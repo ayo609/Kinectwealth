@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+<title>KineticWealth · Investment Plans</title>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+
+<style>
+/* ═══════════════════════════════════════
+   KINETICWEALTH PLANS THEME
+   ═══════════════════════════════════════ */
+[data-theme="light"] {
+  --bg: #F0F6FF;
+  --card: #FFFFFF;
+  --card2: #F8FAFE;
+  --border: #DBEAFE;
+  --text: #1E293B;
+  --sub: #64748B;
+  --muted: #94A3B8;
+  --topbar-bg: rgba(255, 255, 255, 0.95);
+}
+
+[data-theme="dark"] {
+  --bg: #0F172A;
+  --card: #1E293B;
+  --card2: #273548;
+  --border: rgba(59, 130, 246, 0.15);
+  --text: #F1F5F9;
+  --sub: #94A3B8;
+  --muted: #64748B;
+  --topbar-bg: rgba(15, 23, 42, 0.97);
+}
+
+:root {
+  --primary: #1E40AF;
+  --primary-dark: #1E3A8A;
+  --secondary: #3B82F6;
+  --accent: #06B6D4;
+  --success: #10B981;
+  --danger: #EF4444;
+  --warning: #F59E0B;
+  --gold: #F59E0B;
+  --gradient-1: #1E40AF;
+  --gradient-2: #3B82F6;
+  --gradient-3: #06B6D4;
+  --nav-h: 64px;
+  --bot-h: 72px;
+  --radius-sm: 12px;
+  --radius: 16px;
+  --radius-lg: 20px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  padding-bottom: calc(var(--bot-h) + 16px);
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* Top Bar */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 900;
+  height: var(--nav-h);
+  background: var(--topbar-bg);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+}
+
+.back-btn {
+  width: 40px; height: 40px;
+  border-radius: var(--radius-sm);
+  background: var(--card2);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+.back-btn:hover { background: var(--border); }
+
+.brand-name {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--gradient-1), var(--gradient-3));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.theme-btn {
+  width: 40px; height: 40px;
+  border-radius: var(--radius-sm);
+  background: var(--card2);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  transition: all 0.2s;
+}
+
+/* Balance Card */
+.balance-section {
+  padding: 16px;
+}
+
+.balance-card {
+  background: linear-gradient(135deg, var(--gradient-1), var(--gradient-2));
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: white;
+  box-shadow: 0 8px 25px rgba(30, 64, 175, 0.3);
+}
+
+.balance-info .balance-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.8;
+  margin-bottom: 4px;
+}
+
+.balance-amount {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.balance-icon {
+  width: 48px; height: 48px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+/* Section Header */
+.section-header {
+  padding: 8px 16px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.plan-count {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--secondary);
+  background: rgba(59, 130, 246, 0.1);
+  padding: 6px 14px;
+  border-radius: 20px;
+}
+
+/* Plans Grid */
+.plans-container {
+  padding: 0 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.plan-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  transition: all 0.3s;
+  animation: fadeInUp 0.4s ease both;
+}
+
+.plan-card:nth-child(1) { animation-delay: 0.05s; }
+.plan-card:nth-child(2) { animation-delay: 0.1s; }
+.plan-card:nth-child(3) { animation-delay: 0.15s; }
+.plan-card:nth-child(4) { animation-delay: 0.2s; }
+.plan-card:nth-child(5) { animation-delay: 0.25s; }
+.plan-card:nth-child(6) { animation-delay: 0.3s; }
+.plan-card:nth-child(7) { animation-delay: 0.35s; }
+.plan-card:nth-child(8) { animation-delay: 0.4s; }
+.plan-card:nth-child(9) { animation-delay: 0.45s; }
+.plan-card:nth-child(10) { animation-delay: 0.5s; }
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.plan-card:hover {
+  border-color: var(--secondary);
+  box-shadow: 0 8px 25px rgba(30, 64, 175, 0.1);
+  transform: translateY(-2px);
+}
+
+.plan-card.purchased {
+  opacity: 0.7;
+}
+
+.plan-header {
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.plan-icon {
+  width: 48px; height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--gradient-1), var(--gradient-2));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.plan-info {
+  flex: 1;
+}
+
+.plan-name {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.plan-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.plan-badge.hot {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+}
+
+.plan-badge.popular {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--warning);
+}
+
+.plan-badge.premium {
+  background: rgba(139, 92, 246, 0.1);
+  color: #8B5CF6;
+}
+
+.plan-details {
+  padding: 16px 18px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.detail-label {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.detail-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.detail-value.highlight {
+  color: var(--success);
+}
+
+.detail-value.capital {
+  color: var(--secondary);
+}
+
+.plan-footer {
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--border);
+  background: var(--card2);
+}
+
+.plan-price {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--secondary);
+}
+
+.invest-btn {
+  padding: 10px 24px;
+  background: linear-gradient(135deg, var(--gradient-1), var(--gradient-2));
+  color: white;
+  border: none;
+  border-radius: 25px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+}
+
+.invest-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(30, 64, 175, 0.4);
+}
+
+.invest-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.invest-btn:disabled {
+  background: var(--muted);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.purchased-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  background: rgba(16, 185, 129, 0.1);
+  border-radius: 25px;
+  color: var(--success);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* Referral Bonus Info */
+.referral-info {
+  margin: 0 16px 16px;
+  padding: 16px;
+  background: var(--card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  text-align: center;
+}
+
+.referral-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.referral-levels {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.referral-level {
+  text-align: center;
+}
+
+.level-badge {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gradient-1), var(--gradient-2));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 14px;
+  margin: 0 auto 6px;
+}
+
+.level-pct {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--secondary);
+}
+
+.level-label {
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* Bottom Nav */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--bot-h);
+  background: var(--topbar-bg);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 8px;
+  z-index: 800;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 12px;
+  transition: all 0.3s;
+}
+
+.nav-item i { font-size: 22px; }
+
+.nav-item.active {
+  color: var(--secondary);
+}
+
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 3px;
+  background: var(--secondary);
+  border-radius: 0 0 3px 3px;
+}
+
+@media (max-width: 360px) {
+  .plan-details {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="topbar">
+  <a href="home.html" class="back-btn">
+    <i class="fas fa-arrow-left"></i>
+  </a>
+  <span class="brand-name">KineticWealth</span>
+  <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">
+    <i class="fas fa-moon"></i>
+  </button>
+</div>
+
+<!-- Balance Card -->
+<div class="balance-section">
+  <div class="balance-card">
+    <div class="balance-info">
+      <div class="balance-label">Deposit Balance</div>
+      <div class="balance-amount">₦<span id="depositBalance">0.00</span></div>
+    </div>
+    <div class="balance-icon">
+      <i class="fas fa-wallet"></i>
+    </div>
+  </div>
+</div>
+
+<!-- Section Header -->
+<div class="section-header">
+  <div class="section-title">Investment Plans</div>
+  <div class="plan-count" id="planCount">10 Plans</div>
+</div>
+
+<!-- Referral Bonus Info -->
+<div class="referral-info">
+  <div class="referral-title">🎁 Referral Bonus Structure</div>
+  <div class="referral-levels">
+    <div class="referral-level">
+      <div class="level-badge">A</div>
+      <div class="level-pct">10%</div>
+      <div class="level-label">Level 1</div>
+    </div>
+    <div class="referral-level">
+      <div class="level-badge">B</div>
+      <div class="level-pct">3%</div>
+      <div class="level-label">Level 2</div>
+    </div>
+    <div class="referral-level">
+      <div class="level-badge">C</div>
+      <div class="level-pct">1%</div>
+      <div class="level-label">Level 3</div>
+    </div>
+  </div>
+</div>
+
+<!-- Plans Grid -->
+<div class="plans-container" id="plansGrid">
+  <!-- Dynamic content -->
+</div>
+
+<!-- Bottom Nav -->
+<div class="bottom-nav">
+  <a href="home.html" class="nav-item">
+    <i class="fas fa-house"></i><span>Home</span>
+  </a>
+  <a href="plans.html" class="nav-item active">
+    <i class="fas fa-cube"></i><span>Plans</span>
+  </a>
+  <a href="referrals.html" class="nav-item">
+    <i class="fas fa-users"></i><span>Team</span>
+  </a>
+  <a href="dashboard.html" class="nav-item">
+    <i class="fas fa-user"></i><span>Profile</span>
+  </a>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   FIREBASE INIT
+═══════════════════════════════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "AIzaSyCFwefJ8rxZUDLbDsRHnHdA-28zPs49rlo",
+  authDomain: "cashpoint-ac4f4.firebaseapp.com",
+  projectId: "cashpoint-ac4f4",
+  storageBucket: "cashpoint-ac4f4.firebasestorage.app",
+  messagingSenderId: "16133206416",
+  appId: "1:16133206416:web:a093f4e153ad2c9bcc8315"
+};
+
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const FV = firebase.firestore.FieldValue;
+
+/* ═══════════════════════════════════════════════════════════════════
+   KINETICWEALTH INVESTMENT PLANS
+   Name: Capital → Daily ROI for Duration → Total Return
+═══════════════════════════════════════════════════════════════════ */
+const INVESTMENT_PLANS = [
+  {
+    id: 'kinetic-spark',
+    name: 'Kinetic Spark',
+    capital: 5000,
+    dailyROI: 500,
+    duration: 20,
+    totalReturn: 10000,
+    badge: 'hot',
+    description: 'Perfect entry-level plan for beginners'
+  },
+  {
+    id: 'kinetic-pulse',
+    name: 'Kinetic Pulse',
+    capital: 10000,
+    dailyROI: 1080,
+    duration: 20,
+    totalReturn: 21600,
+    badge: 'popular',
+    description: 'Steady returns with moderate investment'
+  },
+  {
+    id: 'kinetic-surge',
+    name: 'Kinetic Surge',
+    capital: 30000,
+    dailyROI: 3500,
+    duration: 25,
+    totalReturn: 87500,
+    badge: 'hot',
+    description: 'Accelerate your earnings with higher returns'
+  },
+  {
+    id: 'kinetic-flow',
+    name: 'Kinetic Flow',
+    capital: 60000,
+    dailyROI: 7500,
+    duration: 25,
+    totalReturn: 187500,
+    badge: 'popular',
+    description: 'Consistent high-yield investment flow'
+  },
+  {
+    id: 'kinetic-momentum',
+    name: 'Kinetic Momentum',
+    capital: 130000,
+    dailyROI: 16200,
+    duration: 30,
+    totalReturn: 486000,
+    badge: '',
+    description: 'Build serious wealth momentum'
+  },
+  {
+    id: 'kinetic-velocity',
+    name: 'Kinetic Velocity',
+    capital: 220000,
+    dailyROI: 24200,
+    duration: 30,
+    totalReturn: 726000,
+    badge: 'premium',
+    description: 'High-velocity returns for serious investors'
+  },
+  {
+    id: 'kinetic-reactor',
+    name: 'Kinetic Reactor',
+    capital: 450000,
+    dailyROI: 49000,
+    duration: 35,
+    totalReturn: 1715000,
+    badge: 'premium',
+    description: 'Compound your wealth with reactor power'
+  },
+  {
+    id: 'kinetic-dynamo',
+    name: 'Kinetic Dynamo',
+    capital: 550000,
+    dailyROI: 60000,
+    duration: 35,
+    totalReturn: 2100000,
+    badge: 'premium',
+    description: 'Dynamic returns for power investors'
+  },
+  {
+    id: 'kinetic-apex',
+    name: 'Kinetic Apex',
+    capital: 720000,
+    dailyROI: 75000,
+    duration: 40,
+    totalReturn: 3000000,
+    badge: 'premium',
+    description: 'Reach the apex of investment returns'
+  },
+  {
+    id: 'kinetic-infinity',
+    name: 'Kinetic Infinity',
+    capital: 950000,
+    dailyROI: 98000,
+    duration: 43,
+    totalReturn: 4214000,
+    badge: 'premium',
+    description: 'Unlimited potential with infinity plan'
+  }
+];
+
+/* ═══════════════════════════════════════════════════════════════════
+   THEME MANAGEMENT
+═══════════════════════════════════════════════════════════════════ */
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = document.getElementById('themeBtn');
+  if (btn) {
+    btn.innerHTML = theme === 'dark' 
+      ? '<i class="fas fa-sun"></i>' 
+      : '<i class="fas fa-moon"></i>';
+  }
+  localStorage.setItem('kw-plans-theme', theme);
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  applyTheme(current === 'dark' ? 'light' : 'dark');
+}
+
+applyTheme(localStorage.getItem('kw-plans-theme') || 'light');
+
+/* ═══════════════════════════════════════════════════════════════════
+   GLOBAL STATE
+═══════════════════════════════════════════════════════════════════ */
+let currentUser = null;
+let currentUserId = null;
+let depositBalance = 0;
+let purchasedPlanIds = new Set();
+let userData = null;
+
+const formatCurrency = (n) => Number(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 });
+
+/* ═══════════════════════════════════════════════════════════════════
+   AUTH STATE
+═══════════════════════════════════════════════════════════════════ */
+auth.onAuthStateChanged(async (user) => {
+  if (!user) {
+    window.location.href = 'login.html';
+    return;
+  }
+  currentUser = user;
+  currentUserId = user.uid;
+  await loadUserData();
+  renderAllPlans();
+});
+
+/* ═══════════════════════════════════════════════════════════════════
+   LOAD USER DATA
+═══════════════════════════════════════════════════════════════════ */
+async function loadUserData() {
+  try {
+    const snap = await db.collection('users').doc(currentUserId).get();
+    if (!snap.exists) return;
+    
+    const data = snap.data();
+    userData = data;
+    depositBalance = data.depositBalance || 0;
+    
+    document.getElementById('depositBalance').textContent = formatCurrency(depositBalance);
+    
+    // Load purchased plans
+    const plans = data.purchasedPlans || [];
+    plans.forEach(id => purchasedPlanIds.add(id));
+    
+  } catch (error) {
+    console.error('Error loading user data:', error);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   RENDER ALL PLANS
+═══════════════════════════════════════════════════════════════════ */
+function renderAllPlans() {
+  const grid = document.getElementById('plansGrid');
+  document.getElementById('planCount').textContent = INVESTMENT_PLANS.length + ' Plans';
+  
+  grid.innerHTML = INVESTMENT_PLANS.map(plan => {
+    const isPurchased = purchasedPlanIds.has(plan.id);
+    const profit = plan.totalReturn - plan.capital;
+    const dailyRate = ((plan.dailyROI / plan.capital) * 100).toFixed(1);
+    
+    return `
+      <div class="plan-card${isPurchased ? ' purchased' : ''}">
+        <div class="plan-header">
+          <div class="plan-icon">
+            <i class="fas fa-chart-line"></i>
+          </div>
+          <div class="plan-info">
+            <div class="plan-name">${plan.name}</div>
+            ${plan.badge ? `<span class="plan-badge ${plan.badge}">${plan.badge.toUpperCase()}</span>` : ''}
+          </div>
+        </div>
+        
+        <div class="plan-details">
+          <div class="detail-item">
+            <div class="detail-label">Capital Required</div>
+            <div class="detail-value capital">₦${formatCurrency(plan.capital)}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Daily Income</div>
+            <div class="detail-value highlight">₦${formatCurrency(plan.dailyROI)}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Duration</div>
+            <div class="detail-value">${plan.duration} Days</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Total Return</div>
+            <div class="detail-value highlight">₦${formatCurrency(plan.totalReturn)}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Net Profit</div>
+            <div class="detail-value highlight">+₦${formatCurrency(profit)}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Daily Rate</div>
+            <div class="detail-value">${dailyRate}%</div>
+          </div>
+        </div>
+        
+        <div class="plan-footer">
+          <div class="plan-price">₦${formatCurrency(plan.capital)}</div>
+          ${isPurchased 
+            ? `<div class="purchased-badge"><i class="fas fa-check-circle"></i> Purchased</div>`
+            : `<button class="invest-btn" onclick="purchasePlan('${plan.id}')" ${depositBalance < plan.capital ? 'disabled' : ''}>
+                <i class="fas fa-bolt"></i> Invest Now
+              </button>`
+          }
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PURCHASE PLAN
+═══════════════════════════════════════════════════════════════════ */
+async function purchasePlan(planId) {
+  const plan = INVESTMENT_PLANS.find(p => p.id === planId);
+  if (!plan) return;
+  
+  // Check if already purchased
+  if (purchasedPlanIds.has(plan.id)) {
+    Swal.fire({
+      icon: 'info',
+      title: 'Already Purchased',
+      text: 'You already own this investment plan.',
+      confirmButtonColor: '#3B82F6'
+    });
+    return;
+  }
+  
+  // Check balance
+  if (depositBalance < plan.capital) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Insufficient Balance',
+      html: `
+        <p>You need <strong>₦${formatCurrency(plan.capital)}</strong></p>
+        <p>Your balance: <strong>₦${formatCurrency(depositBalance)}</strong></p>
+        <p style="margin-top: 12px;">Please top up your deposit wallet.</p>
+      `,
+      confirmButtonColor: '#3B82F6',
+      confirmButtonText: 'Go to Deposit',
+      showCancelButton: true,
+      cancelButtonText: 'Cancel'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        window.location.href = 'deposit.html';
+      }
+    });
+    return;
+  }
+  
+  // Confirmation dialog
+  const profit = plan.totalReturn - plan.capital;
+  const result = await Swal.fire({
+    title: plan.name,
+    html: `
+      <div style="text-align: left; background: #EFF6FF; border-radius: 12px; padding: 16px;">
+        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #DBEAFE;">
+          <span>Capital</span>
+          <span><strong>₦${formatCurrency(plan.capital)}</strong></span>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #DBEAFE;">
+          <span>Daily Income</span>
+          <span style="color: #10B981;">₦${formatCurrency(plan.dailyROI)}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #DBEAFE;">
+          <span>Duration</span>
+          <span>${plan.duration} Days</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #DBEAFE;">
+          <span>Total Return</span>
+          <span style="color: #10B981; font-weight: 700;">₦${formatCurrency(plan.totalReturn)}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 8px 0; font-weight: 800;">
+          <span>Net Profit</span>
+          <span style="color: #1E40AF;">+₦${formatCurrency(profit)}</span>
+        </div>
+      </div>
+      <div style="margin-top: 12px; padding: 12px; background: #ECFDF5; border-radius: 12px; text-align: center;">
+        <p style="font-size: 13px; color: #64748B;">Your Balance After Purchase</p>
+        <p style="font-size: 18px; font-weight: 800; color: #10B981;">₦${formatCurrency(depositBalance - plan.capital)}</p>
+      </div>
+    `,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Confirm Purchase',
+    cancelButtonText: 'Cancel',
+    confirmButtonColor: '#3B82F6'
+  });
+  
+  if (!result.isConfirmed) return;
+  
+  // Process purchase
+  Swal.fire({
+    title: 'Processing Purchase...',
+    html: 'Please wait while we activate your plan',
+    allowOutsideClick: false,
+    didOpen: () => Swal.showLoading()
+  });
+  
+  try {
+    // Verify balance again
+    const userSnap = await db.collection('users').doc(currentUserId).get();
+    if (!userSnap.exists) throw new Error('Account not found');
+    
+    const freshData = userSnap.data();
+    const freshBalance = freshData.depositBalance || 0;
+    
+    if (freshBalance < plan.capital) throw new Error('Insufficient balance');
+    
+    const alreadyPurchased = (freshData.purchasedPlans || []).includes(plan.id);
+    if (alreadyPurchased) throw new Error('Plan already purchased');
+    
+    // Create batch
+    const batch = db.batch();
+    
+    // Create investment document
+    const invRef = db.collection('investments').doc();
+    const now = Date.now();
+    
+    batch.set(invRef, {
+      userId: currentUserId,
+      userName: freshData.fullName || freshData.username || 'User',
+      planId: plan.id,
+      planName: plan.name,
+      planType: 'investment',
+      capital: plan.capital,
+      dailyROI: plan.dailyROI,
+      totalReturn: plan.totalReturn,
+      duration: plan.duration,
+      claimedDays: 0,
+      daysRemaining: plan.duration,
+      totalEarned: 0,
+      status: 'active',
+      createdAt: FV.serverTimestamp(),
+      activatedAt: FV.serverTimestamp(),
+      nextClaimAt: firebase.firestore.Timestamp.fromMillis(now + 86400000)
+    });
+    
+    // Update user balance
+    batch.update(db.collection('users').doc(currentUserId), {
+      depositBalance: FV.increment(-plan.capital),
+      totalInvested: FV.increment(plan.capital),
+      purchasedPlans: FV.arrayUnion(plan.id)
+    });
+    
+    // Create transaction record
+    batch.set(db.collection('transactions').doc(), {
+      userId: currentUserId,
+      type: 'investment_purchase',
+      amount: plan.capital,
+      planId: plan.id,
+      planName: plan.name,
+      description: `Purchased ${plan.name} investment plan`,
+      wallet: 'deposit',
+      createdAt: FV.serverTimestamp()
+    });
+    
+    // Commit batch
+    await batch.commit();
+    
+    // Pay referral bonuses (to upliner's deposit wallet)
+    await payReferralBonuses(currentUserId, plan.capital, plan.name, invRef.id);
+    
+    // Update local state
+    depositBalance -= plan.capital;
+    purchasedPlanIds.add(plan.id);
+    document.getElementById('depositBalance').textContent = formatCurrency(depositBalance);
+    
+    // Success!
+    Swal.fire({
+      icon: 'success',
+      title: '🎉 Plan Activated!',
+      html: `
+        <div style="font-size: 15px;">
+          <p><strong>${plan.name}</strong> is now active!</p>
+          <p style="margin-top: 8px;">Daily Income: <strong style="color: #10B981;">₦${formatCurrency(plan.dailyROI)}</strong></p>
+          <p>Duration: <strong>${plan.duration} Days</strong></p>
+          <p style="margin-top: 12px;">Claim your first reward in 24 hours!</p>
+          <a href="home.html" style="color: #3B82F6; font-weight: 700;">Go to Dashboard →</a>
+        </div>
+      `,
+      confirmButtonColor: '#3B82F6'
+    });
+    
+    // Re-render plans
+    renderAllPlans();
+    
+  } catch (error) {
+    console.error('Purchase error:', error);
+    Swal.fire({
+      icon: 'error',
+      title: 'Purchase Failed',
+      text: error.message || 'An error occurred. Please try again.',
+      confirmButtonColor: '#EF4444'
+    });
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   REFERRAL BONUS SYSTEM
+   Level A (1): 10% → Upliner's Deposit Wallet
+   Level B (2): 3%  → Upliner's Deposit Wallet
+   Level C (3): 1%  → Upliner's Deposit Wallet
+═══════════════════════════════════════════════════════════════════ */
+async function payReferralBonuses(buyerUid, amount, planName, investmentId) {
+  try {
+    const buyerSnap = await db.collection('users').doc(buyerUid).get();
+    if (!buyerSnap.exists) {
+      console.log('Buyer not found for referral bonuses');
+      return { totalPaid: 0 };
+    }
+    
+    const buyerData = buyerSnap.data();
+    const referrerRaw = getReferrerId(buyerData);
+    
+    if (!referrerRaw) {
+      console.log('No referrer found for user:', buyerUid);
+      return { totalPaid: 0 };
+    }
+    
+    let currentUid = await resolveReferrerUid(referrerRaw);
+    
+    if (!currentUid || currentUid === buyerUid) {
+      console.log('Invalid referrer or self-referral');
+      return { totalPaid: 0 };
+    }
+    
+    const batch = db.batch();
+    let totalPaid = 0;
+    
+    // Process 3 levels of referrals
+    for (let level = 1; level <= 3; level++) {
+      const uplineSnap = await db.collection('users').doc(currentUid).get();
+      
+      if (!uplineSnap.exists) {
+        console.log(`Level ${level} upline not found`);
+        break;
+      }
+      
+      // Calculate bonus percentage
+      const percentage = level === 1 ? 0.10 : level === 2 ? 0.03 : 0.01;
+      const bonusAmount = Math.floor(amount * percentage);
+      
+      if (bonusAmount > 0) {
+        const uplineData = uplineSnap.data();
+        const uplineName = uplineData.fullName || uplineData.username || 'User';
+        
+        // Credit upliner's deposit wallet
+        batch.update(db.collection('users').doc(currentUid), {
+          depositBalance: FV.increment(bonusAmount),
+          totalRefEarnings: FV.increment(bonusAmount),
+          totalEarnings: FV.increment(bonusAmount)
+        });
+        
+        // Create referral bonus transaction
+        batch.set(db.collection('transactions').doc(), {
+          userId: currentUid,
+          userName: uplineName,
+          type: 'referral_bonus',
+          amount: bonusAmount,
+          level: level,
+          fromUserId: buyerUid,
+          planName: planName,
+          investmentId: investmentId,
+          description: `Level ${level} (${(percentage * 100)}%) referral bonus from ${planName} purchase`,
+          wallet: 'deposit',
+          status: 'completed',
+          createdAt: FV.serverTimestamp()
+        });
+        
+        // Update referral counts
+        batch.update(db.collection('users').doc(currentUid), {
+          [`level${level}Count`]: FV.increment(1)
+        });
+        
+        totalPaid += bonusAmount;
+        console.log(`✅ Level ${level} bonus: ₦${bonusAmount} to ${uplineName} (${currentUid})`);
+      }
+      
+      // Get next upline
+      const uplineData = uplineSnap.data();
+      const nextReferrerRaw = getReferrerId(uplineData);
+      
+      if (!nextReferrerRaw) {
+        console.log(`No further upline after level ${level}`);
+        break;
+      }
+      
+      const nextUid = await resolveReferrerUid(nextReferrerRaw);
+      
+      if (!nextUid || nextUid === currentUid) {
+        console.log(`Invalid next upline at level ${level}`);
+        break;
+      }
+      
+      currentUid = nextUid;
+    }
+    
+    // Commit all referral bonuses
+    if (totalPaid > 0) {
+      await batch.commit();
+      console.log(`✅ Total referral bonuses paid: ₦${totalPaid}`);
+    } else {
+      console.log('No referral bonuses to pay');
+    }
+    
+    return { totalPaid };
+    
+  } catch (error) {
+    console.error('Referral bonus error:', error);
+    return { totalPaid: 0 };
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   REFERRAL HELPER FUNCTIONS
+═══════════════════════════════════════════════════════════════════ */
+function getReferrerId(data) {
+  if (!data) return null;
+  
+  // Check all possible referrer field names
+  const possibleKeys = [
+    'referrerUid', 'refererUid', 'referredByUid', 
+    'uplineUid', 'referredBy', 'referrer', 
+    'upline', 'invitedBy', 'parentId'
+  ];
+  
+  for (const key of possibleKeys) {
+    const value = data[key];
+    if (value && value !== 'direct' && value !== 'none' && value !== '') {
+      return String(value).trim();
+    }
+  }
+  
+  return null;
+}
+
+async function resolveReferrerUid(referrer) {
+  if (!referrer || referrer === 'direct' || referrer === 'none' || referrer === '') {
+    return null;
+  }
+  
+  const ref = String(referrer).trim();
+  
+  // If it looks like a Firebase UID (28+ chars)
+  if (ref.length >= 28 && /^[a-zA-Z0-9]+$/.test(ref)) {
+    try {
+      const doc = await db.collection('users').doc(ref).get();
+      if (doc.exists) return ref;
+    } catch (e) {
+      // Not a valid UID
+    }
+  }
+  
+  // Try to find by referral code
+  try {
+    const snapshot = await db.collection('users')
+      .where('referralCode', '==', ref)
+      .limit(1)
+      .get();
+    
+    if (!snapshot.empty) {
+      return snapshot.docs[0].id;
+    }
+  } catch (e) {
+    console.warn('Referral code lookup error:', e.message);
+  }
+  
+  return null;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   EXPORT FUNCTIONS
+═══════════════════════════════════════════════════════════════════ */
+window.toggleTheme = toggleTheme;
+window.purchasePlan = purchasePlan;
+
+console.log('🚀 KineticWealth Plans Page Ready');
+console.log('📊 10 Investment Plans Available');
+console.log('💰 Referral Bonuses: Level A=10%, Level B=3%, Level C=1%');
+</script>
+
+</body>
+</html>
