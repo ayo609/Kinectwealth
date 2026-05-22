@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+<title>KineticWealth · Team & Referrals</title>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+
+<style>
+/* ═══════════════════════════════════════
+   KINETICWEALTH REFERRAL THEME
+   ═══════════════════════════════════════ */
+[data-theme="light"] {
+  --bg: #F0F6FF;
+  --card: #FFFFFF;
+  --card2: #F8FAFE;
+  --border: #DBEAFE;
+  --text: #1E293B;
+  --sub: #64748B;
+  --muted: #94A3B8;
+  --topbar-bg: rgba(255, 255, 255, 0.95);
+  --shadow: 0 4px 20px rgba(30, 64, 175, 0.08);
+}
+
+[data-theme="dark"] {
+  --bg: #0F172A;
+  --card: #1E293B;
+  --card2: #273548;
+  --border: rgba(59, 130, 246, 0.15);
+  --text: #F1F5F9;
+  --sub: #94A3B8;
+  --muted: #64748B;
+  --topbar-bg: rgba(15, 23, 42, 0.97);
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+:root {
+  --primary: #1E40AF;
+  --primary-dark: #1E3A8A;
+  --secondary: #3B82F6;
+  --accent: #06B6D4;
+  --success: #10B981;
+  --danger: #EF4444;
+  --warning: #F59E0B;
+  --gradient-1: #1E40AF;
+  --gradient-2: #3B82F6;
+  --gradient-3: #06B6D4;
+  --level-a: #3B82F6;
+  --level-b: #06B6D4;
+  --level-c: #8B5CF6;
+  --nav-h: 64px;
+  --bot-h: 72px;
+  --radius-sm: 12px;
+  --radius: 16px;
+  --radius-lg: 20px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  padding-bottom: calc(var(--bot-h) + 16px);
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* Top Bar */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 900;
+  height: var(--nav-h);
+  background: var(--topbar-bg);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  box-shadow: var(--shadow);
+}
+
+.back-btn {
+  width: 40px; height: 40px;
+  border-radius: var(--radius-sm);
+  background: var(--card2);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+.brand-name {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--gradient-1), var(--gradient-3));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.theme-btn {
+  width: 40px; height: 40px;
+  border-radius: var(--radius-sm);
+  background: var(--card2);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  transition: all 0.2s;
+}
+
+/* Main Content */
+.main-content {
+  padding: 0 16px;
+}
+
+/* Referral Link Card */
+.ref-link-card {
+  background: linear-gradient(135deg, var(--gradient-1), var(--gradient-2));
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin: 16px 0;
+  color: white;
+  box-shadow: 0 8px 30px rgba(30, 64, 175, 0.3);
+}
+
+.ref-link-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.85;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ref-link-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ref-link-input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: 'Inter', sans-serif;
+}
+
+.copy-btn {
+  padding: 12px 20px;
+  background: white;
+  color: var(--primary);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.copy-btn:active {
+  transform: scale(0.95);
+}
+
+.share-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.share-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+
+.share-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Section Title */
+.section-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.stat-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 16px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.stat-card.full {
+  grid-column: 1 / -1;
+}
+
+.stat-icon {
+  width: 42px; height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.stat-icon.blue { background: rgba(59, 130, 246, 0.1); color: var(--secondary); }
+.stat-icon.green { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+.stat-icon.purple { background: rgba(139, 92, 246, 0.1); color: #8B5CF6; }
+
+.stat-value {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--sub);
+  font-weight: 600;
+}
+
+/* Level Breakdown Cards */
+.level-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.level-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 16px 12px;
+  border: 1px solid var(--border);
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: var(--shadow);
+}
+
+.level-card:hover {
+  transform: translateY(-2px);
+}
+
+.level-card.level-a { border-top: 3px solid var(--level-a); }
+.level-card.level-b { border-top: 3px solid var(--level-b); }
+.level-card.level-c { border-top: 3px solid var(--level-c); }
+
+.level-card.active {
+  border-color: var(--secondary);
+  box-shadow: 0 8px 25px rgba(30, 64, 175, 0.15);
+}
+
+.level-letter {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.level-letter.la { color: var(--level-a); }
+.level-letter.lb { color: var(--level-b); }
+.level-letter.lc { color: var(--level-c); }
+
+.level-name {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--sub);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+.level-percent {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.level-percent.la { color: var(--level-a); }
+.level-percent.lb { color: var(--level-b); }
+.level-percent.lc { color: var(--level-c); }
+
+.level-count {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text);
+  margin-top: 4px;
+}
+
+.level-sub {
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* Level Detail Banner */
+.level-detail-banner {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 16px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+}
+
+.level-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.level-detail-icon {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.level-detail-icon.la { background: rgba(59, 130, 246, 0.1); color: var(--level-a); }
+.level-detail-icon.lb { background: rgba(6, 182, 212, 0.1); color: var(--level-b); }
+.level-detail-icon.lc { background: rgba(139, 92, 246, 0.1); color: var(--level-c); }
+
+.level-detail-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.level-detail-sub {
+  font-size: 12px;
+  color: var(--sub);
+}
+
+.level-detail-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.level-info-item {
+  background: var(--card2);
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+}
+
+.level-info-value {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.level-info-label {
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* Team Filter */
+.filter-bar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.filter-btn {
+  flex: 1;
+  padding: 10px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid var(--border);
+  background: var(--card2);
+  color: var(--sub);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: 'Inter', sans-serif;
+}
+
+.filter-btn.active-a {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: var(--level-a);
+  color: var(--level-a);
+}
+
+.filter-btn.active-b {
+  background: rgba(6, 182, 212, 0.1);
+  border-color: var(--level-b);
+  color: var(--level-b);
+}
+
+.filter-btn.active-c {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: var(--level-c);
+  color: var(--level-c);
+}
+
+.filter-count {
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.filter-count.ca { background: rgba(59, 130, 246, 0.15); color: var(--level-a); }
+.filter-count.cb { background: rgba(6, 182, 212, 0.15); color: var(--level-b); }
+.filter-count.cc { background: rgba(139, 92, 246, 0.15); color: var(--level-c); }
+
+/* Search */
+.search-wrapper {
+  position: relative;
+  margin-bottom: 14px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 16px 12px 42px;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.search-input:focus {
+  border-color: var(--secondary);
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* Member Cards */
+.member-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.member-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: var(--shadow);
+  transition: all 0.2s;
+  animation: fadeIn 0.3s ease both;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.member-card:hover {
+  border-color: var(--secondary);
+}
+
+.member-avatar {
+  width: 44px; height: 44px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 17px;
+  color: white;
+  flex-shrink: 0;
+}
+
+.av-a { background: linear-gradient(135deg, #3B82F6, #1D4ED8); }
+.av-b { background: linear-gradient(135deg, #06B6D4, #0891B2); }
+.av-c { background: linear-gradient(135deg, #8B5CF6, #7C3AED); }
+
+.member-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.member-name {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text);
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.member-email {
+  font-size: 11px;
+  color: var(--sub);
+  margin-bottom: 6px;
+}
+
+.member-tags {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.member-tag {
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.tag-plan {
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--secondary);
+}
+
+.tag-date {
+  background: var(--card2);
+  color: var(--sub);
+}
+
+.tag-active {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+}
+
+.tag-inactive {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+}
+
+.member-right {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.member-invested {
+  font-size: 10px;
+  color: var(--sub);
+  margin-bottom: 2px;
+}
+
+.member-invested span {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.member-bonus {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--success);
+}
+
+.member-bonus-label {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 48px 20px;
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.4;
+}
+
+.empty-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--sub);
+  margin-bottom: 6px;
+}
+
+.empty-text {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Bottom Nav */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--bot-h);
+  background: var(--topbar-bg);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 8px;
+  z-index: 800;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 12px;
+  transition: all 0.3s;
+  position: relative;
+}
+
+.nav-item i { font-size: 22px; }
+
+.nav-item.active {
+  color: var(--secondary);
+}
+
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 3px;
+  background: var(--secondary);
+  border-radius: 0 0 3px 3px;
+}
+
+@media (max-width: 360px) {
+  .level-grid { gap: 6px; }
+  .level-card { padding: 12px 8px; }
+  .stats-grid { grid-template-columns: 1fr; }
+  .level-detail-info { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="topbar">
+  <a href="home.html" class="back-btn">
+    <i class="fas fa-arrow-left"></i>
+  </a>
+  <span class="brand-name">KineticWealth</span>
+  <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">
+    <i class="fas fa-moon"></i>
+  </button>
+</div>
+
+<div class="main-content">
+
+  <!-- Referral Link Card -->
+  <div class="ref-link-card">
+    <div class="ref-link-label">
+      <i class="fas fa-link"></i> Your Referral Link
+    </div>
+    <div class="ref-link-row">
+      <div class="ref-link-input" id="refLinkDisplay">Loading...</div>
+      <button class="copy-btn" onclick="copyReferralLink()">
+        <i class="fas fa-copy"></i> Copy
+      </button>
+    </div>
+    <div class="share-buttons">
+      <button class="share-btn" onclick="shareWhatsApp()">
+        <i class="fab fa-whatsapp"></i> WhatsApp
+      </button>
+      <button class="share-btn" onclick="shareTelegram()">
+        <i class="fab fa-telegram"></i> Telegram
+      </button>
+      <button class="share-btn" onclick="shareMore()">
+        <i class="fas fa-share-alt"></i> More
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="section-title">
+    <i class="fas fa-chart-pie" style="color: var(--secondary);"></i> Team Overview
+  </div>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="fas fa-users"></i></div>
+      <div class="stat-value" id="totalTeam">0</div>
+      <div class="stat-label">Total Team Members</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon green"><i class="fas fa-user-check"></i></div>
+      <div class="stat-value" id="activeMembers">0</div>
+      <div class="stat-label">Active Investors</div>
+    </div>
+    <div class="stat-card full">
+      <div class="stat-icon purple"><i class="fas fa-coins"></i></div>
+      <div class="stat-value" id="totalInvested">₦0.00</div>
+      <div class="stat-label">Total Team Investment</div>
+    </div>
+  </div>
+
+  <!-- Level Breakdown -->
+  <div class="section-title">
+    <i class="fas fa-layer-group" style="color: #8B5CF6;"></i> Referral Levels
+  </div>
+  <div class="level-grid">
+    <div class="level-card level-a" id="levelACard" onclick="selectLevel('A')">
+      <div class="level-letter la">A</div>
+      <div class="level-name">Level 1</div>
+      <div class="level-percent la">10%</div>
+      <div class="level-count" id="levelACount">0</div>
+      <div class="level-sub">Members</div>
+    </div>
+    <div class="level-card level-b" id="levelBCard" onclick="selectLevel('B')">
+      <div class="level-letter lb">B</div>
+      <div class="level-name">Level 2</div>
+      <div class="level-percent lb">3%</div>
+      <div class="level-count" id="levelBCount">0</div>
+      <div class="level-sub">Members</div>
+    </div>
+    <div class="level-card level-c" id="levelCCard" onclick="selectLevel('C')">
+      <div class="level-letter lc">C</div>
+      <div class="level-name">Level 3</div>
+      <div class="level-percent lc">1%</div>
+      <div class="level-count" id="levelCCount">0</div>
+      <div class="level-sub">Members</div>
+    </div>
+  </div>
+
+  <!-- Level Detail Banner -->
+  <div class="level-detail-banner" id="levelDetailBanner">
+    <div class="level-detail-header">
+      <div class="level-detail-icon la" id="detailIcon">
+        <i class="fas fa-star"></i>
+      </div>
+      <div>
+        <div class="level-detail-title" id="detailTitle">Level A — Direct Referrals</div>
+        <div class="level-detail-sub" id="detailSub">10% bonus on their investments</div>
+      </div>
+    </div>
+    <div class="level-detail-info">
+      <div class="level-info-item">
+        <div class="level-info-value" id="detailMembers">0</div>
+        <div class="level-info-label">Members</div>
+      </div>
+      <div class="level-info-item">
+        <div class="level-info-value" id="detailInvested">₦0</div>
+        <div class="level-info-label">Total Invested</div>
+      </div>
+      <div class="level-info-item">
+        <div class="level-info-value" id="detailBonus">₦0</div>
+        <div class="level-info-label">Total Bonus Earned</div>
+      </div>
+      <div class="level-info-item">
+        <div class="level-info-value" id="detailRate">10%</div>
+        <div class="level-info-label">Commission Rate</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Team List -->
+  <div class="section-title">
+    <i class="fas fa-list" style="color: var(--warning);"></i> My Team Members
+  </div>
+  
+  <div class="filter-bar">
+    <button class="filter-btn active-a" id="filterBtnA" onclick="filterByLevel('A')">
+      <i class="fas fa-circle" style="font-size: 6px;"></i> Level A
+      <span class="filter-count ca" id="filterCountA">0</span>
+    </button>
+    <button class="filter-btn" id="filterBtnB" onclick="filterByLevel('B')">
+      <i class="fas fa-circle" style="font-size: 6px;"></i> Level B
+      <span class="filter-count cb" id="filterCountB">0</span>
+    </button>
+    <button class="filter-btn" id="filterBtnC" onclick="filterByLevel('C')">
+      <i class="fas fa-circle" style="font-size: 6px;"></i> Level C
+      <span class="filter-count cc" id="filterCountC">0</span>
+    </button>
+  </div>
+
+  <div class="search-wrapper">
+    <i class="fas fa-search search-icon"></i>
+    <input type="text" class="search-input" id="searchInput" 
+           placeholder="Search by name or email..." oninput="renderFilteredTeam()">
+  </div>
+
+  <div class="member-list" id="memberList">
+    <div class="empty-state">
+      <div class="empty-icon"><i class="fas fa-circle-notch fa-spin"></i></div>
+      <div class="empty-text">Loading your team...</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Bottom Nav -->
+<div class="bottom-nav">
+  <a href="home.html" class="nav-item">
+    <i class="fas fa-house"></i><span>Home</span>
+  </a>
+  <a href="plans.html" class="nav-item">
+    <i class="fas fa-cube"></i><span>Plans</span>
+  </a>
+  <a href="deposit.html" class="nav-item">
+    <i class="fas fa-credit-card"></i><span>Deposit</span>
+  </a>
+  <a href="referrals.html" class="nav-item active">
+    <i class="fas fa-users"></i><span>Team</span>
+  </a>
+  <a href="dashboard.html" class="nav-item">
+    <i class="fas fa-user"></i><span>Profile</span>
+  </a>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   FIREBASE INIT
+═══════════════════════════════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "AIzaSyCFwefJ8rxZUDLbDsRHnHdA-28zPs49rlo",
+  authDomain: "cashpoint-ac4f4.firebaseapp.com",
+  projectId: "cashpoint-ac4f4",
+  storageBucket: "cashpoint-ac4f4.firebasestorage.app",
+  messagingSenderId: "16133206416",
+  appId: "1:16133206416:web:a093f4e153ad2c9bcc8315"
+};
+
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+/* ═══════════════════════════════════════════════════════════════════
+   REFERRAL RATES (KineticWealth)
+═══════════════════════════════════════════════════════════════════ */
+const REFERRAL_RATES = {
+  A: { level: 1, percent: 10, label: 'Level A — Direct Referrals', color: '#3B82F6', icon: 'fa-star' },
+  B: { level: 2, percent: 3, label: 'Level B — Indirect Referrals', color: '#06B6D4', icon: 'fa-users' },
+  C: { level: 3, percent: 1, label: 'Level C — Extended Network', color: '#8B5CF6', icon: 'fa-globe' }
+};
+
+/* ═══════════════════════════════════════════════════════════════════
+   THEME
+═══════════════════════════════════════════════════════════════════ */
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = document.getElementById('themeBtn');
+  if (btn) {
+    btn.innerHTML = theme === 'dark' 
+      ? '<i class="fas fa-sun"></i>' 
+      : '<i class="fas fa-moon"></i>';
+  }
+  localStorage.setItem('kw-ref-theme', theme);
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  applyTheme(current === 'dark' ? 'light' : 'dark');
+}
+
+applyTheme(localStorage.getItem('kw-ref-theme') || 'light');
+
+/* ═══════════════════════════════════════════════════════════════════
+   GLOBAL STATE
+═══════════════════════════════════════════════════════════════════ */
+let currentUserId = null;
+let myReferralCode = '';
+let myReferralLink = '';
+let allDownlines = [];
+let currentLevel = 'A';
+let allUsersMap = new Map();
+
+const formatCurrency = (n) => Number(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 });
+
+/* ═══════════════════════════════════════════════════════════════════
+   HELPER FUNCTIONS
+═══════════════════════════════════════════════════════════════════ */
+function getReferrerField(data) {
+  if (!data) return null;
+  const fields = ['referrerUid', 'refererUid', 'referredByUid', 'uplineUid', 'referredBy', 'referrer', 'upline', 'invitedBy', 'parentId'];
+  for (const f of fields) {
+    const val = data[f];
+    if (val && String(val).trim() !== '' && val !== 'direct' && val !== 'none') return String(val).trim();
+  }
+  return null;
+}
+
+function resolveToUid(rawRef) {
+  if (!rawRef) return null;
+  const ref = String(rawRef).trim();
+  if (ref === 'direct' || ref === 'none' || ref === '') return null;
+  if (ref.length >= 28 && /^[a-zA-Z0-9]+$/.test(ref)) return allUsersMap.has(ref) ? ref : null;
+  for (const [uid, data] of allUsersMap) {
+    if (data.referralCode === ref) return uid;
+  }
+  return null;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   BUILD TEAM STRUCTURE
+═══════════════════════════════════════════════════════════════════ */
+function buildTeam(allUsers) {
+  const l1 = [], l2 = [], l3 = [];
+  
+  // Level A: Direct referrals
+  for (const user of allUsers) {
+    const resolvedUid = resolveToUid(getReferrerField(user));
+    if (resolvedUid === currentUserId) l1.push(user);
+  }
+  
+  // Level B: Referrals of Level A
+  const l1Uids = new Set(l1.map(u => u.uid));
+  for (const user of allUsers) {
+    if (l1Uids.has(user.uid)) continue;
+    const resolvedUid = resolveToUid(getReferrerField(user));
+    if (resolvedUid && l1Uids.has(resolvedUid)) l2.push(user);
+  }
+  
+  // Level C: Referrals of Level B
+  const l2Uids = new Set(l2.map(u => u.uid));
+  for (const user of allUsers) {
+    if (l1Uids.has(user.uid) || l2Uids.has(user.uid)) continue;
+    const resolvedUid = resolveToUid(getReferrerField(user));
+    if (resolvedUid && l2Uids.has(resolvedUid)) l3.push(user);
+  }
+  
+  return { l1, l2, l3 };
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ENRICH MEMBER DATA
+═══════════════════════════════════════════════════════════════════ */
+async function enrichMember(user, levelKey) {
+  const rate = REFERRAL_RATES[levelKey];
+  let planName = 'No Plan';
+  const invested = user.totalInvested || 0;
+  
+  try {
+    const invSnap = await db.collection('investments')
+      .where('userId', '==', user.uid)
+      .where('status', '==', 'active')
+      .limit(1)
+      .get();
+    
+    if (!invSnap.empty) {
+      planName = invSnap.docs[0].data().planName || 'Investment';
+    }
+  } catch (e) {
+    // Silently fail
+  }
+  
+  return {
+    level: levelKey,
+    levelNum: rate.level,
+    uid: user.uid,
+    fullName: user.fullName || user.username || 'User',
+    email: user.email || 'N/A',
+    planName: planName,
+    invested: invested,
+    bonus: Math.floor(invested * (rate.percent / 100)),
+    isActive: invested > 0,
+    joinedAt: user.createdAt || null
+  };
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   AUTH & LOAD
+═══════════════════════════════════════════════════════════════════ */
+auth.onAuthStateChanged(async (user) => {
+  if (!user) {
+    window.location.href = 'login.html';
+    return;
+  }
+  
+  currentUserId = user.uid;
+  
+  const userDoc = await db.collection('users').doc(currentUserId).get();
+  if (!userDoc.exists) {
+    window.location.href = 'login.html';
+    return;
+  }
+  
+  const userData = userDoc.data();
+  myReferralCode = userData.referralCode || ('KW' + currentUserId.slice(0, 8).toUpperCase());
+  
+  // Ensure referral code exists
+  if (!userData.referralCode) {
+    db.collection('users').doc(currentUserId).update({ referralCode: myReferralCode }).catch(() => {});
+  }
+  
+  myReferralLink = `${window.location.origin}/signup.html?ref=${myReferralCode}`;
+  document.getElementById('refLinkDisplay').textContent = myReferralLink;
+  
+  await loadTeamData();
+});
+
+/* ═══════════════════════════════════════════════════════════════════
+   LOAD TEAM DATA
+═══════════════════════════════════════════════════════════════════ */
+async function loadTeamData() {
+  try {
+    // Get ALL users (for team building)
+    const allSnap = await db.collection('users').get();
+    allUsersMap.clear();
+    const allUsers = [];
+    
+    allSnap.docs.forEach(doc => {
+      const data = doc.data();
+      allUsers.push({ uid: doc.id, ...data });
+      allUsersMap.set(doc.id, data);
+    });
+    
+    // Build team structure
+    const { l1, l2, l3 } = buildTeam(allUsers);
+    
+    console.log('📊 Team Structure:', { l1: l1.length, l2: l2.length, l3: l3.length });
+    
+    // Enrich all members
+    allDownlines = [];
+    for (const u of l1) allDownlines.push(await enrichMember(u, 'A'));
+    for (const u of l2) allDownlines.push(await enrichMember(u, 'B'));
+    for (const u of l3) allDownlines.push(await enrichMember(u, 'C'));
+    
+    // Update counts
+    const l1List = allDownlines.filter(d => d.level === 'A');
+    const l2List = allDownlines.filter(d => d.level === 'B');
+    const l3List = allDownlines.filter(d => d.level === 'C');
+    
+    document.getElementById('totalTeam').textContent = allDownlines.length;
+    document.getElementById('activeMembers').textContent = allDownlines.filter(d => d.isActive).length;
+    document.getElementById('totalInvested').textContent = '₦' + formatCurrency(allDownlines.reduce((s, d) => s + d.invested, 0));
+    
+    document.getElementById('levelACount').textContent = l1List.length;
+    document.getElementById('levelBCount').textContent = l2List.length;
+    document.getElementById('levelCCount').textContent = l3List.length;
+    
+    document.getElementById('filterCountA').textContent = l1List.length;
+    document.getElementById('filterCountB').textContent = l2List.length;
+    document.getElementById('filterCountC').textContent = l3List.length;
+    
+    // Render default view
+    selectLevel('A');
+    renderFilteredTeam();
+    
+  } catch (error) {
+    console.error('Team load error:', error);
+    document.getElementById('memberList').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div>
+        <div class="empty-title">Error Loading Team</div>
+        <div class="empty-text">Please refresh the page</div>
+      </div>`;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   LEVEL SELECTION
+═══════════════════════════════════════════════════════════════════ */
+function selectLevel(levelKey) {
+  currentLevel = levelKey;
+  const rate = REFERRAL_RATES[levelKey];
+  
+  // Update level cards
+  document.getElementById('levelACard').classList.toggle('active', levelKey === 'A');
+  document.getElementById('levelBCard').classList.toggle('active', levelKey === 'B');
+  document.getElementById('levelCCard').classList.toggle('active', levelKey === 'C');
+  
+  // Update detail banner
+  const detailIcon = document.getElementById('detailIcon');
+  detailIcon.className = `level-detail-icon l${levelKey.toLowerCase()}`;
+  detailIcon.innerHTML = `<i class="fas ${rate.icon}"></i>`;
+  
+  document.getElementById('detailTitle').textContent = rate.label;
+  document.getElementById('detailSub').textContent = `${rate.percent}% bonus on their investments`;
+  
+  const levelMembers = allDownlines.filter(d => d.level === levelKey);
+  const totalInvested = levelMembers.reduce((s, d) => s + d.invested, 0);
+  const totalBonus = levelMembers.reduce((s, d) => s + d.bonus, 0);
+  
+  document.getElementById('detailMembers').textContent = levelMembers.length;
+  document.getElementById('detailInvested').textContent = '₦' + formatCurrency(totalInvested);
+  document.getElementById('detailBonus').textContent = '₦' + formatCurrency(totalBonus);
+  document.getElementById('detailRate').textContent = rate.percent + '%';
+  
+  // Update filter buttons
+  document.getElementById('filterBtnA').className = 'filter-btn' + (levelKey === 'A' ? ' active-a' : '');
+  document.getElementById('filterBtnB').className = 'filter-btn' + (levelKey === 'B' ? ' active-b' : '');
+  document.getElementById('filterBtnC').className = 'filter-btn' + (levelKey === 'C' ? ' active-c' : '');
+  
+  renderFilteredTeam();
+}
+
+function filterByLevel(levelKey) {
+  selectLevel(levelKey);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   RENDER TEAM
+═══════════════════════════════════════════════════════════════════ */
+function renderFilteredTeam() {
+  const query = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+  const levelMembers = allDownlines.filter(d => d.level === currentLevel);
+  const filtered = query 
+    ? levelMembers.filter(d => d.fullName.toLowerCase().includes(query) || d.email.toLowerCase().includes(query))
+    : levelMembers;
+  
+  const container = document.getElementById('memberList');
+  
+  if (!filtered.length) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon"><i class="fas fa-users"></i></div>
+        <div class="empty-title">${query ? 'No Results Found' : `No Level ${currentLevel} Members Yet`}</div>
+        <div class="empty-text">${query ? 'Try a different name or email' : 'Share your referral link to grow your team!'}</div>
+      </div>`;
+    return;
+  }
+  
+  const avatars = { A: 'av-a', B: 'av-b', C: 'av-c' };
+  const levelLabels = { A: 'Level A (10%)', B: 'Level B (3%)', C: 'Level C (1%)' };
+  
+  container.innerHTML = '';
+  
+  filtered.forEach((member, index) => {
+    let joinedStr = '—';
+    if (member.joinedAt) {
+      try {
+        const dt = member.joinedAt.toDate ? member.joinedAt.toDate() : new Date(member.joinedAt);
+        joinedStr = dt.toLocaleDateString('en-NG', { day: '2-digit', month: 'short', year: '2-digit' });
+      } catch (e) {
+        // Keep default
+      }
+    }
+    
+    const card = document.createElement('div');
+    card.className = 'member-card';
+    card.style.animationDelay = `${index * 0.04}s`;
+    card.innerHTML = `
+      <div class="member-avatar ${avatars[member.level]}">${member.fullName.charAt(0).toUpperCase()}</div>
+      <div class="member-info">
+        <div class="member-name">${member.fullName}</div>
+        <div class="member-email">${member.email}</div>
+        <div class="member-tags">
+          <span class="member-tag tag-plan"><i class="fas fa-chart-pie"></i> ${member.planName}</span>
+          <span class="member-tag tag-date"><i class="far fa-calendar"></i> ${joinedStr}</span>
+          <span class="member-tag ${member.isActive ? 'tag-active' : 'tag-inactive'}">
+            ${member.isActive ? 'Active' : 'Inactive'}
+          </span>
+        </div>
+      </div>
+      <div class="member-right">
+        <div class="member-invested">Invested: <span>₦${formatCurrency(member.invested)}</span></div>
+        <div class="member-bonus">+₦${formatCurrency(member.bonus)}</div>
+        <div class="member-bonus-label">${levelLabels[member.level]}</div>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SHARE FUNCTIONS
+═══════════════════════════════════════════════════════════════════ */
+function copyReferralLink() {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(myReferralLink).then(() => {
+      showCopiedToast();
+    }).catch(() => fallbackCopy());
+  } else {
+    fallbackCopy();
+  }
+}
+
+function fallbackCopy() {
+  const el = document.createElement('textarea');
+  el.value = myReferralLink;
+  el.style.position = 'fixed';
+  el.style.opacity = '0';
+  document.body.appendChild(el);
+  el.select();
+  document.execCommand('copy');
+  document.body.removeChild(el);
+  showCopiedToast();
+}
+
+function showCopiedToast() {
+  Swal.fire({
+    icon: 'success',
+    title: 'Link Copied!',
+    text: 'Share it with friends to earn referral bonuses!',
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 2500,
+    timerProgressBar: true
+  });
+}
+
+function shareWhatsApp() {
+  const message = encodeURIComponent(
+    `🚀 Join KineticWealth and start earning daily returns!\n\n` +
+    `💰 Invest in plans and earn up to 20% daily\n` +
+    `👥 3-Level referral program (10% - 3% - 1%)\n\n` +
+    `Sign up with my link: ${myReferralLink}`
+  );
+  window.open(`https://wa.me/?text=${message}`, '_blank');
+}
+
+function shareTelegram() {
+  const text = encodeURIComponent('🚀 Join KineticWealth! Earn daily returns with smart investments.');
+  window.open(`https://t.me/share/url?url=${encodeURIComponent(myReferralLink)}&text=${text}`, '_blank');
+}
+
+function shareMore() {
+  if (navigator.share) {
+    navigator.share({
+      title: 'Join KineticWealth',
+      text: 'Earn daily returns with smart investments!',
+      url: myReferralLink
+    }).catch(() => {});
+  } else {
+    copyReferralLink();
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   EXPORT FUNCTIONS
+═══════════════════════════════════════════════════════════════════ */
+window.toggleTheme = toggleTheme;
+window.selectLevel = selectLevel;
+window.filterByLevel = filterByLevel;
+window.renderFilteredTeam = renderFilteredTeam;
+window.copyReferralLink = copyReferralLink;
+window.shareWhatsApp = shareWhatsApp;
+window.shareTelegram = shareTelegram;
+window.shareMore = shareMore;
+
+console.log('🚀 KineticWealth Referral Page Ready');
+console.log('💰 Rates: Level A=10% | Level B=3% | Level C=1%');
+</script>
+
+</body>
+</html>
