@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+<title>KineticWealth · Bind Bank Account</title>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+
+<style>
+/* ═══════════════════════════════════════
+   KINETICWEALTH BIND WALLET THEME
+   ═══════════════════════════════════════ */
+[data-theme="light"] {
+  --bg: #F0F6FF;
+  --card: #FFFFFF;
+  --card2: #F8FAFE;
+  --border: #DBEAFE;
+  --text: #1E293B;
+  --sub: #64748B;
+  --muted: #94A3B8;
+  --topbar-bg: rgba(255, 255, 255, 0.95);
+  --shadow: 0 4px 20px rgba(30, 64, 175, 0.08);
+}
+
+[data-theme="dark"] {
+  --bg: #0F172A;
+  --card: #1E293B;
+  --card2: #273548;
+  --border: rgba(59, 130, 246, 0.15);
+  --text: #F1F5F9;
+  --sub: #94A3B8;
+  --muted: #64748B;
+  --topbar-bg: rgba(15, 23, 42, 0.97);
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+:root {
+  --primary: #1E40AF;
+  --primary-dark: #1E3A8A;
+  --secondary: #3B82F6;
+  --accent: #06B6D4;
+  --success: #10B981;
+  --danger: #EF4444;
+  --warning: #F59E0B;
+  --gradient-1: #1E40AF;
+  --gradient-2: #3B82F6;
+  --gradient-3: #06B6D4;
+  --nav-h: 64px;
+  --bot-h: 72px;
+  --radius-sm: 12px;
+  --radius: 16px;
+  --radius-lg: 20px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  padding-bottom: calc(var(--bot-h) + 16px);
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.3s, color 0.3s;
+  min-height: 100vh;
+}
+
+/* Top Bar */
+.topbar {
+  position: sticky; top: 0; z-index: 900;
+  height: var(--nav-h);
+  background: var(--topbar-bg);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px;
+  box-shadow: var(--shadow);
+}
+
+.back-btn {
+  width: 40px; height: 40px;
+  border-radius: var(--radius-sm);
+  background: var(--card2);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text); text-decoration: none; font-size: 16px;
+  transition: all 0.2s;
+}
+
+.back-btn:hover { background: var(--border); }
+
+.brand-name {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 20px; font-weight: 800;
+  background: linear-gradient(135deg, var(--gradient-1), var(--gradient-3));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.theme-btn {
+  width: 40px; height: 40px;
+  border-radius: var(--radius-sm);
+  background: var(--card2);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  transition: all 0.2s;
+}
+
+/* Main Content */
+.main-content { padding: 0 16px; }
+
+/* Hero */
+.hero-section {
+  background: linear-gradient(135deg, var(--gradient-1), var(--gradient-2));
+  border-radius: var(--radius-lg);
+  padding: 24px 20px;
+  margin: 16px 0;
+  color: white;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(30, 64, 175, 0.3);
+}
+
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 25px;
+  font-size: 12px; font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.hero-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 24px; font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.hero-sub {
+  font-size: 14px; opacity: 0.9;
+}
+
+/* Notice */
+.notice-card {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 20px;
+  display: flex; align-items: flex-start; gap: 12px;
+}
+
+.notice-icon {
+  font-size: 22px;
+  color: var(--warning);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.notice-text {
+  font-size: 13px;
+  color: var(--sub);
+  line-height: 1.6;
+}
+
+.notice-text strong {
+  color: var(--warning);
+}
+
+/* Section Title */
+.section-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 18px; font-weight: 800;
+  color: var(--text);
+  margin-bottom: 14px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+/* Current Bank Card */
+.current-bank-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.bank-card-header {
+  background: linear-gradient(135deg, var(--gradient-1), var(--gradient-2));
+  padding: 16px 18px;
+  color: white;
+  display: flex; align-items: center; gap: 12px;
+}
+
+.bank-card-header i {
+  font-size: 22px;
+}
+
+.bank-card-header h3 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 16px; font-weight: 800;
+}
+
+.bank-card-body {
+  padding: 18px;
+}
+
+.bank-detail-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.bank-detail-row:last-child {
+  border-bottom: none;
+}
+
+.bank-detail-label {
+  font-size: 12px; color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.bank-detail-value {
+  font-size: 15px; font-weight: 700;
+  color: var(--text);
+  text-align: right;
+}
+
+.unbind-btn {
+  width: 100%;
+  margin-top: 16px;
+  padding: 14px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: var(--radius-sm);
+  color: var(--danger);
+  font-size: 14px; font-weight: 700;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+
+.unbind-btn:hover {
+  background: rgba(239, 68, 68, 0.12);
+}
+
+/* Form Card */
+.form-card {
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.form-header {
+  padding: 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+
+.form-header-icon {
+  width: 42px; height: 42px;
+  border-radius: 12px;
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--secondary);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+}
+
+.form-header-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 16px; font-weight: 800;
+  color: var(--text);
+}
+
+.form-body {
+  padding: 20px 18px;
+}
+
+/* Input Group */
+.input-group {
+  margin-bottom: 18px;
+}
+
+.input-label {
+  display: block;
+  font-size: 12px; font-weight: 700;
+  color: var(--sub);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+
+.input-label .required {
+  color: var(--danger);
+}
+
+.input-wrapper {
+  position: relative;
+}
+
+.input-field {
+  width: 100%;
+  padding: 15px 18px;
+  background: var(--card2);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: 15px; font-weight: 600;
+  outline: none;
+  transition: all 0.3s;
+}
+
+.input-field:focus {
+  border-color: var(--secondary);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.input-field.error {
+  border-color: var(--danger);
+}
+
+.input-hint {
+  font-size: 11px; color: var(--muted);
+  font-weight: 500;
+  margin-top: 6px;
+  display: flex; align-items: center; gap: 4px;
+}
+
+.input-hint.error {
+  color: var(--danger);
+}
+
+/* Bank Selector */
+.bank-selector {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.bank-option {
+  padding: 14px 8px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--border);
+  background: var(--card2);
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+
+.bank-option:hover {
+  border-color: var(--secondary);
+}
+
+.bank-option.active {
+  border-color: var(--secondary);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.bank-option .bank-icon {
+  font-size: 24px;
+  margin-bottom: 6px;
+  color: var(--secondary);
+}
+
+.bank-option .bank-name {
+  font-size: 11px; font-weight: 700;
+  color: var(--text);
+}
+
+/* Submit Button */
+.submit-btn {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--gradient-1), var(--gradient-2));
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 15px; font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  box-shadow: 0 8px 25px rgba(30, 64, 175, 0.3);
+  transition: all 0.3s;
+}
+
+.submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 35px rgba(30, 64, 175, 0.4);
+}
+
+.submit-btn:disabled {
+  background: var(--muted);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Security Note */
+.security-note {
+  text-align: center;
+  padding: 16px;
+  margin-top: 8px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-size: 12px; color: var(--success);
+  font-weight: 600;
+}
+
+.security-note i {
+  font-size: 16px;
+}
+
+/* Bottom Nav */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  height: var(--bot-h);
+  background: var(--topbar-bg);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-around;
+  padding: 0 8px; z-index: 800;
+}
+
+.nav-item {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  color: var(--muted); text-decoration: none;
+  font-size: 10px; font-weight: 600;
+  padding: 8px 12px; border-radius: 12px;
+  transition: all 0.3s; position: relative;
+}
+
+.nav-item i { font-size: 22px; }
+
+.nav-item.active { color: var(--secondary); }
+
+.nav-item.active::before {
+  content: '';
+  position: absolute; top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 24px; height: 3px;
+  background: var(--secondary);
+  border-radius: 0 0 3px 3px;
+}
+
+@media (max-width: 400px) {
+  .bank-selector { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="topbar">
+  <a href="dashboard.html" class="back-btn">
+    <i class="fas fa-arrow-left"></i>
+  </a>
+  <span class="brand-name">KineticWealth</span>
+  <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">
+    <i class="fas fa-moon"></i>
+  </button>
+</div>
+
+<div class="main-content">
+
+  <!-- Hero -->
+  <div class="hero-section">
+    <div class="hero-badge">
+      <i class="fas fa-university"></i> Bank Setup
+    </div>
+    <div class="hero-title">Bind Bank Account</div>
+    <div class="hero-sub">Link your bank account to receive withdrawals</div>
+  </div>
+
+  <!-- Notice -->
+  <div class="notice-card">
+    <div class="notice-icon">
+      <i class="fas fa-shield-halved"></i>
+    </div>
+    <div class="notice-text">
+      <strong>Important:</strong> Ensure the account details are correct and belong to you. The account name must match your registered name on KineticWealth. Incorrect details may result in failed withdrawals.
+    </div>
+  </div>
+
+  <!-- Already Bound Card (Hidden by default) -->
+  <div id="currentBankSection" style="display: none;">
+    <div class="section-title">
+      <i class="fas fa-check-circle" style="color: var(--success);"></i> Currently Bound Account
+    </div>
+    <div class="current-bank-card">
+      <div class="bank-card-header">
+        <i class="fas fa-building-columns"></i>
+        <h3 id="currentBankName">—</h3>
+      </div>
+      <div class="bank-card-body">
+        <div class="bank-detail-row">
+          <span class="bank-detail-label">Account Name</span>
+          <span class="bank-detail-value" id="currentAccountName">—</span>
+        </div>
+        <div class="bank-detail-row">
+          <span class="bank-detail-label">Account Number</span>
+          <span class="bank-detail-value" id="currentAccountNumber">—</span>
+        </div>
+        <div class="bank-detail-row">
+          <span class="bank-detail-label">Bank</span>
+          <span class="bank-detail-value" id="currentBankDisplay">—</span>
+        </div>
+        <div class="bank-detail-row">
+          <span class="bank-detail-label">Status</span>
+          <span class="bank-detail-value" style="color: var(--success);">
+            <i class="fas fa-check-circle"></i> Active
+          </span>
+        </div>
+        <button class="unbind-btn" onclick="unbindAccount()">
+          <i class="fas fa-unlink"></i> Remove This Account
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bind Form -->
+  <div id="bindFormSection">
+    <div class="section-title">
+      <i class="fas fa-link" style="color: var(--secondary);"></i>
+      <span id="formTitle">Bind New Account</span>
+    </div>
+    
+    <div class="form-card">
+      <div class="form-header">
+        <div class="form-header-icon">
+          <i class="fas fa-university"></i>
+        </div>
+        <div class="form-header-title">Bank Account Details</div>
+      </div>
+      
+      <div class="form-body">
+        <!-- Bank Selection -->
+        <div class="input-group">
+          <div class="input-label">Select Bank <span class="required">*</span></div>
+          <div class="bank-selector" id="bankSelector">
+            <!-- Generated dynamically -->
+          </div>
+          <div class="input-group" style="margin-top: 12px;">
+            <div class="input-label">Or Enter Bank Name</div>
+            <div class="input-wrapper">
+              <input type="text" class="input-field" id="otherBankInput" 
+                     placeholder="Enter bank name" 
+                     oninput="onOtherBankInput(this.value)">
+            </div>
+          </div>
+        </div>
+        
+        <!-- Account Number -->
+        <div class="input-group">
+          <div class="input-label">Account Number <span class="required">*</span></div>
+          <div class="input-wrapper">
+            <input type="text" class="input-field" id="accountNumber" 
+                   placeholder="Enter your 10-digit account number"
+                   maxlength="10"
+                   oninput="validateAccountNumber(this.value)">
+          </div>
+          <div class="input-hint" id="accountNumberHint">
+            <i class="fas fa-info-circle"></i> Enter 10-digit NUBAN account number
+          </div>
+        </div>
+        
+        <!-- Account Name -->
+        <div class="input-group">
+          <div class="input-label">Account Name <span class="required">*</span></div>
+          <div class="input-wrapper">
+            <input type="text" class="input-field" id="accountName" 
+                   placeholder="Enter account holder's name"
+                   oninput="validateAccountName(this.value)">
+          </div>
+          <div class="input-hint" id="accountNameHint">
+            <i class="fas fa-info-circle"></i> Must match your registered name on KineticWealth
+          </div>
+        </div>
+        
+        <!-- Submit -->
+        <button class="submit-btn" id="bindSubmitBtn" onclick="submitBindAccount()">
+          <i class="fas fa-link"></i> Bind Account
+        </button>
+        
+        <div class="security-note">
+          <i class="fas fa-lock"></i>
+          <span>Your bank details are encrypted and secure</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Bottom Nav -->
+<div class="bottom-nav">
+  <a href="home.html" class="nav-item">
+    <i class="fas fa-house"></i><span>Home</span>
+  </a>
+  <a href="plans.html" class="nav-item">
+    <i class="fas fa-cube"></i><span>Plans</span>
+  </a>
+  <a href="referrals.html" class="nav-item">
+    <i class="fas fa-users"></i><span>Team</span>
+  </a>
+  <a href="dashboard.html" class="nav-item active">
+    <i class="fas fa-user"></i><span>Profile</span>
+  </a>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   FIREBASE INIT
+═══════════════════════════════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "AIzaSyCFwefJ8rxZUDLbDsRHnHdA-28zPs49rlo",
+  authDomain: "cashpoint-ac4f4.firebaseapp.com",
+  projectId: "cashpoint-ac4f4",
+  storageBucket: "cashpoint-ac4f4.firebasestorage.app",
+  messagingSenderId: "16133206416",
+  appId: "1:16133206416:web:a093f4e153ad2c9bcc8315"
+};
+
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+/* ═══════════════════════════════════════════════════════════════════
+   THEME
+═══════════════════════════════════════════════════════════════════ */
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = document.getElementById('themeBtn');
+  if (btn) {
+    btn.innerHTML = theme === 'dark' 
+      ? '<i class="fas fa-sun"></i>' 
+      : '<i class="fas fa-moon"></i>';
+  }
+  localStorage.setItem('kw-bind-theme', theme);
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  applyTheme(current === 'dark' ? 'light' : 'dark');
+}
+
+applyTheme(localStorage.getItem('kw-bind-theme') || 'light');
+
+/* ═══════════════════════════════════════════════════════════════════
+   POPULAR NIGERIAN BANKS
+═══════════════════════════════════════════════════════════════════ */
+const POPULAR_BANKS = [
+  'Access Bank', 'GTBank', 'First Bank', 'UBA', 'Zenith Bank',
+  'Kuda Bank', 'Opay', 'PalmPay', 'Fidelity Bank', 'Union Bank',
+  'Stanbic IBTC', 'Sterling Bank', 'Polaris Bank', 'Ecobank',
+  'Wema Bank', 'Heritage Bank', 'Keystone Bank', 'Jaiz Bank',
+  'Moniepoint', 'Providus Bank'
+];
+
+let selectedBank = null;
+let currentBankData = null;
+
+/* ═══════════════════════════════════════════════════════════════════
+   AUTH STATE
+═══════════════════════════════════════════════════════════════════ */
+auth.onAuthStateChanged(async (user) => {
+  if (!user) {
+    window.location.href = 'login.html';
+    return;
+  }
+  await loadCurrentBank();
+  renderBankSelector();
+});
+
+/* ═══════════════════════════════════════════════════════════════════
+   LOAD CURRENT BANK
+═══════════════════════════════════════════════════════════════════ */
+async function loadCurrentBank() {
+  try {
+    const userDoc = await db.collection('users').doc(auth.currentUser.uid).get();
+    
+    if (!userDoc.exists) return;
+    
+    const data = userDoc.data();
+    const bankDetails = data.bankDetails;
+    
+    if (bankDetails && bankDetails.isBound) {
+      currentBankData = bankDetails;
+      
+      // Show current bank section
+      document.getElementById('currentBankSection').style.display = 'block';
+      document.getElementById('currentBankName').textContent = bankDetails.bankName || '—';
+      document.getElementById('currentAccountName').textContent = bankDetails.accountName || '—';
+      document.getElementById('currentAccountNumber').textContent = bankDetails.accountNumber || '—';
+      document.getElementById('currentBankDisplay').textContent = bankDetails.bankName || '—';
+      
+      // Update form title
+      document.getElementById('formTitle').textContent = 'Update Account';
+      
+      // Pre-fill form
+      document.getElementById('accountNumber').value = bankDetails.accountNumber || '';
+      document.getElementById('accountName').value = bankDetails.accountName || '';
+      
+      if (bankDetails.bankName) {
+        selectedBank = bankDetails.bankName;
+        highlightSelectedBank();
+      }
+    } else {
+      currentBankData = null;
+      document.getElementById('currentBankSection').style.display = 'none';
+      document.getElementById('formTitle').textContent = 'Bind New Account';
+    }
+    
+  } catch (error) {
+    console.error('Load error:', error);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   RENDER BANK SELECTOR
+═══════════════════════════════════════════════════════════════════ */
+function renderBankSelector() {
+  const selector = document.getElementById('bankSelector');
+  
+  selector.innerHTML = POPULAR_BANKS.map(bank => `
+    <div class="bank-option${selectedBank === bank ? ' active' : ''}" 
+         onclick="selectBank('${bank.replace(/'/g, "\\'")}')" 
+         data-bank="${bank}">
+      <div class="bank-icon">
+        <i class="fas fa-building-columns"></i>
+      </div>
+      <div class="bank-name">${bank}</div>
+    </div>
+  `).join('');
+}
+
+function selectBank(bankName) {
+  selectedBank = bankName;
+  document.getElementById('otherBankInput').value = '';
+  highlightSelectedBank();
+}
+
+function onOtherBankInput(value) {
+  if (value.trim()) {
+    selectedBank = value.trim();
+    // Deselect all preset banks
+    document.querySelectorAll('.bank-option').forEach(opt => opt.classList.remove('active'));
+  } else {
+    selectedBank = null;
+  }
+}
+
+function highlightSelectedBank() {
+  document.querySelectorAll('.bank-option').forEach(opt => {
+    opt.classList.toggle('active', opt.dataset.bank === selectedBank);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   VALIDATION
+═══════════════════════════════════════════════════════════════════ */
+function validateAccountNumber(value) {
+  const input = document.getElementById('accountNumber');
+  const hint = document.getElementById('accountNumberHint');
+  
+  // Only allow digits
+  const cleaned = value.replace(/\D/g, '');
+  if (value !== cleaned) {
+    input.value = cleaned;
+  }
+  
+  if (cleaned.length === 0) {
+    hint.innerHTML = '<i class="fas fa-info-circle"></i> Enter 10-digit NUBAN account number';
+    hint.className = 'input-hint';
+    input.classList.remove('error');
+  } else if (cleaned.length < 10) {
+    hint.innerHTML = '<i class="fas fa-exclamation-circle"></i> Account number must be 10 digits';
+    hint.className = 'input-hint error';
+    input.classList.add('error');
+  } else if (cleaned.length === 10) {
+    hint.innerHTML = '<i class="fas fa-check-circle"></i> Valid account number format';
+    hint.className = 'input-hint';
+    hint.style.color = 'var(--success)';
+    input.classList.remove('error');
+  } else {
+    hint.innerHTML = '<i class="fas fa-exclamation-circle"></i> Maximum 10 digits';
+    hint.className = 'input-hint error';
+    input.classList.add('error');
+  }
+}
+
+function validateAccountName(value) {
+  const input = document.getElementById('accountName');
+  const hint = document.getElementById('accountNameHint');
+  
+  if (value.trim().length === 0) {
+    hint.innerHTML = '<i class="fas fa-info-circle"></i> Must match your registered name on KineticWealth';
+    hint.className = 'input-hint';
+    input.classList.remove('error');
+  } else if (value.trim().length < 3) {
+    hint.innerHTML = '<i class="fas fa-exclamation-circle"></i> Name is too short';
+    hint.className = 'input-hint error';
+    input.classList.add('error');
+  } else {
+    hint.innerHTML = '<i class="fas fa-check-circle"></i> Name format looks good';
+    hint.className = 'input-hint';
+    hint.style.color = 'var(--success)';
+    input.classList.remove('error');
+  }
+}
+
+function isFormValid() {
+  const accountNumber = document.getElementById('accountNumber').value.replace(/\D/g, '');
+  const accountName = document.getElementById('accountName').value.trim();
+  
+  return selectedBank && accountNumber.length === 10 && accountName.length >= 3;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SUBMIT BIND ACCOUNT
+═══════════════════════════════════════════════════════════════════ */
+async function submitBindAccount() {
+  const accountNumber = document.getElementById('accountNumber').value.replace(/\D/g, '');
+  const accountName = document.getElementById('accountName').value.trim();
+  
+  // Validate
+  if (!selectedBank) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Select Bank',
+      text: 'Please select your bank from the list or enter it manually.',
+      confirmButtonColor: '#3B82F6'
+    });
+    return;
+  }
+  
+  if (accountNumber.length !== 10) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Invalid Account Number',
+      text: 'Please enter a valid 10-digit account number.',
+      confirmButtonColor: '#3B82F6'
+    });
+    return;
+  }
+  
+  if (accountName.length < 3) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Invalid Account Name',
+      text: 'Please enter the account holder\'s full name.',
+      confirmButtonColor: '#3B82F6'
+    });
+    return;
+  }
+  
+  // Confirm
+  const isUpdate = currentBankData && currentBankData.isBound;
+  
+  const result = await Swal.fire({
+    title: isUpdate ? 'Update Bank Account?' : 'Confirm Bank Details',
+    html: `
+      <div style="text-align: left; background: #EFF6FF; border-radius: 12px; padding: 14px;">
+        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #DBEAFE;">
+          <span style="color: #64748B;">Bank</span>
+          <span><strong>${selectedBank}</strong></span>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #DBEAFE;">
+          <span style="color: #64748B;">Account Number</span>
+          <span><strong>${accountNumber}</strong></span>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 8px 0;">
+          <span style="color: #64748B;">Account Name</span>
+          <span><strong>${accountName}</strong></span>
+        </div>
+      </div>
+      <p style="margin-top: 12px; font-size: 13px; color: #F59E0B;">
+        <i class="fas fa-exclamation-triangle"></i> 
+        Please verify these details are correct. Incorrect details may cause withdrawal failures.
+      </p>
+    `,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: isUpdate ? 'Update Account' : 'Bind Account',
+    cancelButtonText: 'Cancel',
+    confirmButtonColor: '#3B82F6'
+  });
+  
+  if (!result.isConfirmed) return;
+  
+  // Process
+  Swal.fire({
+    title: 'Processing...',
+    html: 'Please wait while we save your bank details',
+    allowOutsideClick: false,
+    didOpen: () => Swal.showLoading()
+  });
+  
+  try {
+    // Save to Firestore
+    await db.collection('users').doc(auth.currentUser.uid).update({
+      bankDetails: {
+        bankName: selectedBank,
+        accountNumber: accountNumber,
+        accountName: accountName,
+        isBound: true,
+        boundAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }
+    });
+    
+    // Update local state
+    currentBankData = {
+      bankName: selectedBank,
+      accountNumber: accountNumber,
+      accountName: accountName,
+      isBound: true
+    };
+    
+    Swal.fire({
+      icon: 'success',
+      title: isUpdate ? 'Account Updated! 🎉' : 'Account Bound! 🎉',
+      html: `
+        <div style="font-size: 15px;">
+          <p><strong>${selectedBank}</strong></p>
+          <p>${accountNumber}</p>
+          <p>${accountName}</p>
+          <p style="margin-top: 8px; color: #10B981; font-weight: 600;">
+            <i class="fas fa-check-circle"></i> 
+            ${isUpdate ? 'Bank details updated successfully!' : 'You can now withdraw funds!'}
+          </p>
+          ${!isUpdate ? '<a href="withdraw.html" style="color: #3B82F6; font-weight: 700; display: inline-block; margin-top: 8px;">Go to Withdraw →</a>' : ''}
+        </div>
+      `,
+      confirmButtonColor: '#3B82F6'
+    });
+    
+    // Reload to show current bank
+    await loadCurrentBank();
+    renderBankSelector();
+    
+  } catch (error) {
+    console.error('Bind error:', error);
+    Swal.fire({
+      icon: 'error',
+      title: 'Failed',
+      text: error.message || 'Could not save bank details. Please try again.',
+      confirmButtonColor: '#EF4444'
+    });
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   UNBIND ACCOUNT
+═══════════════════════════════════════════════════════════════════ */
+async function unbindAccount() {
+  const result = await Swal.fire({
+    title: 'Remove Bank Account?',
+    html: `
+      <p style="color: #EF4444; font-weight: 600;">⚠️ Warning</p>
+      <p style="font-size: 14px;">Removing your bank account means you won't be able to withdraw funds until you bind a new account.</p>
+      <p style="font-size: 13px; color: #64748B;">Are you sure you want to continue?</p>
+    `,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Yes, Remove',
+    cancelButtonText: 'Cancel',
+    confirmButtonColor: '#EF4444'
+  });
+  
+  if (!result.isConfirmed) return;
+  
+  try {
+    await db.collection('users').doc(auth.currentUser.uid).update({
+      bankDetails: {
+        isBound: false,
+        removedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }
+    });
+    
+    currentBankData = null;
+    
+    Swal.fire({
+      icon: 'success',
+      title: 'Account Removed',
+      text: 'Your bank account has been unbound.',
+      confirmButtonColor: '#3B82F6'
+    });
+    
+    // Reset form
+    document.getElementById('accountNumber').value = '';
+    document.getElementById('accountName').value = '';
+    document.getElementById('otherBankInput').value = '';
+    selectedBank = null;
+    
+    await loadCurrentBank();
+    renderBankSelector();
+    
+  } catch (error) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Failed',
+      text: error.message,
+      confirmButtonColor: '#EF4444'
+    });
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   EXPORT
+═══════════════════════════════════════════════════════════════════ */
+window.toggleTheme = toggleTheme;
+window.selectBank = selectBank;
+window.onOtherBankInput = onOtherBankInput;
+window.validateAccountNumber = validateAccountNumber;
+window.validateAccountName = validateAccountName;
+window.submitBindAccount = submitBindAccount;
+window.unbindAccount = unbindAccount;
+
+console.log('🚀 KineticWealth Bind Wallet Page Ready');
+</script>
+
+</body>
+</html>
