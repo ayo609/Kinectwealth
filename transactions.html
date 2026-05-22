@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+<title>KineticWealth · Transactions</title>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+
+<style>
+/* ═══════════════════════════════════════
+   KINETICWEALTH TRANSACTIONS THEME
+   ═══════════════════════════════════════ */
+[data-theme="light"] {
+  --bg: #F0F6FF;
+  --card: #FFFFFF;
+  --card2: #F8FAFE;
+  --border: #DBEAFE;
+  --text: #1E293B;
+  --sub: #64748B;
+  --muted: #94A3B8;
+  --topbar-bg: rgba(255, 255, 255, 0.95);
+  --shadow: 0 4px 20px rgba(30, 64, 175, 0.08);
+}
+
+[data-theme="dark"] {
+  --bg: #0F172A;
+  --card: #1E293B;
+  --card2: #273548;
+  --border: rgba(59, 130, 246, 0.15);
+  --text: #F1F5F9;
+  --sub: #94A3B8;
+  --muted: #64748B;
+  --topbar-bg: rgba(15, 23, 42, 0.97);
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+:root {
+  --primary: #1E40AF;
+  --primary-dark: #1E3A8A;
+  --secondary: #3B82F6;
+  --accent: #06B6D4;
+  --success: #10B981;
+  --danger: #EF4444;
+  --warning: #F59E0B;
+  --gradient-1: #1E40AF;
+  --gradient-2: #3B82F6;
+  --gradient-3: #06B6D4;
+  --nav-h: 64px;
+  --bot-h: 72px;
+  --radius-sm: 12px;
+  --radius: 16px;
+  --radius-lg: 20px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  padding-bottom: calc(var(--bot-h) + 16px);
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* Top Bar */
+.topbar {
+  position: sticky; top: 0; z-index: 900;
+  height: var(--nav-h);
+  background: var(--topbar-bg);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px;
+  box-shadow: var(--shadow);
+}
+
+.back-btn {
+  width: 40px; height: 40px;
+  border-radius: var(--radius-sm);
+  background: var(--card2);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text); text-decoration: none; font-size: 16px;
+  transition: all 0.2s;
+}
+
+.back-btn:hover { background: var(--border); }
+
+.brand-name {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 20px; font-weight: 800;
+  background: linear-gradient(135deg, var(--gradient-1), var(--gradient-3));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.theme-btn {
+  width: 40px; height: 40px;
+  border-radius: var(--radius-sm);
+  background: var(--card2);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  transition: all 0.2s;
+}
+
+/* Main Content */
+.main-content { padding: 0 16px; }
+
+/* Hero */
+.hero-section {
+  background: linear-gradient(135deg, var(--gradient-1), var(--gradient-2));
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin: 16px 0;
+  color: white;
+  box-shadow: 0 8px 30px rgba(30, 64, 175, 0.3);
+}
+
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 25px;
+  font-size: 12px; font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.hero-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 22px; font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.hero-sub {
+  font-size: 13px; opacity: 0.9;
+}
+
+/* Summary Cards */
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.summary-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 14px 10px;
+  text-align: center;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.summary-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--secondary);
+}
+
+.summary-card.active {
+  border-color: var(--secondary);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.summary-value {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 18px; font-weight: 800;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.summary-value.credit { color: var(--success); }
+.summary-value.debit { color: var(--danger); }
+
+.summary-label {
+  font-size: 10px; font-weight: 600;
+  color: var(--sub);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* Filter */
+.filter-scroll {
+  display: flex; gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 14px;
+}
+
+.filter-scroll::-webkit-scrollbar { display: none; }
+
+.filter-chip {
+  padding: 8px 16px;
+  border-radius: 25px;
+  font-size: 12px; font-weight: 700;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--sub);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+
+.filter-chip.active {
+  background: linear-gradient(135deg, var(--gradient-1), var(--gradient-2));
+  color: white;
+  border-color: transparent;
+}
+
+.filter-chip .count {
+  margin-left: 4px;
+  font-size: 10px;
+  opacity: 0.8;
+}
+
+/* Search */
+.search-wrapper {
+  position: relative;
+  margin-bottom: 14px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 16px 12px 42px;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.search-input:focus { border-color: var(--secondary); }
+
+.search-input::placeholder { color: var(--muted); }
+
+.search-icon {
+  position: absolute;
+  left: 14px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted); font-size: 14px;
+}
+
+/* Transaction List */
+.transactions-list {
+  display: flex; flex-direction: column; gap: 8px;
+}
+
+.transaction-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  transition: all 0.2s;
+  animation: fadeInUp 0.3s ease both;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.transaction-card:hover {
+  border-color: var(--secondary);
+}
+
+.transaction-header {
+  padding: 14px 16px;
+  display: flex; align-items: center; gap: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tx-icon {
+  width: 44px; height: 44px;
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.tx-icon.deposit { background: rgba(59, 130, 246, 0.1); color: var(--secondary); }
+.tx-icon.withdrawal { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+.tx-icon.investment { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+.tx-icon.claim { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+.tx-icon.referral { background: rgba(139, 92, 246, 0.1); color: #8B5CF6; }
+.tx-icon.bonus { background: rgba(6, 182, 212, 0.1); color: var(--accent); }
+.tx-icon.transfer { background: rgba(236, 72, 153, 0.1); color: #EC4899; }
+
+.tx-info { flex: 1; min-width: 0; }
+
+.tx-type {
+  font-size: 14px; font-weight: 700;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.tx-description {
+  font-size: 12px; color: var(--sub);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.tx-amount {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.tx-amount-value {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 16px; font-weight: 800;
+}
+
+.tx-amount-value.credit { color: var(--success); }
+.tx-amount-value.debit { color: var(--danger); }
+
+.tx-amount-label {
+  font-size: 10px; color: var(--muted); font-weight: 600;
+}
+
+.transaction-footer {
+  padding: 10px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--card2);
+}
+
+.tx-date {
+  font-size: 11px; color: var(--muted); font-weight: 500;
+}
+
+.tx-status {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 10px; font-weight: 700;
+}
+
+.tx-status.completed { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+.tx-status.pending { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+.tx-status.failed { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+
+.tx-ref {
+  font-size: 10px; color: var(--muted);
+  font-family: monospace;
+}
+
+/* Section Title */
+.section-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 17px; font-weight: 800;
+  color: var(--text);
+  margin-bottom: 12px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+.result-count {
+  font-size: 12px; font-weight: 600;
+  color: var(--sub);
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 48px 20px;
+  background: var(--card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.empty-icon {
+  font-size: 52px; margin-bottom: 14px;
+}
+
+.empty-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 16px; font-weight: 700;
+  color: var(--text); margin-bottom: 6px;
+}
+
+.empty-text {
+  font-size: 13px; color: var(--sub);
+}
+
+/* Bottom Nav */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  height: var(--bot-h);
+  background: var(--topbar-bg);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-around;
+  padding: 0 8px; z-index: 800;
+}
+
+.nav-item {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  color: var(--muted); text-decoration: none;
+  font-size: 10px; font-weight: 600;
+  padding: 8px 12px; border-radius: 12px;
+  transition: all 0.3s; position: relative;
+}
+
+.nav-item i { font-size: 22px; }
+
+.nav-item.active { color: var(--secondary); }
+
+.nav-item.active::before {
+  content: '';
+  position: absolute; top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 24px; height: 3px;
+  background: var(--secondary);
+  border-radius: 0 0 3px 3px;
+}
+
+/* Load More */
+.load-more-section {
+  text-align: center;
+  padding: 16px 0;
+}
+
+.load-more-btn {
+  padding: 12px 32px;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 25px;
+  color: var(--secondary);
+  font-size: 13px; font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+
+.load-more-btn:hover {
+  background: var(--secondary);
+  color: white;
+  border-color: var(--secondary);
+}
+
+.load-more-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+</style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="topbar">
+  <a href="dashboard.html" class="back-btn">
+    <i class="fas fa-arrow-left"></i>
+  </a>
+  <span class="brand-name">KineticWealth</span>
+  <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">
+    <i class="fas fa-moon"></i>
+  </button>
+</div>
+
+<div class="main-content">
+
+  <!-- Hero -->
+  <div class="hero-section">
+    <div class="hero-badge">
+      <i class="fas fa-receipt"></i> Transaction History
+    </div>
+    <div class="hero-title">All Transactions</div>
+    <div class="hero-sub">Track your deposits, withdrawals, earnings & referrals</div>
+  </div>
+
+  <!-- Summary -->
+  <div class="summary-grid">
+    <div class="summary-card active" onclick="filterByType('all')" id="summaryAll">
+      <div class="summary-value" id="totalCount">0</div>
+      <div class="summary-label">Total</div>
+    </div>
+    <div class="summary-card" onclick="filterByType('credit')" id="summaryCredit">
+      <div class="summary-value credit" id="totalCredits">₦0</div>
+      <div class="summary-label">Credits</div>
+    </div>
+    <div class="summary-card" onclick="filterByType('debit')" id="summaryDebit">
+      <div class="summary-value debit" id="totalDebits">₦0</div>
+      <div class="summary-label">Debits</div>
+    </div>
+  </div>
+
+  <!-- Filter Chips -->
+  <div class="filter-scroll">
+    <button class="filter-chip active" onclick="filterByCategory('all', this)">All</button>
+    <button class="filter-chip" onclick="filterByCategory('deposit', this)">Deposits</button>
+    <button class="filter-chip" onclick="filterByCategory('withdrawal', this)">Withdrawals</button>
+    <button class="filter-chip" onclick="filterByCategory('investment', this)">Investments</button>
+    <button class="filter-chip" onclick="filterByCategory('roi_claim', this)">ROI Claims</button>
+    <button class="filter-chip" onclick="filterByCategory('referral_bonus', this)">Referrals</button>
+    <button class="filter-chip" onclick="filterByCategory('welcome_bonus', this)">Bonuses</button>
+  </div>
+
+  <!-- Search -->
+  <div class="search-wrapper">
+    <i class="fas fa-search search-icon"></i>
+    <input type="text" class="search-input" id="searchInput" 
+           placeholder="Search by description, plan name, or reference..." 
+           oninput="renderTransactions()">
+  </div>
+
+  <!-- Transactions -->
+  <div class="section-title">
+    <span>Transaction Records</span>
+    <span class="result-count" id="resultCount">0 results</span>
+  </div>
+
+  <div class="transactions-list" id="transactionsList">
+    <div class="empty-state">
+      <div class="empty-icon">📋</div>
+      <div class="empty-title">Loading transactions...</div>
+    </div>
+  </div>
+
+  <!-- Load More -->
+  <div class="load-more-section" id="loadMoreSection" style="display: none;">
+    <button class="load-more-btn" onclick="loadMoreTransactions()">
+      <i class="fas fa-arrow-down"></i> Load More
+    </button>
+  </div>
+
+</div>
+
+<!-- Bottom Nav -->
+<div class="bottom-nav">
+  <a href="home.html" class="nav-item">
+    <i class="fas fa-house"></i><span>Home</span>
+  </a>
+  <a href="plans.html" class="nav-item">
+    <i class="fas fa-cube"></i><span>Plans</span>
+  </a>
+  <a href="referrals.html" class="nav-item">
+    <i class="fas fa-users"></i><span>Team</span>
+  </a>
+  <a href="dashboard.html" class="nav-item active">
+    <i class="fas fa-user"></i><span>Profile</span>
+  </a>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   FIREBASE INIT
+═══════════════════════════════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "AIzaSyCFwefJ8rxZUDLbDsRHnHdA-28zPs49rlo",
+  authDomain: "cashpoint-ac4f4.firebaseapp.com",
+  projectId: "cashpoint-ac4f4",
+  storageBucket: "cashpoint-ac4f4.firebasestorage.app",
+  messagingSenderId: "16133206416",
+  appId: "1:16133206416:web:a093f4e153ad2c9bcc8315"
+};
+
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+/* ═══════════════════════════════════════════════════════════════════
+   THEME
+═══════════════════════════════════════════════════════════════════ */
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = document.getElementById('themeBtn');
+  if (btn) {
+    btn.innerHTML = theme === 'dark' 
+      ? '<i class="fas fa-sun"></i>' 
+      : '<i class="fas fa-moon"></i>';
+  }
+  localStorage.setItem('kw-tx-theme', theme);
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  applyTheme(current === 'dark' ? 'light' : 'dark');
+}
+
+applyTheme(localStorage.getItem('kw-tx-theme') || 'light');
+
+/* ═══════════════════════════════════════════════════════════════════
+   GLOBAL STATE
+═══════════════════════════════════════════════════════════════════ */
+let currentUser = null;
+let currentUserId = null;
+let allTransactions = [];
+let currentCategory = 'all';
+let currentTypeFilter = 'all';
+let displayedCount = 20;
+
+const formatCurrency = (n) => Number(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 });
+
+/* ═══════════════════════════════════════════════════════════════════
+   CATEGORY MAPPING
+═══════════════════════════════════════════════════════════════════ */
+const categoryConfig = {
+  deposit: { label: 'Deposit', icon: 'fa-credit-card', iconClass: 'deposit', type: 'debit' },
+  withdrawal: { label: 'Withdrawal', icon: 'fa-paper-plane', iconClass: 'withdrawal', type: 'debit' },
+  investment_purchase: { label: 'Investment', icon: 'fa-chart-line', iconClass: 'investment', type: 'debit' },
+  roi_claim: { label: 'ROI Claim', icon: 'fa-hand-holding-dollar', iconClass: 'claim', type: 'credit' },
+  capital_return: { label: 'Capital Return', icon: 'fa-rotate-left', iconClass: 'claim', type: 'credit' },
+  referral_bonus: { label: 'Referral Bonus', icon: 'fa-users', iconClass: 'referral', type: 'credit' },
+  welcome_bonus: { label: 'Welcome Bonus', icon: 'fa-gift', iconClass: 'bonus', type: 'credit' },
+  transfer: { label: 'Transfer', icon: 'fa-exchange-alt', iconClass: 'transfer', type: 'debit' }
+};
+
+/* ═══════════════════════════════════════════════════════════════════
+   AUTH STATE
+═══════════════════════════════════════════════════════════════════ */
+auth.onAuthStateChanged(async (user) => {
+  if (!user) {
+    window.location.href = 'login.html';
+    return;
+  }
+  currentUser = user;
+  currentUserId = user.uid;
+  await loadTransactions();
+});
+
+/* ═══════════════════════════════════════════════════════════════════
+   LOAD TRANSACTIONS
+═══════════════════════════════════════════════════════════════════ */
+async function loadTransactions() {
+  try {
+    // Try with ordering first
+    let snapshot;
+    try {
+      snapshot = await db.collection('transactions')
+        .where('userId', '==', currentUserId)
+        .orderBy('createdAt', 'desc')
+        .limit(50)
+        .get();
+    } catch (indexErr) {
+      console.warn('Index not available, using fallback:', indexErr.message);
+      // Fallback: get all and sort client-side
+      const rawSnap = await db.collection('transactions')
+        .where('userId', '==', currentUserId)
+        .get();
+      
+      const docs = rawSnap.docs.sort((a, b) => {
+        const aTime = a.data().createdAt?.toMillis() || 0;
+        const bTime = b.data().createdAt?.toMillis() || 0;
+        return bTime - aTime;
+      }).slice(0, 50);
+      
+      snapshot = { docs, empty: docs.length === 0 };
+    }
+    
+    allTransactions = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    
+    console.log(`✅ Loaded ${allTransactions.length} transactions`);
+    
+    updateSummary();
+    renderTransactions();
+    
+  } catch (error) {
+    console.error('Load error:', error);
+    document.getElementById('transactionsList').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">⚠️</div>
+        <div class="empty-title">Error Loading</div>
+        <div class="empty-text">Please refresh the page</div>
+      </div>`;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   UPDATE SUMMARY
+═══════════════════════════════════════════════════════════════════ */
+function updateSummary() {
+  const totalCredits = allTransactions
+    .filter(tx => isCreditType(tx.type))
+    .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+  
+  const totalDebits = allTransactions
+    .filter(tx => !isCreditType(tx.type))
+    .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+  
+  document.getElementById('totalCount').textContent = allTransactions.length;
+  document.getElementById('totalCredits').textContent = '₦' + formatCurrency(totalCredits);
+  document.getElementById('totalDebits').textContent = '₦' + formatCurrency(totalDebits);
+}
+
+function isCreditType(type) {
+  return ['roi_claim', 'capital_return', 'referral_bonus', 'welcome_bonus'].includes(type);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   FILTER & SEARCH
+═══════════════════════════════════════════════════════════════════ */
+function filterByCategory(category, btn) {
+  currentCategory = category;
+  
+  // Update active chip
+  document.querySelectorAll('.filter-chip').forEach(chip => chip.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  
+  displayedCount = 20;
+  renderTransactions();
+}
+
+function filterByType(type) {
+  currentTypeFilter = type;
+  
+  // Update summary cards
+  document.getElementById('summaryAll').classList.toggle('active', type === 'all');
+  document.getElementById('summaryCredit').classList.toggle('active', type === 'credit');
+  document.getElementById('summaryDebit').classList.toggle('active', type === 'debit');
+  
+  displayedCount = 20;
+  renderTransactions();
+}
+
+function getFilteredTransactions() {
+  let filtered = [...allTransactions];
+  
+  // Filter by category
+  if (currentCategory !== 'all') {
+    filtered = filtered.filter(tx => tx.type === currentCategory);
+  }
+  
+  // Filter by credit/debit
+  if (currentTypeFilter === 'credit') {
+    filtered = filtered.filter(tx => isCreditType(tx.type));
+  } else if (currentTypeFilter === 'debit') {
+    filtered = filtered.filter(tx => !isCreditType(tx.type));
+  }
+  
+  // Search filter
+  const query = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+  if (query) {
+    filtered = filtered.filter(tx => {
+      const desc = (tx.description || tx.note || '').toLowerCase();
+      const planName = (tx.planName || '').toLowerCase();
+      const ref = (tx.refCode || '').toLowerCase();
+      const typeLabel = (categoryConfig[tx.type]?.label || tx.type || '').toLowerCase();
+      return desc.includes(query) || planName.includes(query) || ref.includes(query) || typeLabel.includes(query);
+    });
+  }
+  
+  return filtered;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   RENDER TRANSACTIONS
+═══════════════════════════════════════════════════════════════════ */
+function renderTransactions() {
+  const container = document.getElementById('transactionsList');
+  const filtered = getFilteredTransactions();
+  const displayed = filtered.slice(0, displayedCount);
+  
+  document.getElementById('resultCount').textContent = `${filtered.length} result${filtered.length !== 1 ? 's' : ''}`;
+  
+  // Show/hide load more
+  const loadMoreSection = document.getElementById('loadMoreSection');
+  loadMoreSection.style.display = filtered.length > displayedCount ? 'block' : 'none';
+  
+  if (!displayed.length) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <div class="empty-title">No Transactions Found</div>
+        <div class="empty-text">${currentCategory !== 'all' || currentTypeFilter !== 'all' ? 'Try changing the filters' : 'Your transactions will appear here'}</div>
+      </div>`;
+    return;
+  }
+  
+  container.innerHTML = '';
+  
+  displayed.forEach((tx, index) => {
+    const config = categoryConfig[tx.type] || { 
+      label: tx.type?.replace(/_/g, ' ') || 'Transaction',
+      icon: 'fa-circle',
+      iconClass: 'deposit',
+      type: 'debit'
+    };
+    
+    const isCredit = isCreditType(tx.type);
+    const amount = Number(tx.amount) || 0;
+    const date = tx.createdAt?.toDate ? tx.createdAt.toDate() : new Date();
+    const dateStr = date.toLocaleDateString('en-NG', {
+      day: '2-digit',
+      month: 'short',
+      year: '2-digit'
+    });
+    const timeStr = date.toLocaleTimeString('en-NG', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    
+    const card = document.createElement('div');
+    card.className = 'transaction-card';
+    card.style.animationDelay = `${index * 0.03}s`;
+    
+    card.innerHTML = `
+      <div class="transaction-header">
+        <div class="tx-icon ${config.iconClass}">
+          <i class="fas ${config.icon}"></i>
+        </div>
+        <div class="tx-info">
+          <div class="tx-type">${config.label}</div>
+          <div class="tx-description">${tx.description || tx.note || tx.planName || '—'}</div>
+        </div>
+        <div class="tx-amount">
+          <div class="tx-amount-value ${isCredit ? 'credit' : 'debit'}">
+            ${isCredit ? '+' : '-'}₦${formatCurrency(amount)}
+          </div>
+          <div class="tx-amount-label">${tx.wallet || ''}</div>
+        </div>
+      </div>
+      <div class="transaction-footer">
+        <div class="tx-date">${dateStr} at ${timeStr}</div>
+        <div class="tx-status ${tx.status || 'completed'}">${(tx.status || 'completed').charAt(0).toUpperCase() + (tx.status || 'completed').slice(1)}</div>
+        ${tx.refCode ? `<div class="tx-ref">Ref: ${tx.refCode}</div>` : ''}
+      </div>
+    `;
+    
+    container.appendChild(card);
+  });
+}
+
+function loadMoreTransactions() {
+  displayedCount += 20;
+  renderTransactions();
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   EXPORT
+═══════════════════════════════════════════════════════════════════ */
+window.toggleTheme = toggleTheme;
+window.filterByCategory = filterByCategory;
+window.filterByType = filterByType;
+window.loadMoreTransactions = loadMoreTransactions;
+
+console.log('🚀 KineticWealth Transactions Page Ready');
+</script>
+
+</body>
+</html>
