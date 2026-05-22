@@ -1,0 +1,1505 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover"/>
+<title>KineticWealth · Admin Panel</title>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+
+<style>
+:root {
+  --bg: #F1F5F9;
+  --sidebar-bg: #1E293B;
+  --sidebar-hover: #273548;
+  --sidebar-active: #3B82F6;
+  --card: #FFFFFF;
+  --border: #E2E8F0;
+  --text: #1E293B;
+  --sub: #64748B;
+  --muted: #94A3B8;
+  --primary: #3B82F6;
+  --success: #10B981;
+  --danger: #EF4444;
+  --warning: #F59E0B;
+  --sidebar-w: 260px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ═══════════ SIDEBAR ═══════════ */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--sidebar-bg);
+  color: white;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  transition: transform 0.3s;
+}
+
+.sidebar-header {
+  padding: 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebar-logo {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  background: var(--primary);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+}
+
+.sidebar-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 18px; font-weight: 800;
+}
+
+.sidebar-subtitle {
+  font-size: 10px;
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 0.05em;
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nav-section {
+  padding: 12px 8px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.35);
+}
+
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px; font-weight: 500;
+  color: rgba(255,255,255,0.7);
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.nav-item:hover { background: var(--sidebar-hover); color: white; }
+.nav-item.active { background: var(--sidebar-active); color: white; }
+.nav-item i { width: 20px; text-align: center; font-size: 15px; }
+.nav-badge {
+  margin-left: auto;
+  background: var(--danger);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.sidebar-footer {
+  padding: 16px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.admin-info {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 12px;
+}
+
+.admin-avatar {
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  background: var(--primary);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 16px;
+}
+
+.admin-name {
+  font-size: 13px; font-weight: 600;
+}
+
+.admin-role {
+  font-size: 10px;
+  color: rgba(255,255,255,0.5);
+}
+
+.logout-btn {
+  width: 100%;
+  padding: 10px;
+  background: rgba(239,68,68,0.15);
+  color: #EF4444;
+  border: 1px solid rgba(239,68,68,0.3);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  transition: all 0.2s;
+}
+
+.logout-btn:hover { background: rgba(239,68,68,0.25); }
+
+/* ═══════════ MAIN CONTENT ═══════════ */
+.main-content {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  padding: 24px;
+  min-height: 100vh;
+}
+
+/* ═══════════ TOP BAR ═══════════ */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.page-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 24px; font-weight: 800;
+}
+
+.page-subtitle {
+  font-size: 13px; color: var(--sub);
+  margin-top: 2px;
+}
+
+.topbar-actions {
+  display: flex; align-items: center; gap: 12px;
+}
+
+.menu-toggle {
+  display: none;
+  width: 40px; height: 40px;
+  border-radius: 8px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  font-size: 18px;
+  align-items: center; justify-content: center;
+}
+
+.refresh-btn {
+  padding: 8px 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px; font-weight: 600;
+  display: flex; align-items: center; gap: 6px;
+  color: var(--sub);
+}
+
+/* ═══════════ STATS CARDS ═══════════ */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+}
+
+.stat-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.stat-card-icon {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+}
+
+.stat-card-icon.blue { background: rgba(59,130,246,0.1); color: #3B82F6; }
+.stat-card-icon.green { background: rgba(16,185,129,0.1); color: #10B981; }
+.stat-card-icon.amber { background: rgba(245,158,11,0.1); color: #F59E0B; }
+.stat-card-icon.purple { background: rgba(139,92,246,0.1); color: #8B5CF6; }
+.stat-card-icon.red { background: rgba(239,68,68,0.1); color: #EF4444; }
+.stat-card-icon.cyan { background: rgba(6,182,212,0.1); color: #06B6D4; }
+
+.stat-card-value {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 28px; font-weight: 800;
+}
+
+.stat-card-label {
+  font-size: 12px; color: var(--sub);
+  margin-top: 4px;
+}
+
+.stat-card-change {
+  font-size: 11px; font-weight: 600;
+  margin-top: 6px;
+}
+
+.stat-card-change.up { color: var(--success); }
+.stat-card-change.down { color: var(--danger); }
+
+/* ═══════════ TABLE ═══════════ */
+.table-card {
+  background: var(--card);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+  overflow: hidden;
+}
+
+.table-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.table-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 16px; font-weight: 700;
+}
+
+.table-actions {
+  display: flex; align-items: center; gap: 8px;
+}
+
+.search-input {
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 12px;
+  outline: none;
+  font-family: 'Inter', sans-serif;
+  width: 200px;
+}
+
+.search-input:focus { border-color: var(--primary); }
+
+.btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 12px; font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+  display: flex; align-items: center; gap: 6px;
+}
+
+.btn-primary { background: var(--primary); color: white; }
+.btn-success { background: var(--success); color: white; }
+.btn-danger { background: var(--danger); color: white; }
+.btn-warning { background: var(--warning); color: white; }
+.btn-outline { background: white; border: 1px solid var(--border); color: var(--text); }
+
+.btn:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-sm { padding: 5px 10px; font-size: 11px; }
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--sub);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: #F8FAFC;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+td {
+  padding: 12px 16px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+tr:hover { background: #F8FAFC; }
+
+.status-badge {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px; font-weight: 600;
+  display: inline-block;
+}
+
+.status-badge.success { background: rgba(16,185,129,0.1); color: #10B981; }
+.status-badge.warning { background: rgba(245,158,11,0.1); color: #F59E0B; }
+.status-badge.danger { background: rgba(239,68,68,0.1); color: #EF4444; }
+.status-badge.info { background: rgba(59,130,246,0.1); color: #3B82F6; }
+
+/* ═══════════ PAGINATION ═══════════ */
+.pagination {
+  padding: 14px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-top: 1px solid var(--border);
+}
+
+.pagination-info {
+  font-size: 12px; color: var(--sub);
+}
+
+.pagination-btns {
+  display: flex; gap: 4px;
+}
+
+.page-btn {
+  width: 32px; height: 32px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: white;
+  cursor: pointer;
+  font-size: 12px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.page-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+.page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ═══════════ MODALS ═══════════ */
+.modal-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  align-items: center; justify-content: center;
+}
+
+.modal-overlay.active { display: flex; }
+
+.modal-box {
+  background: white;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+
+.modal-header {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+.modal-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 16px; font-weight: 700;
+}
+
+.modal-close {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: #F1F5F9;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.modal-body { padding: 20px; }
+.modal-footer { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
+
+/* ═══════════ FORM ═══════════ */
+.form-group { margin-bottom: 16px; }
+.form-label { display: block; font-size: 12px; font-weight: 600; color: var(--sub); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.03em; }
+.form-input { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-family: 'Inter', sans-serif; outline: none; }
+.form-input:focus { border-color: var(--primary); }
+.form-select { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-family: 'Inter', sans-serif; outline: none; background: white; }
+
+/* ═══════════ SECTION HIDDEN ═══════════ */
+.section { display: none; }
+.section.active { display: block; }
+
+/* ═══════════ MOBILE ═══════════ */
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .main-content { margin-left: 0; }
+  .menu-toggle { display: flex; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 480px) {
+  .stats-grid { grid-template-columns: 1fr; }
+  .main-content { padding: 16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ SIDEBAR ═══════════ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">⚡</div>
+    <div>
+      <div class="sidebar-title">KineticWealth</div>
+      <div class="sidebar-subtitle">ADMIN PANEL</div>
+    </div>
+  </div>
+  
+  <nav class="sidebar-nav">
+    <div class="nav-section">Main</div>
+    <a class="nav-item active" data-section="dashboard"><i class="fas fa-th-large"></i> Dashboard</a>
+    
+    <div class="nav-section">Management</div>
+    <a class="nav-item" data-section="users"><i class="fas fa-users"></i> Users</a>
+    <a class="nav-item" data-section="deposits"><i class="fas fa-credit-card"></i> Deposits <span class="nav-badge" id="pendingDepositBadge">0</span></a>
+    <a class="nav-item" data-section="withdrawals"><i class="fas fa-paper-plane"></i> Withdrawals <span class="nav-badge" id="pendingWithdrawalBadge">0</span></a>
+    <a class="nav-item" data-section="investments"><i class="fas fa-chart-line"></i> Investments</a>
+    <a class="nav-item" data-section="plans"><i class="fas fa-cubes"></i> Plans</a>
+    <a class="nav-item" data-section="transactions"><i class="fas fa-receipt"></i> Transactions</a>
+    
+    <div class="nav-section">Settings</div>
+    <a class="nav-item" data-section="settings"><i class="fas fa-cog"></i> Settings</a>
+    <a class="nav-item" data-section="admins"><i class="fas fa-shield-halved"></i> Admins</a>
+  </nav>
+  
+  <div class="sidebar-footer">
+    <div class="admin-info">
+      <div class="admin-avatar" id="adminAvatar">A</div>
+      <div>
+        <div class="admin-name" id="adminName">Admin</div>
+        <div class="admin-role" id="adminRole">Administrator</div>
+      </div>
+    </div>
+    <button class="logout-btn" onclick="adminLogout()">
+      <i class="fas fa-sign-out-alt"></i> Sign Out
+    </button>
+  </div>
+</aside>
+
+<!-- ═══════════ MAIN CONTENT ═══════════ -->
+<main class="main-content">
+  <div class="topbar">
+    <div>
+      <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+      <h1 class="page-title" id="pageTitle">Dashboard</h1>
+      <p class="page-subtitle" id="pageSubtitle">Platform overview</p>
+    </div>
+    <div class="topbar-actions">
+      <button class="refresh-btn" onclick="refreshCurrentSection()"><i class="fas fa-sync-alt"></i> Refresh</button>
+    </div>
+  </div>
+
+  <!-- Dashboard Section -->
+  <div class="section active" id="section-dashboard">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-card-header">
+          <div class="stat-card-icon blue"><i class="fas fa-users"></i></div>
+        </div>
+        <div class="stat-card-value" id="dashTotalUsers">0</div>
+        <div class="stat-card-label">Total Users</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-header">
+          <div class="stat-card-icon green"><i class="fas fa-chart-line"></i></div>
+        </div>
+        <div class="stat-card-value" id="dashActivePlans">0</div>
+        <div class="stat-card-label">Active Investments</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-header">
+          <div class="stat-card-icon amber"><i class="fas fa-credit-card"></i></div>
+        </div>
+        <div class="stat-card-value" id="dashPendingDeposits">0</div>
+        <div class="stat-card-label">Pending Deposits</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-header">
+          <div class="stat-card-icon red"><i class="fas fa-paper-plane"></i></div>
+        </div>
+        <div class="stat-card-value" id="dashPendingWithdrawals">0</div>
+        <div class="stat-card-label">Pending Withdrawals</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-header">
+          <div class="stat-card-icon purple"><i class="fas fa-coins"></i></div>
+        </div>
+        <div class="stat-card-value" id="dashTotalInvested">₦0</div>
+        <div class="stat-card-label">Total Invested</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-header">
+          <div class="stat-card-icon cyan"><i class="fas fa-wallet"></i></div>
+        </div>
+        <div class="stat-card-value" id="dashTotalEarnings">₦0</div>
+        <div class="stat-card-label">Total Earnings Paid</div>
+      </div>
+    </div>
+    
+    <div class="table-card" style="margin-top: 20px;">
+      <div class="table-header">
+        <div class="table-title">Recent Users</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>User</th><th>Email</th><th>Balance</th><th>Status</th><th>Joined</th></tr></thead>
+          <tbody id="recentUsersTable"><tr><td colspan="5" style="text-align:center;">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Users Section -->
+  <div class="section" id="section-users">
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title">All Users</div>
+        <div class="table-actions">
+          <input type="text" class="search-input" placeholder="Search users..." oninput="loadUsers(this.value)">
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Deposit</th><th>Withdrawal</th><th>Status</th><th>Admin</th><th>Actions</th></tr></thead>
+          <tbody id="usersTable"><tr><td colspan="8" style="text-align:center;">Loading...</td></tr></tbody>
+        </table>
+      </div>
+      <div class="pagination"><span class="pagination-info" id="usersPaginationInfo"></span></div>
+    </div>
+  </div>
+
+  <!-- Deposits Section -->
+  <div class="section" id="section-deposits">
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title">Deposits</div>
+        <div class="table-actions">
+          <select class="form-select" style="width:auto;" onchange="loadDeposits(this.value)" id="depositFilter">
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="all">All</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>User</th><th>Amount</th><th>Sender</th><th>Ref</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+          <tbody id="depositsTable"><tr><td colspan="7" style="text-align:center;">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Withdrawals Section -->
+  <div class="section" id="section-withdrawals">
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title">Withdrawals</div>
+        <div class="table-actions">
+          <select class="form-select" style="width:auto;" onchange="loadWithdrawals(this.value)" id="withdrawalFilter">
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="all">All</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>User</th><th>Amount</th><th>Fee</th><th>Receive</th><th>Bank</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+          <tbody id="withdrawalsTable"><tr><td colspan="8" style="text-align:center;">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Investments Section -->
+  <div class="section" id="section-investments">
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title">All Investments</div>
+        <div class="table-actions">
+          <select class="form-select" style="width:auto;" onchange="loadInvestments(this.value)" id="investmentFilter">
+            <option value="active">Active</option>
+            <option value="completed">Completed</option>
+            <option value="all">All</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>User</th><th>Plan</th><th>Capital</th><th>Daily ROI</th><th>Progress</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+          <tbody id="investmentsTable"><tr><td colspan="8" style="text-align:center;">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Plans Section -->
+  <div class="section" id="section-plans">
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title">Investment Plans</div>
+        <div class="table-actions">
+          <button class="btn btn-primary" onclick="showAddPlanModal()"><i class="fas fa-plus"></i> Add Plan</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Capital</th><th>Daily ROI</th><th>Duration</th><th>Total Return</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="plansTable"><tr><td colspan="7" style="text-align:center;">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Transactions Section -->
+  <div class="section" id="section-transactions">
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title">All Transactions</div>
+        <div class="table-actions">
+          <select class="form-select" style="width:auto;" onchange="loadTransactions(this.value)" id="transactionFilter">
+            <option value="all">All Types</option>
+            <option value="deposit">Deposits</option>
+            <option value="withdrawal">Withdrawals</option>
+            <option value="investment_purchase">Investments</option>
+            <option value="roi_claim">ROI Claims</option>
+            <option value="referral_bonus">Referrals</option>
+            <option value="welcome_bonus">Bonuses</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>User</th><th>Type</th><th>Amount</th><th>Description</th><th>Date</th></tr></thead>
+          <tbody id="transactionsTable"><tr><td colspan="5" style="text-align:center;">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Section -->
+  <div class="section" id="section-settings">
+    <div class="table-card">
+      <div class="table-header"><div class="table-title">Platform Settings</div></div>
+      <div style="padding:20px;">
+        <div class="form-group"><label class="form-label">Welcome Bonus (₦)</label><input type="number" class="form-input" id="setWelcomeBonus"></div>
+        <div class="form-group"><label class="form-label">Minimum Withdrawal (₦)</label><input type="number" class="form-input" id="setMinWithdrawal"></div>
+        <div class="form-group"><label class="form-label">Withdrawal Fee (%)</label><input type="number" class="form-input" id="setWithdrawalFee"></div>
+        <div class="form-group"><label class="form-label">Withdrawal Start Hour</label><input type="number" class="form-input" id="setWithdrawalStart" min="0" max="23"></div>
+        <div class="form-group"><label class="form-label">Withdrawal End Hour</label><input type="number" class="form-input" id="setWithdrawalEnd" min="0" max="23"></div>
+        <div class="form-group"><label class="form-label">Deposit Account Number</label><input type="text" class="form-input" id="setAccountNumber"></div>
+        <div class="form-group"><label class="form-label">Deposit Account Name</label><input type="text" class="form-input" id="setAccountName"></div>
+        <div class="form-group"><label class="form-label">Deposit Bank Name</label><input type="text" class="form-input" id="setBankName"></div>
+        <div class="form-group"><label class="form-label">Referral Level 1 (%)</label><input type="number" class="form-input" id="setRefL1"></div>
+        <div class="form-group"><label class="form-label">Referral Level 2 (%)</label><input type="number" class="form-input" id="setRefL2"></div>
+        <div class="form-group"><label class="form-label">Referral Level 3 (%)</label><input type="number" class="form-input" id="setRefL3"></div>
+        <button class="btn btn-primary" onclick="saveSettings()"><i class="fas fa-save"></i> Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admins Section -->
+  <div class="section" id="section-admins">
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title">Admin Users</div>
+        <div class="table-actions">
+          <button class="btn btn-primary" onclick="showAddAdminModal()"><i class="fas fa-plus"></i> Add Admin</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Added</th><th>Actions</th></tr></thead>
+          <tbody id="adminsTable"><tr><td colspan="5" style="text-align:center;">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ═══════════ MODALS ═══════════ -->
+<div class="modal-overlay" id="userDetailModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">User Details</div>
+      <button class="modal-close" onclick="closeModal('userDetailModal')">✕</button>
+    </div>
+    <div class="modal-body" id="userDetailContent"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="addPlanModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">Add Investment Plan</div>
+      <button class="modal-close" onclick="closeModal('addPlanModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Plan Name</label><input type="text" class="form-input" id="planName"></div>
+      <div class="form-group"><label class="form-label">Capital (₦)</label><input type="number" class="form-input" id="planCapital"></div>
+      <div class="form-group"><label class="form-label">Daily ROI (₦)</label><input type="number" class="form-input" id="planDailyROI"></div>
+      <div class="form-group"><label class="form-label">Duration (Days)</label><input type="number" class="form-input" id="planDuration"></div>
+      <div class="form-group"><label class="form-label">Total Return (₦)</label><input type="number" class="form-input" id="planTotalReturn"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('addPlanModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addPlan()">Add Plan</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="addAdminModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">Add Admin</div>
+      <button class="modal-close" onclick="closeModal('addAdminModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">User Email</label><input type="email" class="form-input" id="adminEmail"></div>
+      <div class="form-group"><label class="form-label">Role</label><select class="form-select" id="adminRoleSelect"><option value="admin">Admin</option><option value="superadmin">Super Admin</option></select></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('addAdminModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addAdmin()">Add Admin</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   FIREBASE INIT
+═══════════════════════════════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "AIzaSyCFwefJ8rxZUDLbDsRHnHdA-28zPs49rlo",
+  authDomain: "cashpoint-ac4f4.firebaseapp.com",
+  projectId: "cashpoint-ac4f4",
+  storageBucket: "cashpoint-ac4f4.firebasestorage.app",
+  messagingSenderId: "16133206416",
+  appId: "1:16133206416:web:a093f4e153ad2c9bcc8315"
+};
+
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const FV = firebase.firestore.FieldValue;
+
+/* ═══════════════════════════════════════════════════════════════════
+   GLOBAL STATE
+═══════════════════════════════════════════════════════════════════ */
+let currentAdmin = null;
+let currentSection = 'dashboard';
+const formatCurrency = n => Number(n||0).toLocaleString('en-NG',{minimumFractionDigits:2});
+const formatShort = n => { const v=Number(n||0); if(v>=1e6) return '₦'+(v/1e6).toFixed(1)+'M'; if(v>=1e3) return '₦'+(v/1e3).toFixed(1)+'K'; return '₦'+v; };
+
+/* ═══════════════════════════════════════════════════════════════════
+   AUTH CHECK - Admin only from Firestore isAdmin field
+═══════════════════════════════════════════════════════════════════ */
+auth.onAuthStateChanged(async (user) => {
+  if (!user) {
+    window.location.href = 'login.html';
+    return;
+  }
+  
+  // Check if user is admin in Firestore
+  const userDoc = await db.collection('users').doc(user.uid).get();
+  
+  if (!userDoc.exists || !userDoc.data().isAdmin) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Access Denied',
+      text: 'You do not have admin privileges.',
+      confirmButtonColor: '#EF4444'
+    }).then(() => {
+      auth.signOut().then(() => window.location.href = 'login.html');
+    });
+    return;
+  }
+  
+  currentAdmin = { uid: user.uid, ...userDoc.data() };
+  
+  // Update admin info in sidebar
+  const name = currentAdmin.fullName || currentAdmin.username || 'Admin';
+  document.getElementById('adminAvatar').textContent = name.charAt(0).toUpperCase();
+  document.getElementById('adminName').textContent = name;
+  document.getElementById('adminRole').textContent = currentAdmin.adminRole || 'Administrator';
+  
+  // Initialize
+  initNavigation();
+  loadDashboard();
+  updatePendingCounts();
+  
+  console.log('✅ Admin authenticated:', name);
+});
+
+/* ═══════════════════════════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════════════════════════ */
+function initNavigation() {
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.preventDefault();
+      const section = item.dataset.section;
+      switchSection(section);
+    });
+  });
+}
+
+function switchSection(section) {
+  currentSection = section;
+  
+  // Update nav
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelector(`[data-section="${section}"]`)?.classList.add('active');
+  
+  // Update sections
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(`section-${section}`)?.classList.add('active');
+  
+  // Update page title
+  const titles = {
+    dashboard: 'Dashboard', users: 'User Management', deposits: 'Deposit Management',
+    withdrawals: 'Withdrawal Management', investments: 'Investment Management',
+    plans: 'Plan Management', transactions: 'Transaction Logs',
+    settings: 'Platform Settings', admins: 'Admin Management'
+  };
+  document.getElementById('pageTitle').textContent = titles[section] || section;
+  
+  // Load section data
+  switch(section) {
+    case 'dashboard': loadDashboard(); break;
+    case 'users': loadUsers(); break;
+    case 'deposits': loadDeposits(); break;
+    case 'withdrawals': loadWithdrawals(); break;
+    case 'investments': loadInvestments(); break;
+    case 'plans': loadPlans(); break;
+    case 'transactions': loadTransactions(); break;
+    case 'settings': loadSettings(); break;
+    case 'admins': loadAdmins(); break;
+  }
+  
+  // Close mobile sidebar
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+function refreshCurrentSection() { switchSection(currentSection); }
+
+function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   DASHBOARD
+═══════════════════════════════════════════════════════════════════ */
+async function loadDashboard() {
+  try {
+    const [usersSnap, investmentsSnap, depositsSnap, withdrawalsSnap, transactionsSnap] = await Promise.all([
+      db.collection('users').get(),
+      db.collection('investments').where('status','==','active').get(),
+      db.collection('deposits').where('status','==','pending').get(),
+      db.collection('withdrawals').where('status','==','pending').get(),
+      db.collection('transactions').get()
+    ]);
+    
+    document.getElementById('dashTotalUsers').textContent = usersSnap.size;
+    document.getElementById('dashActivePlans').textContent = investmentsSnap.size;
+    document.getElementById('dashPendingDeposits').textContent = depositsSnap.size;
+    document.getElementById('dashPendingWithdrawals').textContent = withdrawalsSnap.size;
+    
+    let totalInvested = 0, totalEarnings = 0;
+    transactionsSnap.docs.forEach(d => {
+      const amt = Number(d.data().amount) || 0;
+      if (['investment_purchase','deposit'].includes(d.data().type)) totalInvested += amt;
+      if (['roi_claim','referral_bonus','welcome_bonus','capital_return'].includes(d.data().type)) totalEarnings += amt;
+    });
+    document.getElementById('dashTotalInvested').textContent = formatShort(totalInvested);
+    document.getElementById('dashTotalEarnings').textContent = formatShort(totalEarnings);
+    
+    // Recent users
+    const recentUsers = usersSnap.docs.slice(-5).reverse();
+    const tbody = document.getElementById('recentUsersTable');
+    tbody.innerHTML = recentUsers.map(d => {
+      const u = d.data();
+      return `<tr>
+        <td><strong>${u.fullName||u.username||'N/A'}</strong></td>
+        <td>${u.email||'—'}</td>
+        <td>${formatShort((u.depositBalance||0)+(u.withdrawalBalance||0))}</td>
+        <td><span class="status-badge ${u.status==='active'?'success':'danger'}">${u.status||'active'}</span></td>
+        <td>${u.createdAt?.toDate?.()?.toLocaleDateString?.()||'—'}</td>
+      </tr>`;
+    }).join('');
+    if (!recentUsers.length) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No users yet</td></tr>';
+    
+  } catch(e) { console.error('Dashboard error:', e); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   USERS
+═══════════════════════════════════════════════════════════════════ */
+async function loadUsers(search = '') {
+  try {
+    let snap = await db.collection('users').get();
+    let users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    
+    if (search) {
+      const q = search.toLowerCase();
+      users = users.filter(u => (u.fullName||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q) || (u.username||'').toLowerCase().includes(q));
+    }
+    
+    const tbody = document.getElementById('usersTable');
+    tbody.innerHTML = users.map(u => `
+      <tr>
+        <td><strong>${u.fullName||u.username||'N/A'}</strong></td>
+        <td>${u.email||'—'}</td>
+        <td>${u.phone||'—'}</td>
+        <td>${formatShort(u.depositBalance||0)}</td>
+        <td>${formatShort(u.withdrawalBalance||0)}</td>
+        <td><span class="status-badge ${u.status==='active'?'success':'danger'}">${u.status||'active'}</span></td>
+        <td>${u.isAdmin?'<span class="status-badge info">Admin</span>':'—'}</td>
+        <td>
+          <button class="btn btn-sm btn-outline" onclick="viewUserDetail('${u.id}')"><i class="fas fa-eye"></i></button>
+          ${!u.isAdmin ? `<button class="btn btn-sm btn-primary" onclick="toggleUserAdmin('${u.id}',true)"><i class="fas fa-shield-halved"></i></button>` : `<button class="btn btn-sm btn-warning" onclick="toggleUserAdmin('${u.id}',false)"><i class="fas fa-user"></i></button>`}
+          <button class="btn btn-sm btn-danger" onclick="deleteUser('${u.id}')"><i class="fas fa-trash"></i></button>
+        </td>
+      </tr>
+    `).join('');
+    
+    if (!users.length) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No users found</td></tr>';
+    document.getElementById('usersPaginationInfo').textContent = `${users.length} users`;
+    
+  } catch(e) { console.error('Users error:', e); }
+}
+
+async function viewUserDetail(uid) {
+  const doc = await db.collection('users').doc(uid).get();
+  if (!doc.exists) return;
+  const u = doc.data();
+  
+  document.getElementById('userDetailContent').innerHTML = `
+    <p><strong>Name:</strong> ${u.fullName||u.username||'N/A'}</p>
+    <p><strong>Email:</strong> ${u.email||'—'}</p>
+    <p><strong>Phone:</strong> ${u.phone||'—'}</p>
+    <p><strong>Deposit Balance:</strong> ₦${formatCurrency(u.depositBalance||0)}</p>
+    <p><strong>Withdrawal Balance:</strong> ₦${formatCurrency(u.withdrawalBalance||0)}</p>
+    <p><strong>Total Invested:</strong> ₦${formatCurrency(u.totalInvested||0)}</p>
+    <p><strong>Total Earned:</strong> ₦${formatCurrency(u.totalEarnings||0)}</p>
+    <p><strong>Referrals:</strong> ${u.referralCount||0}</p>
+    <p><strong>Referral Code:</strong> ${u.referralCode||'N/A'}</p>
+    <p><strong>Admin:</strong> ${u.isAdmin?'Yes':'No'}</p>
+    <div style="margin-top:12px;">
+      <button class="btn btn-primary btn-sm" onclick="adjustBalance('${uid}','deposit')">Adjust Deposit</button>
+      <button class="btn btn-warning btn-sm" onclick="adjustBalance('${uid}','withdrawal')">Adjust Withdrawal</button>
+    </div>
+  `;
+  openModal('userDetailModal');
+}
+
+async function adjustBalance(uid, wallet) {
+  const { value: amount } = await Swal.fire({
+    title: `Adjust ${wallet} Balance`,
+    input: 'number',
+    inputLabel: 'Amount (use negative to subtract)',
+    showCancelButton: true,
+    confirmButtonColor: '#3B82F6'
+  });
+  if (!amount) return;
+  
+  const field = wallet === 'deposit' ? 'depositBalance' : 'withdrawalBalance';
+  await db.collection('users').doc(uid).update({ [field]: FV.increment(Number(amount)) });
+  Swal.fire({ icon: 'success', title: 'Balance Updated', timer: 1500 });
+  viewUserDetail(uid);
+}
+
+async function toggleUserAdmin(uid, makeAdmin) {
+  const result = await Swal.fire({
+    title: makeAdmin ? 'Make Admin?' : 'Remove Admin?',
+    text: makeAdmin ? 'Grant admin privileges?' : 'Revoke admin privileges?',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#3B82F6'
+  });
+  if (!result.isConfirmed) return;
+  
+  await db.collection('users').doc(uid).update({ isAdmin: makeAdmin, adminRole: makeAdmin ? 'admin' : FV.delete() });
+  Swal.fire({ icon: 'success', title: 'Updated!', timer: 1500 });
+  loadUsers();
+}
+
+async function deleteUser(uid) {
+  const result = await Swal.fire({
+    title: 'Delete User?',
+    text: 'This cannot be undone!',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#EF4444',
+    confirmButtonText: 'Delete'
+  });
+  if (!result.isConfirmed) return;
+  
+  await db.collection('users').doc(uid).delete();
+  Swal.fire({ icon: 'success', title: 'User Deleted', timer: 1500 });
+  loadUsers();
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   DEPOSITS
+═══════════════════════════════════════════════════════════════════ */
+async function loadDeposits(filter = 'pending') {
+  try {
+    let query = db.collection('deposits');
+    if (filter !== 'all') query = query.where('status', '==', filter);
+    const snap = await query.get();
+    
+    const docs = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => (b.createdAt?.toMillis?.()||0) - (a.createdAt?.toMillis?.()||0));
+    
+    const tbody = document.getElementById('depositsTable');
+    tbody.innerHTML = docs.map(d => `
+      <tr>
+        <td><strong>${d.userName||'N/A'}</strong></td>
+        <td>₦${formatCurrency(d.amount)}</td>
+        <td>${d.senderName||'—'}</td>
+        <td><small>${d.refCode||'—'}</small></td>
+        <td><span class="status-badge ${d.status==='pending'?'warning':d.status==='approved'?'success':'danger'}">${d.status}</span></td>
+        <td>${d.createdAt?.toDate?.()?.toLocaleDateString?.()||'—'}</td>
+        <td>
+          ${d.status === 'pending' ? `
+            <button class="btn btn-sm btn-success" onclick="approveDeposit('${d.id}','${d.userId}',${d.amount})">Approve</button>
+            <button class="btn btn-sm btn-danger" onclick="rejectDeposit('${d.id}')">Reject</button>
+          ` : `<span class="status-badge ${d.status==='approved'?'success':'danger'}">${d.status}</span>`}
+        </td>
+      </tr>
+    `).join('');
+    
+    if (!docs.length) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No deposits found</td></tr>';
+    
+  } catch(e) { console.error('Deposits error:', e); }
+}
+
+async function approveDeposit(depId, userId, amount) {
+  const result = await Swal.fire({
+    title: 'Approve Deposit?',
+    text: `Credit ₦${formatCurrency(amount)} to user's deposit wallet?`,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#10B981'
+  });
+  if (!result.isConfirmed) return;
+  
+  const batch = db.batch();
+  batch.update(db.collection('deposits').doc(depId), { status: 'approved', approvedAt: FV.serverTimestamp() });
+  batch.update(db.collection('users').doc(userId), { depositBalance: FV.increment(amount) });
+  batch.set(db.collection('transactions').doc(), {
+    userId, type: 'deposit', amount, status: 'completed',
+    description: 'Deposit approved by admin', createdAt: FV.serverTimestamp()
+  });
+  await batch.commit();
+  
+  Swal.fire({ icon: 'success', title: 'Deposit Approved!', timer: 1500 });
+  loadDeposits(document.getElementById('depositFilter').value);
+  updatePendingCounts();
+}
+
+async function rejectDeposit(depId) {
+  const { value: reason } = await Swal.fire({
+    title: 'Reject Deposit?',
+    input: 'text',
+    inputLabel: 'Reason for rejection',
+    showCancelButton: true,
+    confirmButtonColor: '#EF4444'
+  });
+  if (!reason) return;
+  
+  await db.collection('deposits').doc(depId).update({ status: 'rejected', rejectReason: reason, rejectedAt: FV.serverTimestamp() });
+  Swal.fire({ icon: 'success', title: 'Deposit Rejected', timer: 1500 });
+  loadDeposits(document.getElementById('depositFilter').value);
+  updatePendingCounts();
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   WITHDRAWALS
+═══════════════════════════════════════════════════════════════════ */
+async function loadWithdrawals(filter = 'pending') {
+  try {
+    let query = db.collection('withdrawals');
+    if (filter !== 'all') query = query.where('status', '==', filter);
+    const snap = await query.get();
+    
+    const docs = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => (b.requestedAt?.toMillis?.()||0) - (a.requestedAt?.toMillis?.()||0));
+    
+    const tbody = document.getElementById('withdrawalsTable');
+    tbody.innerHTML = docs.map(d => `
+      <tr>
+        <td><strong>${d.userName||'N/A'}</strong></td>
+        <td>₦${formatCurrency(d.amount)}</td>
+        <td style="color:#EF4444;">-₦${formatCurrency(d.feeAmount||0)}</td>
+        <td style="color:#10B981;">₦${formatCurrency(d.receiveAmount||0)}</td>
+        <td>${d.bankName||'—'}<br><small>${d.accountNumber||''}</small></td>
+        <td><span class="status-badge ${d.status==='pending'?'warning':d.status==='approved'?'success':'danger'}">${d.status}</span></td>
+        <td>${d.requestedAt?.toDate?.()?.toLocaleDateString?.()||'—'}</td>
+        <td>
+          ${d.status === 'pending' ? `
+            <button class="btn btn-sm btn-success" onclick="approveWithdrawal('${d.id}')">Approve</button>
+            <button class="btn btn-sm btn-danger" onclick="rejectWithdrawal('${d.id}')">Reject</button>
+          ` : `<span class="status-badge ${d.status==='approved'?'success':'danger'}">${d.status}</span>`}
+        </td>
+      </tr>
+    `).join('');
+    
+    if (!docs.length) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No withdrawals found</td></tr>';
+    
+  } catch(e) { console.error('Withdrawals error:', e); }
+}
+
+async function approveWithdrawal(wId) {
+  const result = await Swal.fire({ title: 'Approve Withdrawal?', text: 'Confirm this payout?', icon: 'question', showCancelButton: true, confirmButtonColor: '#10B981' });
+  if (!result.isConfirmed) return;
+  
+  await db.collection('withdrawals').doc(wId).update({ status: 'approved', approvedAt: FV.serverTimestamp() });
+  Swal.fire({ icon: 'success', title: 'Withdrawal Approved!', timer: 1500 });
+  loadWithdrawals(document.getElementById('withdrawalFilter').value);
+  updatePendingCounts();
+}
+
+async function rejectWithdrawal(wId) {
+  const { value: reason } = await Swal.fire({ title: 'Reject Withdrawal?', input: 'text', inputLabel: 'Reason', showCancelButton: true, confirmButtonColor: '#EF4444' });
+  if (!reason) return;
+  
+  const wDoc = await db.collection('withdrawals').doc(wId).get();
+  if (wDoc.exists) {
+    await db.collection('users').doc(wDoc.data().userId).update({ withdrawalBalance: FV.increment(wDoc.data().amount) });
+  }
+  await db.collection('withdrawals').doc(wId).update({ status: 'rejected', rejectReason: reason, rejectedAt: FV.serverTimestamp() });
+  Swal.fire({ icon: 'success', title: 'Withdrawal Rejected', timer: 1500 });
+  loadWithdrawals(document.getElementById('withdrawalFilter').value);
+  updatePendingCounts();
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   INVESTMENTS
+═══════════════════════════════════════════════════════════════════ */
+async function loadInvestments(filter = 'active') {
+  try {
+    let query = db.collection('investments');
+    if (filter !== 'all') query = query.where('status', '==', filter);
+    const snap = await query.get();
+    
+    const docs = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => (b.createdAt?.toMillis?.()||0) - (a.createdAt?.toMillis?.()||0));
+    
+    const tbody = document.getElementById('investmentsTable');
+    tbody.innerHTML = docs.map(d => `
+      <tr>
+        <td><strong>${d.userName||'N/A'}</strong></td>
+        <td>${d.planName||'Investment'}</td>
+        <td>₦${formatCurrency(d.capital)}</td>
+        <td>₦${formatCurrency(d.dailyROI)}</td>
+        <td>${d.claimedDays||0}/${d.duration||0} days</td>
+        <td><span class="status-badge ${d.status==='active'?'success':'info'}">${d.status}</span></td>
+        <td>${d.createdAt?.toDate?.()?.toLocaleDateString?.()||'—'}</td>
+        <td>
+          ${d.status === 'active' ? `<button class="btn btn-sm btn-warning" onclick="completeInvestment('${d.id}')">Complete</button>` : '—'}
+        </td>
+      </tr>
+    `).join('');
+    
+    if (!docs.length) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No investments found</td></tr>';
+    
+  } catch(e) { console.error('Investments error:', e); }
+}
+
+async function completeInvestment(invId) {
+  const result = await Swal.fire({ title: 'Complete Investment?', text: 'Mark as completed?', icon: 'question', showCancelButton: true, confirmButtonColor: '#3B82F6' });
+  if (!result.isConfirmed) return;
+  
+  await db.collection('investments').doc(invId).update({ status: 'completed', completedAt: FV.serverTimestamp() });
+  Swal.fire({ icon: 'success', title: 'Completed!', timer: 1500 });
+  loadInvestments(document.getElementById('investmentFilter').value);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PLANS
+═══════════════════════════════════════════════════════════════════ */
+async function loadPlans() {
+  try {
+    const snap = await db.collection('plans').get();
+    const plans = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    
+    const tbody = document.getElementById('plansTable');
+    tbody.innerHTML = plans.map(p => `
+      <tr>
+        <td><strong>${p.name||'N/A'}</strong></td>
+        <td>₦${formatCurrency(p.capital)}</td>
+        <td>₦${formatCurrency(p.dailyROI)}</td>
+        <td>${p.duration} Days</td>
+        <td>₦${formatCurrency(p.totalReturn)}</td>
+        <td><span class="status-badge ${p.active!==false?'success':'danger'}">${p.active!==false?'Active':'Inactive'}</span></td>
+        <td>
+          <button class="btn btn-sm btn-outline" onclick="editPlan('${p.id}')"><i class="fas fa-edit"></i></button>
+          <button class="btn btn-sm btn-danger" onclick="deletePlan('${p.id}')"><i class="fas fa-trash"></i></button>
+        </td>
+      </tr>
+    `).join('');
+    
+    if (!plans.length) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No plans. Add one!</td></tr>';
+    
+  } catch(e) { console.error('Plans error:', e); }
+}
+
+function showAddPlanModal() { openModal('addPlanModal'); }
+
+async function addPlan() {
+  const name = document.getElementById('planName').value.trim();
+  const capital = Number(document.getElementById('planCapital').value);
+  const dailyROI = Number(document.getElementById('planDailyROI').value);
+  const duration = Number(document.getElementById('planDuration').value);
+  const totalReturn = Number(document.getElementById('planTotalReturn').value);
+  
+  if (!name || !capital || !dailyROI || !duration || !totalReturn) {
+    return Swal.fire({ icon: 'warning', title: 'Fill all fields' });
+  }
+  
+  await db.collection('plans').add({ name, capital, dailyROI, duration, totalReturn, active: true, createdAt: FV.serverTimestamp() });
+  Swal.fire({ icon: 'success', title: 'Plan Added!', timer: 1500 });
+  closeModal('addPlanModal');
+  ['planName','planCapital','planDailyROI','planDuration','planTotalReturn'].forEach(id => document.getElementById(id).value = '');
+  loadPlans();
+}
+
+async function deletePlan(planId) {
+  const result = await Swal.fire({ title: 'Delete Plan?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#EF4444' });
+  if (!result.isConfirmed) return;
+  await db.collection('plans').doc(planId).delete();
+  Swal.fire({ icon: 'success', title: 'Deleted!', timer: 1500 });
+  loadPlans();
+}
+
+async function editPlan(planId) {
+  const doc = await db.collection('plans').doc(planId).get();
+  if (!doc.exists) return;
+  const p = doc.data();
+  
+  const { value: formValues } = await Swal.fire({
+    title: 'Edit Plan',
+    html: `
+      <input id="swalName" class="swal2-input" value="${p.name||''}" placeholder="Name">
+      <input id="swalCapital" class="swal2-input" type="number" value="${p.capital||0}" placeholder="Capital">
+      <input id="swalROI" class="swal2-input" type="number" value="${p.dailyROI||0}" placeholder="Daily ROI">
+      <input id="swalDuration" class="swal2-input" type="number" value="${p.duration||0}" placeholder="Duration">
+      <input id="swalReturn" class="swal2-input" type="number" value="${p.totalReturn||0}" placeholder="Total Return">
+    `,
+    showCancelButton: true,
+    confirmButtonColor: '#3B82F6',
+    preConfirm: () => ({
+      name: document.getElementById('swalName').value,
+      capital: Number(document.getElementById('swalCapital').value),
+      dailyROI: Number(document.getElementById('swalROI').value),
+      duration: Number(document.getElementById('swalDuration').value),
+      totalReturn: Number(document.getElementById('swalReturn').value)
+    })
+  });
+  
+  if (!formValues) return;
+  await db.collection('plans').doc(planId).update(formValues);
+  Swal.fire({ icon: 'success', title: 'Updated!', timer: 1500 });
+  loadPlans();
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   TRANSACTIONS
+═══════════════════════════════════════════════════════════════════ */
+async function loadTransactions(filter = 'all') {
+  try {
+    let query = db.collection('transactions');
+    if (filter !== 'all') query = query.where('type', '==', filter);
+    const snap = await query.get();
+    
+    const docs = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => (b.createdAt?.toMillis?.()||0) - (a.createdAt?.toMillis?.()||0)).slice(0, 50);
+    
+    const tbody = document.getElementById('transactionsTable');
+    tbody.innerHTML = docs.map(d => `
+      <tr>
+        <td>${d.userId?.slice(0,8)||'N/A'}...</td>
+        <td><span class="status-badge info">${(d.type||'').replace(/_/g,' ')}</span></td>
+        <td>₦${formatCurrency(d.amount)}</td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;">${d.description||d.note||'—'}</td>
+        <td>${d.createdAt?.toDate?.()?.toLocaleDateString?.()||'—'}</td>
+      </tr>
+    `).join('');
+    
+    if (!docs.length) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No transactions</td></tr>';
+    
+  } catch(e) { console.error('Transactions error:', e); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SETTINGS
+═══════════════════════════════════════════════════════════════════ */
+async function loadSettings() {
+  const doc = await db.collection('settings').doc('platform').get();
+  if (doc.exists) {
+    const s = doc.data();
+    document.getElementById('setWelcomeBonus').value = s.welcomeBonus || 1000;
+    document.getElementById('setMinWithdrawal').value = s.minWithdrawal || 1500;
+    document.getElementById('setWithdrawalFee').value = s.withdrawalFee || 15;
+    document.getElementById('setWithdrawalStart').value = s.withdrawalStartHour || 10;
+    document.getElementById('setWithdrawalEnd').value = s.withdrawalEndHour || 17;
+    document.getElementById('setAccountNumber').value = s.accountNumber || '1193982973';
+    document.getElementById('setAccountName').value = s.accountName || 'Hussiani Abdullahi';
+    document.getElementById('setBankName').value = s.bankName || 'Paga';
+    document.getElementById('setRefL1').value = s.refL1 || 10;
+    document.getElementById('setRefL2').value = s.refL2 || 3;
+    document.getElementById('setRefL3').value = s.refL3 || 1;
+  }
+}
+
+async function saveSettings() {
+  await db.collection('settings').doc('platform').set({
+    welcomeBonus: Number(document.getElementById('setWelcomeBonus').value) || 1000,
+    minWithdrawal: Number(document.getElementById('setMinWithdrawal').value) || 1500,
+    withdrawalFee: Number(document.getElementById('setWithdrawalFee').value) || 15,
+    withdrawalStartHour: Number(document.getElementById('setWithdrawalStart').value) || 10,
+    withdrawalEndHour: Number(document.getElementById('setWithdrawalEnd').value) || 17,
+    accountNumber: document.getElementById('setAccountNumber').value,
+    accountName: document.getElementById('setAccountName').value,
+    bankName: document.getElementById('setBankName').value,
+    refL1: Number(document.getElementById('setRefL1').value) || 10,
+    refL2: Number(document.getElementById('setRefL2').value) || 3,
+    refL3: Number(document.getElementById('setRefL3').value) || 1,
+    updatedAt: FV.serverTimestamp()
+  });
+  Swal.fire({ icon: 'success', title: 'Settings Saved!', timer: 1500 });
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ADMINS
+═══════════════════════════════════════════════════════════════════ */
+async function loadAdmins() {
+  try {
+    const snap = await db.collection('users').where('isAdmin', '==', true).get();
+    const admins = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    
+    const tbody = document.getElementById('adminsTable');
+    tbody.innerHTML = admins.map(a => `
+      <tr>
+        <td><strong>${a.fullName||a.username||'N/A'}</strong></td>
+        <td>${a.email||'—'}</td>
+        <td><span class="status-badge info">${a.adminRole||'admin'}</span></td>
+        <td>—</td>
+        <td>
+          ${a.id !== currentAdmin.uid ? `<button class="btn btn-sm btn-danger" onclick="removeAdmin('${a.id}')">Remove</button>` : '<small>You</small>'}
+        </td>
+      </tr>
+    `).join('');
+    
+    if (!admins.length) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No admins</td></tr>';
+    
+  } catch(e) { console.error('Admins error:', e); }
+}
+
+function showAddAdminModal() { openModal('addAdminModal'); }
+
+async function addAdmin() {
+  const email = document.getElementById('adminEmail').value.trim().toLowerCase();
+  const role = document.getElementById('adminRoleSelect').value;
+  
+  if (!email) return Swal.fire({ icon: 'warning', title: 'Enter email' });
+  
+  const snap = await db.collection('users').where('email', '==', email).limit(1).get();
+  if (snap.empty) return Swal.fire({ icon: 'error', title: 'User not found' });
+  
+  await db.collection('users').doc(snap.docs[0].id).update({ isAdmin: true, adminRole: role });
+  Swal.fire({ icon: 'success', title: 'Admin Added!', timer: 1500 });
+  closeModal('addAdminModal');
+  document.getElementById('adminEmail').value = '';
+  loadAdmins();
+}
+
+async function removeAdmin(uid) {
+  const result = await Swal.fire({ title: 'Remove Admin?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#EF4444' });
+  if (!result.isConfirmed) return;
+  
+  await db.collection('users').doc(uid).update({ isAdmin: false, adminRole: FV.delete() });
+  Swal.fire({ icon: 'success', title: 'Removed!', timer: 1500 });
+  loadAdmins();
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   UTILITY
+═══════════════════════════════════════════════════════════════════ */
+function openModal(id) { document.getElementById(id).classList.add('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+async function updatePendingCounts() {
+  try {
+    const [depSnap, witSnap] = await Promise.all([
+      db.collection('deposits').where('status','==','pending').get(),
+      db.collection('withdrawals').where('status','==','pending').get()
+    ]);
+    document.getElementById('pendingDepositBadge').textContent = depSnap.size;
+    document.getElementById('pendingWithdrawalBadge').textContent = witSnap.size;
+  } catch(e) {}
+}
+
+function adminLogout() {
+  Swal.fire({
+    title: 'Sign Out?',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#EF4444'
+  }).then(r => {
+    if (r.isConfirmed) auth.signOut().then(() => window.location.href = 'login.html');
+  });
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.classList.remove('active');
+  });
+});
+
+console.log('🚀 KineticWealth Admin Panel Ready');
+console.log('📋 All features loaded successfully');
+</script>
+
+</body>
+</html>
