@@ -1,0 +1,1800 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+<title>KineticWealth · Withdraw Funds</title>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+
+<style>
+/* ═══════════════════════════════════════
+   KINETICWEALTH WITHDRAWAL THEME
+   ═══════════════════════════════════════ */
+[data-theme="light"] {
+  --bg: #F0F6FF;
+  --card: #FFFFFF;
+  --card2: #F8FAFE;
+  --border: #DBEAFE;
+  --text: #1E293B;
+  --sub: #64748B;
+  --muted: #94A3B8;
+  --topbar-bg: rgba(255, 255, 255, 0.95);
+  --shadow: 0 4px 20px rgba(30, 64, 175, 0.08);
+}
+
+[data-theme="dark"] {
+  --bg: #0F172A;
+  --card: #1E293B;
+  --card2: #273548;
+  --border: rgba(59, 130, 246, 0.15);
+  --text: #F1F5F9;
+  --sub: #94A3B8;
+  --muted: #64748B;
+  --topbar-bg: rgba(15, 23, 42, 0.97);
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+:root {
+  --primary: #1E40AF;
+  --primary-dark: #1E3A8A;
+  --secondary: #3B82F6;
+  --accent: #06B6D4;
+  --success: #10B981;
+  --danger: #EF4444;
+  --warning: #F59E0B;
+  --gradient-1: #1E40AF;
+  --gradient-2: #3B82F6;
+  --gradient-3: #06B6D4;
+  --nav-h: 64px;
+  --bot-h: 72px;
+  --radius-sm: 12px;
+  --radius: 16px;
+  --radius-lg: 20px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  padding-bottom: calc(var(--bot-h) + 16px);
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* Top Bar */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 900;
+  height: var(--nav-h);
+  background: var(--topbar-bg);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  box-shadow: var(--shadow);
+}
+
+.back-btn {
+  width: 40px; height: 40px;
+  border-radius: var(--radius-sm);
+  background: var(--card2);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+.back-btn:hover { background: var(--border); }
+
+.brand-name {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--gradient-1), var(--gradient-3));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.theme-btn {
+  width: 40px; height: 40px;
+  border-radius: var(--radius-sm);
+  background: var(--card2);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  transition: all 0.2s;
+}
+
+.avatar-btn {
+  width: 42px; height: 42px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--secondary), var(--accent));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 800;
+  font-size: 16px;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Main Content */
+.main-content {
+  padding: 0 16px;
+}
+
+/* Hero */
+.hero-section {
+  background: linear-gradient(135deg, var(--gradient-1), var(--gradient-2));
+  border-radius: var(--radius-lg);
+  padding: 24px 20px;
+  margin: 16px 0;
+  color: white;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(30, 64, 175, 0.3);
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 25px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.hero-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.hero-sub {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* Balance Card */
+.balance-card {
+  background: linear-gradient(135deg, #059669, #10B981);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin: 16px 0;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+}
+
+.balance-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.85;
+  margin-bottom: 4px;
+}
+
+.balance-amount {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 30px;
+  font-weight: 800;
+}
+
+.balance-icon {
+  width: 48px; height: 48px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+/* Info Chips */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.info-chip {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: var(--shadow);
+}
+
+.chip-icon {
+  width: 40px; height: 40px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.chip-icon.red { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+.chip-icon.amber { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+.chip-icon.blue { background: rgba(59, 130, 246, 0.1); color: var(--secondary); }
+.chip-icon.green { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+
+.chip-value {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.chip-label {
+  font-size: 10px;
+  color: var(--sub);
+  font-weight: 600;
+}
+
+/* Status Banners */
+.status-banner {
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-banner.success {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-banner.error {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.status-banner.warning {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.status-icon {
+  width: 40px; height: 40px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.status-icon.success { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+.status-icon.error { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+.status-icon.warning { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+
+.status-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.status-sub {
+  font-size: 12px;
+  color: var(--sub);
+}
+
+/* Section Title */
+.section-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 14px;
+}
+
+/* Bank Account Card */
+.bank-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 18px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+}
+
+.bank-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.bank-header-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bank-header-title i {
+  color: var(--success);
+}
+
+.bank-edit {
+  font-size: 12px;
+  color: var(--secondary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.bank-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.bank-detail {
+  background: var(--card2);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.bank-detail-label {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 3px;
+  font-weight: 600;
+}
+
+.bank-detail-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* Withdrawal Form */
+.form-card {
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.form-header {
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.form-header-icon {
+  width: 38px; height: 38px;
+  border-radius: 11px;
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.form-header-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.form-body {
+  padding: 18px;
+}
+
+/* Quick Amounts */
+.quick-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.quick-btn {
+  padding: 12px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--card2);
+  border: 2px solid var(--border);
+  text-align: center;
+  cursor: pointer;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
+  transition: all 0.2s;
+}
+
+.quick-btn:active {
+  transform: scale(0.95);
+}
+
+.quick-btn.active {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: var(--secondary);
+  color: var(--secondary);
+}
+
+/* Input */
+.input-group {
+  margin-bottom: 14px;
+}
+
+.input-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--sub);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-prefix {
+  position: absolute;
+  left: 14px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--secondary);
+  z-index: 1;
+}
+
+.input-field {
+  width: 100%;
+  padding: 14px 14px 14px 34px;
+  background: var(--card2);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.input-field:focus {
+  border-color: var(--secondary);
+}
+
+.input-field.no-prefix {
+  padding-left: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+}
+
+.pin-input {
+  letter-spacing: 12px;
+  text-align: center;
+  font-size: 24px !important;
+}
+
+/* Preview Card */
+.preview-card {
+  background: var(--card2);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  display: none;
+}
+
+.preview-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.preview-label {
+  font-size: 13px;
+  color: var(--sub);
+  font-weight: 600;
+}
+
+.preview-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.preview-value.danger {
+  color: var(--danger);
+}
+
+.preview-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 8px 0;
+}
+
+.preview-receive {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.preview-receive-label {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.preview-receive-value {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--success);
+}
+
+/* Submit Button */
+.submit-btn {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--gradient-1), var(--gradient-2));
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 6px 20px rgba(30, 64, 175, 0.3);
+  transition: all 0.3s;
+}
+
+.submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(30, 64, 175, 0.4);
+}
+
+.submit-btn:disabled {
+  background: var(--muted);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 48px 20px;
+  background: var(--card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.empty-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.empty-text {
+  font-size: 13px;
+  color: var(--sub);
+  margin-bottom: 16px;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, var(--gradient-1), var(--gradient-2));
+  color: white;
+  border-radius: 30px;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 13px;
+  box-shadow: 0 4px 15px rgba(30, 64, 175, 0.3);
+}
+
+/* History */
+.history-card {
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.history-item:last-child {
+  border-bottom: none;
+}
+
+.hist-icon {
+  width: 42px; height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.hist-icon.pending {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--warning);
+}
+
+.hist-icon.approved {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+}
+
+.hist-icon.rejected {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+}
+
+.hist-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.hist-amount {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.hist-bank {
+  font-size: 11px;
+  color: var(--sub);
+}
+
+.hist-ref {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.hist-right {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.hist-status {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 800;
+  margin-bottom: 4px;
+  display: inline-block;
+}
+
+.hist-status.pending {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--warning);
+}
+
+.hist-status.approved {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+}
+
+.hist-status.rejected {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+}
+
+.hist-date {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.hist-receive {
+  font-size: 11px;
+  color: var(--success);
+  font-weight: 700;
+}
+
+/* Bottom Nav */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--bot-h);
+  background: var(--topbar-bg);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 8px;
+  z-index: 800;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 12px;
+  transition: all 0.3s;
+  position: relative;
+}
+
+.nav-item i { font-size: 22px; }
+
+.nav-item.active {
+  color: var(--secondary);
+}
+
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 3px;
+  background: var(--secondary);
+  border-radius: 0 0 3px 3px;
+}
+</style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="topbar">
+  <a href="home.html" class="back-btn">
+    <i class="fas fa-arrow-left"></i>
+  </a>
+  <span class="brand-name">KineticWealth</span>
+  <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">
+    <i class="fas fa-moon"></i>
+  </button>
+</div>
+
+<div class="main-content">
+
+  <!-- Hero -->
+  <div class="hero-section">
+    <div class="hero-badge">
+      <i class="fas fa-paper-plane"></i> Secure Withdrawal
+    </div>
+    <div class="hero-title">Withdraw Funds</div>
+    <div class="hero-sub">Min ₦1,500 · 15% Fee · Mon-Fri · 10AM-5PM · Once Daily</div>
+  </div>
+
+  <!-- Balance -->
+  <div class="balance-card">
+    <div>
+      <div class="balance-label">Withdrawal Balance</div>
+      <div class="balance-amount">₦<span id="balanceDisplay">0.00</span></div>
+    </div>
+    <div class="balance-icon">
+      <i class="fas fa-wallet"></i>
+    </div>
+  </div>
+
+  <!-- Info Chips -->
+  <div class="info-grid">
+    <div class="info-chip">
+      <div class="chip-icon red"><i class="fas fa-arrow-down"></i></div>
+      <div>
+        <div class="chip-value">₦1,500</div>
+        <div class="chip-label">Minimum</div>
+      </div>
+    </div>
+    <div class="info-chip">
+      <div class="chip-icon amber"><i class="fas fa-percent"></i></div>
+      <div>
+        <div class="chip-value">15%</div>
+        <div class="chip-label">Processing Fee</div>
+      </div>
+    </div>
+    <div class="info-chip">
+      <div class="chip-icon blue"><i class="fas fa-calendar-check"></i></div>
+      <div>
+        <div class="chip-value">1/Day</div>
+        <div class="chip-label">Withdrawal Limit</div>
+      </div>
+    </div>
+    <div class="info-chip">
+      <div class="chip-icon green"><i class="fas fa-clock"></i></div>
+      <div>
+        <div class="chip-value">10AM-5PM</div>
+        <div class="chip-label">Mon-Fri Only</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Time Status Banner -->
+  <div id="timeStatusBanner"></div>
+
+  <!-- Daily Limit Banner -->
+  <div id="dailyLimitBanner"></div>
+
+  <!-- Active Plan Banner -->
+  <div id="activePlanBanner"></div>
+
+  <!-- Main Section -->
+  <div id="mainSection"></div>
+
+  <!-- History -->
+  <div class="section-title">📋 Withdrawal History</div>
+  <div class="history-card">
+    <div class="history-list" id="historyList">
+      <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <div class="empty-title">Loading history...</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Bottom Nav -->
+<div class="bottom-nav">
+  <a href="home.html" class="nav-item">
+    <i class="fas fa-house"></i><span>Home</span>
+  </a>
+  <a href="plans.html" class="nav-item">
+    <i class="fas fa-cube"></i><span>Plans</span>
+  </a>
+  <a href="withdraw.html" class="nav-item active">
+    <i class="fas fa-paper-plane"></i><span>Withdraw</span>
+  </a>
+  <a href="referrals.html" class="nav-item">
+    <i class="fas fa-users"></i><span>Team</span>
+  </a>
+  <a href="dashboard.html" class="nav-item">
+    <i class="fas fa-user"></i><span>Profile</span>
+  </a>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   FIREBASE INIT
+═══════════════════════════════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "AIzaSyCFwefJ8rxZUDLbDsRHnHdA-28zPs49rlo",
+  authDomain: "cashpoint-ac4f4.firebaseapp.com",
+  projectId: "cashpoint-ac4f4",
+  storageBucket: "cashpoint-ac4f4.firebasestorage.app",
+  messagingSenderId: "16133206416",
+  appId: "1:16133206416:web:a093f4e153ad2c9bcc8315"
+};
+
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const FV = firebase.firestore.FieldValue;
+
+/* ═══════════════════════════════════════════════════════════════════
+   KINETICWEALTH WITHDRAWAL RULES
+═══════════════════════════════════════════════════════════════════ */
+const MIN_WITHDRAW = 1500;           // Minimum ₦1,500
+const FEE_PERCENT = 15;              // 15% processing fee
+const WITHDRAWAL_START_HOUR = 10;    // 10 AM
+const WITHDRAWAL_END_HOUR = 17;      // 5 PM
+const WEEKEND_DAYS = ['Saturday', 'Sunday'];
+const QUICK_AMOUNTS = [1500, 3000, 5000, 10000, 20000, 50000, 100000, 200000, 500000];
+
+/* ═══════════════════════════════════════════════════════════════════
+   THEME
+═══════════════════════════════════════════════════════════════════ */
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = document.getElementById('themeBtn');
+  if (btn) {
+    btn.innerHTML = theme === 'dark' 
+      ? '<i class="fas fa-sun"></i>' 
+      : '<i class="fas fa-moon"></i>';
+  }
+  localStorage.setItem('kw-withdraw-theme', theme);
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  applyTheme(current === 'dark' ? 'light' : 'dark');
+}
+
+applyTheme(localStorage.getItem('kw-withdraw-theme') || 'light');
+
+/* ═══════════════════════════════════════════════════════════════════
+   GLOBAL STATE
+═══════════════════════════════════════════════════════════════════ */
+let currentUser = null;
+let currentUserId = null;
+let withdrawalBalance = 0;
+let userData = null;
+let hasActivePlan = false;
+
+const formatCurrency = (n) => Number(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 });
+const formatShort = (n) => Number(n || 0).toLocaleString('en-NG');
+
+function escapeHtml(s) {
+  if (!s) return '';
+  return s.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[m] || m);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   DATE/TIME HELPERS
+═══════════════════════════════════════════════════════════════════ */
+function getTodayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function isWeekday() {
+  const day = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+  return !WEEKEND_DAYS.includes(day);
+}
+
+function isWithdrawalTimeOpen() {
+  if (!isWeekday()) return false;
+  const hour = new Date().getHours();
+  return hour >= WITHDRAWAL_START_HOUR && hour < WITHDRAWAL_END_HOUR;
+}
+
+function getNextOpeningMessage() {
+  const now = new Date();
+  const day = now.toLocaleDateString('en-US', { weekday: 'long' });
+  
+  if (WEEKEND_DAYS.includes(day)) {
+    return `Opens Monday at ${WITHDRAWAL_START_HOUR}:00 AM`;
+  }
+  
+  if (now.getHours() < WITHDRAWAL_START_HOUR) {
+    return `Opens today at ${WITHDRAWAL_START_HOUR}:00 AM`;
+  }
+  
+  // After hours - find next weekday
+  let next = new Date(now);
+  next.setDate(next.getDate() + 1);
+  let nextDay = next.toLocaleDateString('en-US', { weekday: 'long' });
+  
+  while (WEEKEND_DAYS.includes(nextDay)) {
+    next.setDate(next.getDate() + 1);
+    nextDay = next.toLocaleDateString('en-US', { weekday: 'long' });
+  }
+  
+  return `Opens ${next.toLocaleDateString('en-NG', { weekday: 'long', month: 'short', day: 'numeric' })} at ${WITHDRAWAL_START_HOUR}:00 AM`;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PIN HASHING
+═══════════════════════════════════════════════════════════════════ */
+function hashPin(pin) {
+  let hash = 0;
+  for (let i = 0; i < pin.length; i++) {
+    hash = ((hash << 5) - hash) + pin.charCodeAt(i);
+    hash |= 0;
+  }
+  return 'KW-' + Math.abs(hash).toString(16).toUpperCase();
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   CHECKS
+═══════════════════════════════════════════════════════════════════ */
+function isBankBound() {
+  return userData && userData.bankDetails && userData.bankDetails.isBound === true;
+}
+
+function isPinSet() {
+  return userData && userData.withdrawalPin && userData.withdrawalPin.length > 0;
+}
+
+async function hasWithdrawnToday() {
+  try {
+    const snapshot = await db.collection('withdrawals')
+      .where('userId', '==', currentUserId)
+      .where('withdrawalDate', '==', getTodayStr())
+      .limit(1)
+      .get();
+    return !snapshot.empty;
+  } catch (e) {
+    return false;
+  }
+}
+
+async function checkActivePlan() {
+  try {
+    const snapshot = await db.collection('investments')
+      .where('userId', '==', currentUserId)
+      .where('status', '==', 'active')
+      .limit(1)
+      .get();
+    hasActivePlan = !snapshot.empty;
+    return hasActivePlan;
+  } catch (e) {
+    hasActivePlan = false;
+    return false;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   AUTH STATE
+═══════════════════════════════════════════════════════════════════ */
+auth.onAuthStateChanged(async (user) => {
+  if (!user) {
+    window.location.href = 'login.html';
+    return;
+  }
+  currentUser = user;
+  currentUserId = user.uid;
+  await loadPage();
+});
+
+/* ═══════════════════════════════════════════════════════════════════
+   LOAD PAGE
+═══════════════════════════════════════════════════════════════════ */
+async function loadPage() {
+  try {
+    const doc = await db.collection('users').doc(currentUserId).get();
+    if (!doc.exists) {
+      window.location.href = 'login.html';
+      return;
+    }
+    
+    userData = doc.data();
+    withdrawalBalance = userData.withdrawalBalance || 0;
+    
+    document.getElementById('balanceDisplay').textContent = formatCurrency(withdrawalBalance);
+    
+    await checkActivePlan();
+    renderTimeStatusBanner();
+    await renderDailyLimitBanner();
+    renderActivePlanBanner();
+    await renderMainSection();
+    await loadHistory();
+    
+  } catch (error) {
+    console.error('Load error:', error);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   RENDER BANNERS
+═══════════════════════════════════════════════════════════════════ */
+function renderTimeStatusBanner() {
+  const el = document.getElementById('timeStatusBanner');
+  const now = new Date();
+  const day = now.toLocaleDateString('en-US', { weekday: 'long' });
+  const isOpen = isWithdrawalTimeOpen();
+  const isWeekend = WEEKEND_DAYS.includes(day);
+  
+  if (isOpen) {
+    el.innerHTML = `
+      <div class="status-banner success">
+        <div class="status-icon success"><i class="fas fa-check-circle"></i></div>
+        <div>
+          <div class="status-title">Withdrawal Window Open</div>
+          <div class="status-sub">Available until ${WITHDRAWAL_END_HOUR}:00 today (${day})</div>
+        </div>
+      </div>`;
+  } else if (isWeekend) {
+    el.innerHTML = `
+      <div class="status-banner error">
+        <div class="status-icon error"><i class="fas fa-calendar-xmark"></i></div>
+        <div>
+          <div class="status-title">Weekend — No Processing</div>
+          <div class="status-sub">Withdrawals available Monday-Friday only</div>
+        </div>
+      </div>`;
+  } else {
+    el.innerHTML = `
+      <div class="status-banner warning">
+        <div class="status-icon warning"><i class="fas fa-clock"></i></div>
+        <div>
+          <div class="status-title">${now.getHours() < WITHDRAWAL_START_HOUR ? 'Not Yet Open' : 'Window Closed'}</div>
+          <div class="status-sub">${getNextOpeningMessage()}</div>
+        </div>
+      </div>`;
+  }
+}
+
+async function renderDailyLimitBanner() {
+  const el = document.getElementById('dailyLimitBanner');
+  const alreadyWithdrawn = await hasWithdrawnToday();
+  
+  if (alreadyWithdrawn) {
+    let next = new Date();
+    next.setDate(next.getDate() + 1);
+    let nextDay = next.toLocaleDateString('en-US', { weekday: 'long' });
+    while (WEEKEND_DAYS.includes(nextDay)) {
+      next.setDate(next.getDate() + 1);
+      nextDay = next.toLocaleDateString('en-US', { weekday: 'long' });
+    }
+    
+    el.innerHTML = `
+      <div class="status-banner error">
+        <div class="status-icon error"><i class="fas fa-calendar-times"></i></div>
+        <div>
+          <div class="status-title">Daily Limit Reached</div>
+          <div class="status-sub">Next withdrawal: ${next.toLocaleDateString('en-NG', { weekday: 'long', month: 'short', day: 'numeric' })} after ${WITHDRAWAL_START_HOUR}:00</div>
+        </div>
+      </div>`;
+  } else {
+    el.innerHTML = `
+      <div class="status-banner success">
+        <div class="status-icon success"><i class="fas fa-check-circle"></i></div>
+        <div>
+          <div class="status-title">Withdrawal Available Today</div>
+          <div class="status-sub">You haven't withdrawn yet today</div>
+        </div>
+      </div>`;
+  }
+}
+
+function renderActivePlanBanner() {
+  const el = document.getElementById('activePlanBanner');
+  
+  if (!hasActivePlan) {
+    el.innerHTML = `
+      <div class="status-banner error">
+        <div class="status-icon error"><i class="fas fa-exclamation-triangle"></i></div>
+        <div>
+          <div class="status-title">No Active Investment Plan</div>
+          <div class="status-sub">You need an active plan to withdraw. <a href="plans.html" style="color: var(--secondary); font-weight: 700;">Invest Now →</a></div>
+        </div>
+      </div>`;
+  } else {
+    el.innerHTML = '';
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MAIN SECTION
+═══════════════════════════════════════════════════════════════════ */
+async function renderMainSection() {
+  const section = document.getElementById('mainSection');
+  const now = new Date();
+  const day = now.toLocaleDateString('en-US', { weekday: 'long' });
+  
+  // Check all conditions
+  if (!hasActivePlan) {
+    section.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🔒</div>
+        <div class="empty-title">Active Plan Required</div>
+        <div class="empty-text">You must have an active investment plan to withdraw funds.</div>
+        <a href="plans.html" class="action-btn">
+          <i class="fas fa-bolt"></i> View Investment Plans
+        </a>
+      </div>`;
+    return;
+  }
+  
+  if (!isWeekday()) {
+    section.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🏖️</div>
+        <div class="empty-title">Weekend</div>
+        <div class="empty-text">Withdrawals are processed Monday-Friday only.</div>
+        <a href="home.html" class="action-btn">
+          <i class="fas fa-home"></i> Back to Dashboard
+        </a>
+      </div>`;
+    return;
+  }
+  
+  if (!isWithdrawalTimeOpen()) {
+    section.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">⏰</div>
+        <div class="empty-title">Window Closed</div>
+        <div class="empty-text">${getNextOpeningMessage()}</div>
+        <a href="home.html" class="action-btn">
+          <i class="fas fa-home"></i> Back to Dashboard
+        </a>
+      </div>`;
+    return;
+  }
+  
+  if (await hasWithdrawnToday()) {
+    section.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🔒</div>
+        <div class="empty-title">Daily Withdrawal Used</div>
+        <div class="empty-text">You can only withdraw once per day. Come back tomorrow.</div>
+        <a href="home.html" class="action-btn">
+          <i class="fas fa-home"></i> Back to Dashboard
+        </a>
+      </div>`;
+    return;
+  }
+  
+  if (withdrawalBalance < MIN_WITHDRAW) {
+    section.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">💰</div>
+        <div class="empty-title">Insufficient Balance</div>
+        <div class="empty-text">Balance: ₦${formatCurrency(withdrawalBalance)}. Minimum withdrawal: ₦${formatShort(MIN_WITHDRAW)}.</div>
+        <a href="home.html" class="action-btn">
+          <i class="fas fa-bolt"></i> Claim Earnings First
+        </a>
+      </div>`;
+    return;
+  }
+  
+  if (!isBankBound()) {
+    section.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🏦</div>
+        <div class="empty-title">No Withdrawal Account</div>
+        <div class="empty-text">Bind a bank account to receive your withdrawals.</div>
+        <a href="bind-wallet.html" class="action-btn">
+          <i class="fas fa-university"></i> Bind Bank Account
+        </a>
+      </div>`;
+    return;
+  }
+  
+  if (!isPinSet()) {
+    section.innerHTML = renderSetPinForm();
+    return;
+  }
+  
+  renderWithdrawForm(section);
+}
+
+function renderSetPinForm() {
+  return `
+    <div class="form-card">
+      <div class="form-header">
+        <div class="form-header-icon"><i class="fas fa-lock"></i></div>
+        <div class="form-header-title">Set Withdrawal PIN</div>
+      </div>
+      <div class="form-body">
+        <div class="input-group">
+          <div class="input-label">Create 4-Digit PIN</div>
+          <input type="password" class="input-field no-prefix pin-input" id="setPinInput" 
+                 placeholder="••••" maxlength="4" 
+                 oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+        </div>
+        <button class="submit-btn" onclick="setWithdrawalPin()">
+          <i class="fas fa-lock"></i> Set PIN
+        </button>
+      </div>
+    </div>`;
+}
+
+function renderWithdrawForm(section) {
+  const bank = userData.bankDetails || {};
+  const quickBtns = QUICK_AMOUNTS
+    .filter(a => a <= withdrawalBalance)
+    .map(a => `<div class="quick-btn" onclick="selectQuickAmount(${a}, this)">₦${formatShort(a)}</div>`)
+    .join('');
+  
+  section.innerHTML = `
+    <div class="bank-card">
+      <div class="bank-header">
+        <div class="bank-header-title">
+          <i class="fas fa-check-circle"></i> Bound Account
+        </div>
+        <a href="bind-wallet.html" class="bank-edit">
+          <i class="fas fa-pen"></i> Manage
+        </a>
+      </div>
+      <div class="bank-details">
+        <div class="bank-detail">
+          <div class="bank-detail-label">Bank</div>
+          <div class="bank-detail-value">${escapeHtml(bank.bankName || '—')}</div>
+        </div>
+        <div class="bank-detail">
+          <div class="bank-detail-label">Account Name</div>
+          <div class="bank-detail-value">${escapeHtml(bank.accountName || '—')}</div>
+        </div>
+        <div class="bank-detail">
+          <div class="bank-detail-label">Account Number</div>
+          <div class="bank-detail-value">${escapeHtml(bank.accountNumber || '—')}</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="form-card">
+      <div class="form-header">
+        <div class="form-header-icon"><i class="fas fa-paper-plane"></i></div>
+        <div class="form-header-title">Request Withdrawal</div>
+      </div>
+      <div class="form-body">
+        ${quickBtns ? `<div class="quick-grid">${quickBtns}</div>` : ''}
+        
+        <div class="input-group">
+          <div class="input-label">Amount (Min ₦${formatShort(MIN_WITHDRAW)})</div>
+          <div class="input-wrapper">
+            <span class="input-prefix">₦</span>
+            <input type="number" class="input-field" id="withdrawAmount" 
+                   placeholder="0" min="${MIN_WITHDRAW}" max="${withdrawalBalance}" 
+                   oninput="onAmountInput(this.value)">
+          </div>
+        </div>
+        
+        <div class="preview-card" id="previewCard">
+          <div class="preview-row">
+            <span class="preview-label">You Request</span>
+            <span class="preview-value" id="previewAmount">₦0</span>
+          </div>
+          <div class="preview-row">
+            <span class="preview-label">15% Processing Fee</span>
+            <span class="preview-value danger" id="previewFee">-₦0</span>
+          </div>
+          <div class="preview-divider"></div>
+          <div class="preview-receive">
+            <span class="preview-receive-label">You Receive</span>
+            <span class="preview-receive-value" id="previewReceive">₦0</span>
+          </div>
+        </div>
+        
+        <div class="input-group">
+          <div class="input-label">Withdrawal PIN</div>
+          <input type="password" class="input-field no-prefix pin-input" id="confirmPin" 
+                 placeholder="••••" maxlength="4" 
+                 oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+        </div>
+        
+        <button class="submit-btn" id="submitBtn" onclick="submitWithdrawal()">
+          <i class="fas fa-paper-plane"></i> Submit Withdrawal
+        </button>
+      </div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SET PIN
+═══════════════════════════════════════════════════════════════════ */
+async function setWithdrawalPin() {
+  const pin = document.getElementById('setPinInput')?.value?.trim();
+  
+  if (!pin || pin.length !== 4) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Invalid PIN',
+      text: 'Please enter a 4-digit PIN',
+      confirmButtonColor: '#3B82F6'
+    });
+    return;
+  }
+  
+  try {
+    await db.collection('users').doc(currentUserId).update({
+      withdrawalPin: hashPin(pin)
+    });
+    
+    Swal.fire({
+      icon: 'success',
+      title: 'PIN Set!',
+      text: 'Your withdrawal PIN has been created.',
+      timer: 2000,
+      showConfirmButton: false
+    });
+    
+    await loadPage();
+  } catch (error) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Failed',
+      text: error.message,
+      confirmButtonColor: '#EF4444'
+    });
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   AMOUNT SELECTION
+═══════════════════════════════════════════════════════════════════ */
+function selectQuickAmount(amount, btn) {
+  document.querySelectorAll('.quick-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('withdrawAmount').value = amount;
+  updatePreview(amount);
+}
+
+function onAmountInput(value) {
+  document.querySelectorAll('.quick-btn').forEach(b => b.classList.remove('active'));
+  const amount = parseFloat(value) || 0;
+  if (amount >= MIN_WITHDRAW) {
+    updatePreview(amount);
+  } else {
+    document.getElementById('previewCard').style.display = 'none';
+  }
+}
+
+function updatePreview(amount) {
+  const fee = Math.round(amount * FEE_PERCENT / 100);
+  const receive = amount - fee;
+  const previewCard = document.getElementById('previewCard');
+  
+  if (!previewCard) return;
+  
+  document.getElementById('previewAmount').textContent = '₦' + formatShort(amount);
+  document.getElementById('previewFee').textContent = '-₦' + formatShort(fee);
+  document.getElementById('previewReceive').textContent = '₦' + formatShort(receive);
+  previewCard.style.display = 'block';
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SUBMIT WITHDRAWAL
+═══════════════════════════════════════════════════════════════════ */
+async function submitWithdrawal() {
+  // Validate all conditions
+  if (!hasActivePlan) {
+    Swal.fire({
+      icon: 'error',
+      title: 'No Active Plan',
+      text: 'You need an active investment plan to withdraw.',
+      confirmButtonColor: '#3B82F6'
+    });
+    return;
+  }
+  
+  if (!isWithdrawalTimeOpen()) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Window Closed',
+      text: getNextOpeningMessage(),
+      confirmButtonColor: '#EF4444'
+    });
+    return;
+  }
+  
+  if (await hasWithdrawnToday()) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Daily Limit',
+      text: 'You have already withdrawn today.',
+      confirmButtonColor: '#EF4444'
+    });
+    return;
+  }
+  
+  const amountInput = document.getElementById('withdrawAmount');
+  const pinInput = document.getElementById('confirmPin');
+  const amount = parseFloat(amountInput?.value) || 0;
+  const pin = pinInput?.value?.trim();
+  
+  if (amount < MIN_WITHDRAW) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Below Minimum',
+      text: `Minimum withdrawal is ₦${formatShort(MIN_WITHDRAW)}`,
+      confirmButtonColor: '#3B82F6'
+    });
+    return;
+  }
+  
+  if (amount > withdrawalBalance) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Insufficient Balance',
+      text: 'Amount exceeds your withdrawal balance.',
+      confirmButtonColor: '#3B82F6'
+    });
+    return;
+  }
+  
+  if (!pin || pin.length !== 4) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Enter PIN',
+      text: 'Please enter your 4-digit withdrawal PIN.',
+      confirmButtonColor: '#3B82F6'
+    });
+    return;
+  }
+  
+  if (hashPin(pin) !== userData.withdrawalPin) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Incorrect PIN',
+      text: 'The PIN you entered is incorrect.',
+      confirmButtonColor: '#EF4444'
+    });
+    return;
+  }
+  
+  const fee = Math.round(amount * FEE_PERCENT / 100);
+  const receive = amount - fee;
+  const bank = userData.bankDetails || {};
+  
+  // Confirmation
+  const result = await Swal.fire({
+    title: 'Confirm Withdrawal',
+    html: `
+      <div style="text-align: left; background: #EFF6FF; border-radius: 12px; padding: 14px;">
+        <div style="display: flex; justify-content: space-between; padding: 6px 0;">
+          <span>Request Amount</span>
+          <span><strong>₦${formatShort(amount)}</strong></span>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 6px 0;">
+          <span>Processing Fee (15%)</span>
+          <span style="color: #EF4444;">-₦${formatShort(fee)}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 6px 0; border-top: 1px solid #DBEAFE; margin-top: 4px; font-weight: 800;">
+          <span>You Receive</span>
+          <span style="color: #10B981;">₦${formatShort(receive)}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 6px 0; margin-top: 4px;">
+          <span>Bank</span>
+          <span>${escapeHtml(bank.bankName)} · ${escapeHtml(bank.accountNumber)}</span>
+        </div>
+      </div>
+    `,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Confirm Withdrawal',
+    cancelButtonText: 'Cancel',
+    confirmButtonColor: '#3B82F6'
+  });
+  
+  if (!result.isConfirmed) return;
+  
+  // Process
+  document.getElementById('submitBtn').disabled = true;
+  
+  Swal.fire({
+    title: 'Processing Withdrawal...',
+    html: 'Please wait while we process your request',
+    allowOutsideClick: false,
+    didOpen: () => Swal.showLoading()
+  });
+  
+  try {
+    const refCode = 'KW-' + Date.now().toString(36).toUpperCase().slice(-8);
+    const today = getTodayStr();
+    
+    const batch = db.batch();
+    
+    // Update user balance
+    batch.update(db.collection('users').doc(currentUserId), {
+      withdrawalBalance: FV.increment(-amount),
+      lastWithdrawalDate: today
+    });
+    
+    // Create withdrawal record
+    batch.set(db.collection('withdrawals').doc(), {
+      userId: currentUserId,
+      userName: userData.fullName || userData.username || 'User',
+      userEmail: currentUser.email || '',
+      amount: amount,
+      feeAmount: fee,
+      feePercent: FEE_PERCENT,
+      receiveAmount: receive,
+      refCode: refCode,
+      status: 'pending',
+      bankName: bank.bankName,
+      accountName: bank.accountName,
+      accountNumber: bank.accountNumber,
+      withdrawalDate: today,
+      withdrawalHour: new Date().getHours(),
+      requestedAt: FV.serverTimestamp(),
+      updatedAt: FV.serverTimestamp()
+    });
+    
+    // Create transaction record
+    batch.set(db.collection('transactions').doc(), {
+      userId: currentUserId,
+      type: 'withdrawal',
+      amount: amount,
+      status: 'pending',
+      refCode: refCode,
+      description: `Withdrawal to ${bank.bankName} (${bank.accountNumber}) - Ref: ${refCode}`,
+      wallet: 'withdrawal',
+      createdAt: FV.serverTimestamp()
+    });
+    
+    await batch.commit();
+    
+    // Update local state
+    withdrawalBalance -= amount;
+    document.getElementById('balanceDisplay').textContent = formatCurrency(withdrawalBalance);
+    
+    Swal.fire({
+      icon: 'success',
+      title: 'Withdrawal Submitted! 🎉',
+      html: `
+        <div style="font-size: 15px;">
+          <p><strong>Amount:</strong> ₦${formatShort(amount)}</p>
+          <p><strong>Fee (15%):</strong> -₦${formatShort(fee)}</p>
+          <p><strong>You Receive:</strong> <span style="color: #10B981; font-weight: 800;">₦${formatShort(receive)}</span></p>
+          <p style="margin-top: 8px;"><strong>Reference:</strong> ${refCode}</p>
+          <p style="font-size: 12px; color: #64748B;">Processing within 24 hours</p>
+        </div>
+      `,
+      confirmButtonColor: '#3B82F6'
+    });
+    
+    await loadPage();
+    
+  } catch (error) {
+    console.error('Withdrawal error:', error);
+    Swal.fire({
+      icon: 'error',
+      title: 'Withdrawal Failed',
+      text: error.message || 'Please try again later.',
+      confirmButtonColor: '#EF4444'
+    });
+    document.getElementById('submitBtn').disabled = false;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   LOAD HISTORY
+═══════════════════════════════════════════════════════════════════ */
+async function loadHistory() {
+  const container = document.getElementById('historyList');
+  
+  try {
+    let snapshot;
+    try {
+      snapshot = await db.collection('withdrawals')
+        .where('userId', '==', currentUserId)
+        .orderBy('requestedAt', 'desc')
+        .limit(20)
+        .get();
+    } catch (indexErr) {
+      // Fallback without index
+      const rawSnap = await db.collection('withdrawals')
+        .where('userId', '==', currentUserId)
+        .get();
+      
+      const docs = rawSnap.docs
+        .sort((a, b) => {
+          const aTime = a.data().requestedAt?.toMillis() || 0;
+          const bTime = b.data().requestedAt?.toMillis() || 0;
+          return bTime - aTime;
+        })
+        .slice(0, 20);
+      
+      snapshot = { docs, empty: docs.length === 0 };
+    }
+    
+    if (snapshot.empty) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">📋</div>
+          <div class="empty-title">No Withdrawals Yet</div>
+          <div class="empty-text">Your withdrawal history will appear here</div>
+        </div>`;
+      return;
+    }
+    
+    container.innerHTML = '';
+    
+    snapshot.docs.forEach(doc => {
+      const data = doc.data();
+      const status = data.status || 'pending';
+      const date = data.requestedAt?.toDate() || new Date();
+      const dateStr = date.toLocaleDateString('en-NG', {
+        day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+      });
+      
+      const fee = data.feeAmount || Math.round((data.amount || 0) * FEE_PERCENT / 100);
+      const receive = data.receiveAmount || ((data.amount || 0) - fee);
+      
+      const iconMap = { pending: '⏳', approved: '✅', rejected: '❌' };
+      const labelMap = { pending: 'Pending', approved: 'Approved', rejected: 'Rejected' };
+      
+      container.innerHTML += `
+        <div class="history-item">
+          <div class="hist-icon ${status}">${iconMap[status] || '⏳'}</div>
+          <div class="hist-info">
+            <div class="hist-amount">₦${formatShort(data.amount)}</div>
+            <div class="hist-bank">${escapeHtml(data.bankName || '—')} · ${escapeHtml(data.accountName || '—')}</div>
+            <div class="hist-ref">Ref: ${data.refCode || '—'}</div>
+          </div>
+          <div class="hist-right">
+            <div class="hist-status ${status}">${labelMap[status] || 'Pending'}</div>
+            <div class="hist-date">${dateStr}</div>
+            <div class="hist-receive">Receive: ₦${formatShort(receive)}</div>
+          </div>
+        </div>`;
+    });
+    
+  } catch (error) {
+    console.error('History error:', error);
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">⚠️</div>
+        <div class="empty-title">Could not load history</div>
+      </div>`;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   EXPORT FUNCTIONS
+═══════════════════════════════════════════════════════════════════ */
+window.toggleTheme = toggleTheme;
+window.setWithdrawalPin = setWithdrawalPin;
+window.selectQuickAmount = selectQuickAmount;
+window.onAmountInput = onAmountInput;
+window.submitWithdrawal = submitWithdrawal;
+
+console.log('🚀 KineticWealth Withdrawal Page Ready');
+console.log('📋 Rules: Min ₦1,500 | 15% Fee | Mon-Fri 10AM-5PM | Once Daily | Active Plan Required');
+</script>
+
+</body>
+</html>
