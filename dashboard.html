@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+<title>KineticWealth · My Profile</title>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+
+<style>
+/* ═══════════════════════════════════════
+   KINETICWEALTH DASHBOARD THEME
+   ═══════════════════════════════════════ */
+[data-theme="light"] {
+  --bg: #F0F6FF;
+  --card: #FFFFFF;
+  --card2: #F8FAFE;
+  --border: #DBEAFE;
+  --text: #1E293B;
+  --sub: #64748B;
+  --muted: #94A3B8;
+  --topbar-bg: rgba(255, 255, 255, 0.95);
+  --shadow: 0 4px 20px rgba(30, 64, 175, 0.08);
+  --chart-grid: #DBEAFE;
+}
+
+[data-theme="dark"] {
+  --bg: #0F172A;
+  --card: #1E293B;
+  --card2: #273548;
+  --border: rgba(59, 130, 246, 0.15);
+  --text: #F1F5F9;
+  --sub: #94A3B8;
+  --muted: #64748B;
+  --topbar-bg: rgba(15, 23, 42, 0.97);
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  --chart-grid: rgba(255, 255, 255, 0.06);
+}
+
+:root {
+  --primary: #1E40AF;
+  --primary-dark: #1E3A8A;
+  --secondary: #3B82F6;
+  --accent: #06B6D4;
+  --success: #10B981;
+  --danger: #EF4444;
+  --warning: #F59E0B;
+  --gradient-1: #1E40AF;
+  --gradient-2: #3B82F6;
+  --gradient-3: #06B6D4;
+  --nav-h: 64px;
+  --bot-h: 72px;
+  --radius-sm: 12px;
+  --radius: 16px;
+  --radius-lg: 20px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  padding-bottom: calc(var(--bot-h) + 20px);
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* Top Bar */
+.topbar {
+  position: sticky; top: 0; z-index: 900;
+  height: var(--nav-h);
+  background: var(--topbar-bg);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px;
+  box-shadow: var(--shadow);
+}
+
+.brand-name {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 20px; font-weight: 800;
+  background: linear-gradient(135deg, var(--gradient-1), var(--gradient-3));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+
+.theme-btn {
+  width: 40px; height: 40px;
+  border-radius: var(--radius-sm);
+  background: var(--card2);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  transition: all 0.2s;
+}
+
+.icon-btn {
+  width: 40px; height: 40px;
+  border-radius: var(--radius-sm);
+  background: var(--card2);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--sub); cursor: pointer; font-size: 16px;
+  transition: all 0.2s;
+}
+
+/* Profile Hero */
+.profile-hero {
+  background: linear-gradient(135deg, var(--gradient-1), var(--gradient-2));
+  padding: 28px 18px 80px;
+  position: relative;
+  overflow: hidden;
+}
+
+.profile-hero::after {
+  content: '';
+  position: absolute;
+  bottom: -1px; left: 0; right: 0;
+  height: 40px;
+  background: var(--bg);
+  border-radius: 40px 40px 0 0;
+}
+
+.hero-glow {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 70% 50% at 50% 60%, rgba(6, 182, 212, 0.12) 0%, transparent 70%);
+}
+
+.avatar-section {
+  display: flex; flex-direction: column; align-items: center;
+  position: relative; z-index: 1;
+}
+
+.profile-avatar {
+  width: 84px; height: 84px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, var(--secondary), var(--accent));
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 34px; font-weight: 800;
+  color: white;
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+  margin-bottom: 14px;
+}
+
+.profile-name {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 22px; font-weight: 800;
+  color: white; margin-bottom: 4px;
+}
+
+.profile-email {
+  font-size: 13px; color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 12px;
+}
+
+.profile-badges {
+  display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+}
+
+.profile-badge {
+  padding: 5px 14px; border-radius: 30px;
+  font-size: 11px; font-weight: 700;
+}
+
+.badge-verified {
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--success);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.badge-member {
+  background: rgba(59, 130, 246, 0.2);
+  color: var(--secondary);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.badge-vip {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(217, 119, 6, 0.3));
+  color: #FCD34D;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+/* Wallet Cards */
+.wallets-wrap {
+  padding: 0 16px;
+  margin-top: -44px;
+  position: relative;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.wallet-card {
+  border-radius: var(--radius);
+  padding: 18px 16px;
+  color: white;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.wallet-card.deposit {
+  background: linear-gradient(135deg, var(--gradient-1), var(--gradient-2));
+}
+
+.wallet-card.withdrawal {
+  background: linear-gradient(135deg, #059669, #10B981);
+}
+
+.wallet-label {
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  opacity: 0.85; margin-bottom: 6px;
+  display: flex; align-items: center; gap: 5px;
+}
+
+.wallet-amount {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 22px; font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.wallet-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(255, 255, 255, 0.18);
+  padding: 8px 14px; border-radius: 25px;
+  font-size: 11px; font-weight: 700;
+  color: white; text-decoration: none;
+  transition: all 0.2s;
+}
+
+.wallet-btn:hover { background: rgba(255, 255, 255, 0.25); }
+
+/* Stats */
+.stats-grid {
+  padding: 0 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.stat-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 16px;
+  border: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+  box-shadow: var(--shadow);
+  transition: all 0.2s;
+}
+
+.stat-card:hover { transform: translateY(-2px); border-color: var(--secondary); }
+
+.stat-icon {
+  width: 44px; height: 44px;
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+
+.stat-icon.blue { background: rgba(59, 130, 246, 0.1); color: var(--secondary); }
+.stat-icon.green { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+.stat-icon.amber { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+.stat-icon.purple { background: rgba(139, 92, 246, 0.1); color: #8B5CF6; }
+
+.stat-value {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 18px; font-weight: 800;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.stat-label {
+  font-size: 11px; color: var(--sub); font-weight: 600;
+}
+
+/* Section */
+.section-wrap { padding: 0 16px; margin-bottom: 16px; }
+
+.section-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 17px; font-weight: 800;
+  color: var(--text); margin-bottom: 12px;
+}
+
+/* Chart Card */
+.chart-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 18px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+}
+
+.chart-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.chart-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 15px; font-weight: 800; color: var(--text);
+}
+
+.chart-total {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 20px; font-weight: 800; color: var(--success);
+}
+
+.chart-wrap { height: 170px; }
+
+/* Menu Card */
+.menu-card {
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.menu-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border);
+  text-decoration: none; cursor: pointer;
+  transition: all 0.2s;
+}
+
+.menu-item:last-child { border-bottom: none; }
+
+.menu-item:hover { background: var(--card2); }
+
+.menu-item:active { transform: scale(0.99); }
+
+.menu-icon {
+  width: 42px; height: 42px;
+  border-radius: 13px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+}
+
+.menu-icon.blue { background: rgba(59, 130, 246, 0.1); color: var(--secondary); }
+.menu-icon.green { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+.menu-icon.amber { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+.menu-icon.purple { background: rgba(139, 92, 246, 0.1); color: #8B5CF6; }
+.menu-icon.cyan { background: rgba(6, 182, 212, 0.1); color: var(--accent); }
+.menu-icon.red { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+
+.menu-label {
+  font-size: 14px; font-weight: 600; color: var(--text); flex: 1;
+}
+
+.menu-arrow { color: var(--muted); font-size: 14px; }
+
+.menu-badge {
+  padding: 4px 12px; border-radius: 20px;
+  font-size: 11px; font-weight: 700;
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--secondary);
+}
+
+.menu-badge.green-badge {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+  animation: pulse-badge 2s infinite;
+}
+
+@keyframes pulse-badge {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* Logout */
+.logout-section { padding: 8px 16px 100px; }
+
+.logout-btn {
+  width: 100%; padding: 16px;
+  border-radius: var(--radius);
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: var(--danger);
+  font-size: 15px; font-weight: 700;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+
+.logout-btn:hover { background: rgba(239, 68, 68, 0.12); }
+
+/* Bottom Nav */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  height: var(--bot-h);
+  background: var(--topbar-bg);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-around;
+  padding: 0 8px; z-index: 800;
+}
+
+.nav-item {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  color: var(--muted); text-decoration: none;
+  font-size: 10px; font-weight: 600;
+  padding: 8px 12px; border-radius: 12px;
+  transition: all 0.3s; position: relative;
+}
+
+.nav-item i { font-size: 22px; }
+
+.nav-item.active { color: var(--secondary); }
+
+.nav-item.active::before {
+  content: '';
+  position: absolute; top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 24px; height: 3px;
+  background: var(--secondary);
+  border-radius: 0 0 3px 3px;
+}
+
+@media (max-width: 360px) {
+  .wallet-amount { font-size: 18px; }
+  .stat-value { font-size: 16px; }
+  .profile-avatar { width: 72px; height: 72px; font-size: 28px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="topbar">
+  <span class="brand-name">KineticWealth</span>
+  <div class="topbar-right">
+    <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">
+      <i class="fas fa-moon"></i>
+    </button>
+    <button class="icon-btn" onclick="showNotifications()">
+      <i class="fas fa-bell"></i>
+    </button>
+  </div>
+</div>
+
+<!-- Profile Hero -->
+<div class="profile-hero">
+  <div class="hero-glow"></div>
+  <div class="avatar-section">
+    <div class="profile-avatar" id="profileAvatar">K</div>
+    <div class="profile-name" id="profileName">Loading...</div>
+    <div class="profile-email" id="profileEmail">—</div>
+    <div class="profile-badges">
+      <span class="profile-badge badge-verified"><i class="fas fa-shield-halved"></i> Verified</span>
+      <span class="profile-badge badge-member"><i class="fas fa-user-check"></i> Member</span>
+      <span class="profile-badge badge-vip" id="vipBadge">⭐ VIP 0</span>
+    </div>
+  </div>
+</div>
+
+<!-- Wallets -->
+<div class="wallets-wrap">
+  <div class="wallet-card deposit">
+    <div class="wallet-label"><i class="fas fa-arrow-down"></i> Deposit Wallet</div>
+    <div class="wallet-amount">₦<span id="depositBalance">0.00</span></div>
+    <a href="deposit.html" class="wallet-btn"><i class="fas fa-plus"></i> Top Up</a>
+  </div>
+  <div class="wallet-card withdrawal">
+    <div class="wallet-label"><i class="fas fa-arrow-up"></i> Withdrawal Wallet</div>
+    <div class="wallet-amount">₦<span id="withdrawalBalance">0.00</span></div>
+    <a href="withdraw.html" class="wallet-btn"><i class="fas fa-paper-plane"></i> Withdraw</a>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon blue"><i class="fas fa-chart-line"></i></div>
+    <div>
+      <div class="stat-value" id="totalPlans">0</div>
+      <div class="stat-label">Active Plans</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon green"><i class="fas fa-coins"></i></div>
+    <div>
+      <div class="stat-value" id="totalEarned">₦0</div>
+      <div class="stat-label">Total Earned</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon amber"><i class="fas fa-users"></i></div>
+    <div>
+      <div class="stat-value" id="referralCount">0</div>
+      <div class="stat-label">Referrals</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon purple"><i class="fas fa-gift"></i></div>
+    <div>
+      <div class="stat-value" id="refEarnings">₦0</div>
+      <div class="stat-label">Ref Earnings</div>
+    </div>
+  </div>
+</div>
+
+<!-- Earnings Chart -->
+<div class="section-wrap">
+  <div class="chart-card">
+    <div class="chart-header">
+      <div>
+        <div class="chart-title">Earnings Overview (7 Days)</div>
+        <div class="chart-total" id="chartTotal">₦0</div>
+      </div>
+      <div style="font-size: 12px; font-weight: 700; color: var(--sub);">This Week</div>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="earningsChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Menu -->
+<div class="section-wrap">
+  <div class="section-title">Quick Links</div>
+  <div class="menu-card">
+    <a href="investments.html" class="menu-item">
+      <div class="menu-icon blue"><i class="fas fa-chart-bar"></i></div>
+      <div class="menu-label">My Investments</div>
+      <i class="fas fa-chevron-right menu-arrow"></i>
+    </a>
+    <a href="transactions.html" class="menu-item">
+      <div class="menu-icon green"><i class="fas fa-receipt"></i></div>
+      <div class="menu-label">Transaction History</div>
+      <i class="fas fa-chevron-right menu-arrow"></i>
+    </a>
+    <a href="referrals.html" class="menu-item">
+      <div class="menu-icon amber"><i class="fas fa-user-plus"></i></div>
+      <div class="menu-label">Referral Team</div>
+      <span class="menu-badge" id="menuRefBadge">0</span>
+    </a>
+    <a href="deposit.html" class="menu-item">
+      <div class="menu-icon blue"><i class="fas fa-credit-card"></i></div>
+      <div class="menu-label">Deposit Funds</div>
+      <i class="fas fa-chevron-right menu-arrow"></i>
+    </a>
+    <a href="withdraw.html" class="menu-item">
+      <div class="menu-icon cyan"><i class="fas fa-paper-plane"></i></div>
+      <div class="menu-label">Withdraw Funds</div>
+      <i class="fas fa-chevron-right menu-arrow"></i>
+    </a>
+    <a href="bind-wallet.html" class="menu-item">
+      <div class="menu-icon green"><i class="fas fa-university"></i></div>
+      <div class="menu-label">Bind Bank Account</div>
+      <i class="fas fa-chevron-right menu-arrow"></i>
+    </a>
+    <a href="plans.html" class="menu-item">
+      <div class="menu-icon purple"><i class="fas fa-crown"></i></div>
+      <div class="menu-label">Investment Plans</div>
+      <span class="menu-badge green-badge">Earn</span>
+    </a>
+    <div class="menu-item" onclick="showSecuritySettings()">
+      <div class="menu-icon purple"><i class="fas fa-shield-halved"></i></div>
+      <div class="menu-label">Security Settings</div>
+      <i class="fas fa-chevron-right menu-arrow"></i>
+    </div>
+    <div class="menu-item" onclick="showSupportInfo()">
+      <div class="menu-icon amber"><i class="fas fa-headset"></i></div>
+      <div class="menu-label">Help & Support</div>
+      <i class="fas fa-chevron-right menu-arrow"></i>
+    </div>
+  </div>
+</div>
+
+<!-- Logout -->
+<div class="logout-section">
+  <button class="logout-btn" onclick="confirmLogout()">
+    <i class="fas fa-sign-out-alt"></i> Sign Out
+  </button>
+</div>
+
+<!-- Bottom Nav -->
+<div class="bottom-nav">
+  <a href="home.html" class="nav-item">
+    <i class="fas fa-house"></i><span>Home</span>
+  </a>
+  <a href="plans.html" class="nav-item">
+    <i class="fas fa-cube"></i><span>Plans</span>
+  </a>
+  <a href="referrals.html" class="nav-item">
+    <i class="fas fa-users"></i><span>Team</span>
+  </a>
+  <a href="dashboard.html" class="nav-item active">
+    <i class="fas fa-user"></i><span>Profile</span>
+  </a>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   FIREBASE INIT
+═══════════════════════════════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "AIzaSyCFwefJ8rxZUDLbDsRHnHdA-28zPs49rlo",
+  authDomain: "cashpoint-ac4f4.firebaseapp.com",
+  projectId: "cashpoint-ac4f4",
+  storageBucket: "cashpoint-ac4f4.firebasestorage.app",
+  messagingSenderId: "16133206416",
+  appId: "1:16133206416:web:a093f4e153ad2c9bcc8315"
+};
+
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const FV = firebase.firestore.FieldValue;
+
+/* ═══════════════════════════════════════════════════════════════════
+   THEME
+═══════════════════════════════════════════════════════════════════ */
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = document.getElementById('themeBtn');
+  if (btn) {
+    btn.innerHTML = theme === 'dark' 
+      ? '<i class="fas fa-sun"></i>' 
+      : '<i class="fas fa-moon"></i>';
+  }
+  localStorage.setItem('kw-dashboard-theme', theme);
+  if (earningsChart) buildEarningsChart([]);
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  applyTheme(current === 'dark' ? 'light' : 'dark');
+}
+
+applyTheme(localStorage.getItem('kw-dashboard-theme') || 'light');
+
+/* ═══════════════════════════════════════════════════════════════════
+   GLOBAL STATE
+═══════════════════════════════════════════════════════════════════ */
+let currentUser = null;
+let earningsChart = null;
+
+const formatCurrency = (n) => Number(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 });
+const formatShort = (n) => {
+  const v = Number(n || 0);
+  if (v >= 1e6) return '₦' + (v / 1e6).toFixed(1) + 'M';
+  if (v >= 1e3) return '₦' + (v / 1e3).toFixed(1) + 'K';
+  return '₦' + v.toFixed(0);
+};
+
+/* ═══════════════════════════════════════════════════════════════════
+   AUTH STATE
+═══════════════════════════════════════════════════════════════════ */
+auth.onAuthStateChanged(async (user) => {
+  if (!user) {
+    window.location.href = 'login.html';
+    return;
+  }
+  currentUser = user;
+  await loadDashboard();
+});
+
+/* ═══════════════════════════════════════════════════════════════════
+   LOAD DASHBOARD
+═══════════════════════════════════════════════════════════════════ */
+async function loadDashboard() {
+  try {
+    const userDoc = await db.collection('users').doc(currentUser.uid).get();
+    
+    if (!userDoc.exists) {
+      console.warn('User document not found');
+      return;
+    }
+    
+    const data = userDoc.data();
+    const name = data.fullName || data.username || 'User';
+    const firstName = name.split(' ')[0];
+    
+    // Profile
+    document.getElementById('profileAvatar').textContent = name.charAt(0).toUpperCase();
+    document.getElementById('profileName').textContent = name;
+    document.getElementById('profileEmail').textContent = currentUser.email || '—';
+    
+    // Balances
+    document.getElementById('depositBalance').textContent = formatCurrency(data.depositBalance || 0);
+    document.getElementById('withdrawalBalance').textContent = formatCurrency(data.withdrawalBalance || 0);
+    
+    // Stats
+    document.getElementById('totalEarned').textContent = formatShort(data.totalEarnings || 0);
+    document.getElementById('referralCount').textContent = data.referralCount || 0;
+    document.getElementById('refEarnings').textContent = formatShort(data.totalRefEarnings || 0);
+    document.getElementById('menuRefBadge').textContent = data.referralCount || 0;
+    
+    // VIP Badge
+    const purchasedPlans = data.purchasedPlans || [];
+    const vipLevel = getVIPLevel(purchasedPlans);
+    const vipBadge = document.getElementById('vipBadge');
+    
+    if (vipLevel > 0) {
+      vipBadge.textContent = `⭐ VIP ${vipLevel}`;
+      vipBadge.style.background = 'linear-gradient(135deg, rgba(245,158,11,0.3), rgba(217,119,6,0.3))';
+      vipBadge.style.color = '#FCD34D';
+    } else {
+      vipBadge.textContent = '⭐ VIP 0';
+    }
+    
+    // Active plans count
+    const investmentsSnap = await db.collection('investments')
+      .where('userId', '==', currentUser.uid)
+      .where('status', '==', 'active')
+      .get();
+    
+    document.getElementById('totalPlans').textContent = investmentsSnap.size;
+    
+    // Build chart
+    const allInvestments = await db.collection('investments')
+      .where('userId', '==', currentUser.uid)
+      .get();
+    
+    buildEarningsChart(allInvestments.docs.map(d => d.data()));
+    
+    // Update last login
+    await db.collection('users').doc(currentUser.uid).update({
+      lastLogin: FV.serverTimestamp()
+    });
+    
+  } catch (error) {
+    console.error('Dashboard load error:', error);
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Failed to load dashboard. Please refresh.',
+      confirmButtonColor: '#EF4444'
+    });
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   VIP LEVEL
+═══════════════════════════════════════════════════════════════════ */
+function getVIPLevel(purchasedPlans) {
+  if (!purchasedPlans || !Array.isArray(purchasedPlans) || purchasedPlans.length === 0) return 0;
+  
+  const vipPlanIds = ['vip1', 'vip2', 'vip3', 'vip4', 'vip5', 'vip6', 'vip7', 'vip8', 'vip9', 'vip10'];
+  const purchasedVips = purchasedPlans.filter(id => vipPlanIds.includes(id));
+  
+  if (purchasedVips.length === 0) return 0;
+  
+  const levels = purchasedVips.map(id => {
+    const match = id.match(/vip(\d+)/);
+    return match ? parseInt(match[1]) : 0;
+  });
+  
+  return Math.max(...levels, 0);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   EARNINGS CHART
+═══════════════════════════════════════════════════════════════════ */
+function buildEarningsChart(investments) {
+  const ctx = document.getElementById('earningsChart')?.getContext('2d');
+  if (!ctx) return;
+  
+  if (earningsChart) earningsChart.destroy();
+  
+  const labels = [];
+  const data = [];
+  let total = 0;
+  
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    labels.push(d.toLocaleDateString('en-NG', { weekday: 'short' }));
+    
+    let dayEarnings = 0;
+    if (investments && investments.length > 0) {
+      dayEarnings = investments.reduce((sum, inv) => {
+        if (inv.status === 'active' || inv.status === 'completed') {
+          return sum + (Number(inv.dailyROI) || 0);
+        }
+        return sum;
+      }, 0);
+    }
+    
+    data.push(dayEarnings > 0 ? dayEarnings : 0);
+    total += dayEarnings;
+  }
+  
+  document.getElementById('chartTotal').textContent = formatShort(total);
+  
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const gridColor = isDark ? 'rgba(255,255,255,0.06)' : '#DBEAFE';
+  const tickColor = isDark ? '#94A3B8' : '#64748B';
+  
+  earningsChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: '₦ Earnings',
+        data,
+        borderColor: '#3B82F6',
+        backgroundColor: 'rgba(59, 130, 246, 0.08)',
+        tension: 0.4,
+        fill: true,
+        pointBackgroundColor: '#1E40AF',
+        pointBorderColor: '#3B82F6',
+        pointBorderWidth: 2,
+        pointRadius: 5,
+        pointHoverRadius: 7
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => `₦${ctx.parsed.y.toLocaleString()}`
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: { color: gridColor },
+          ticks: { 
+            color: tickColor, 
+            font: { size: 10 },
+            callback: (v) => '₦' + (v >= 1000 ? (v/1000).toFixed(0) + 'K' : v)
+          }
+        },
+        x: {
+          grid: { display: false },
+          ticks: { color: tickColor, font: { size: 10 } }
+        }
+      }
+    }
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ACTIONS
+═══════════════════════════════════════════════════════════════════ */
+function showNotifications() {
+  Swal.fire({
+    title: '🔔 Notifications',
+    html: `
+      <div style="text-align: left; font-size: 13px; line-height: 2;">
+        <p>✨ Welcome to <strong>KineticWealth</strong>!</p>
+        <p>💰 Claim your daily income every 24 hours.</p>
+        <p>👥 Earn <strong>10% / 3% / 1%</strong> on referrals.</p>
+        <p>🎁 Share your referral link to grow your team!</p>
+      </div>
+    `,
+    confirmButtonColor: '#3B82F6'
+  });
+}
+
+function showSecuritySettings() {
+  Swal.fire({
+    title: '🔒 Security Settings',
+    html: `
+      <div style="text-align: left; font-size: 14px; line-height: 2.5;">
+        <p><a href="change-password.html" style="color: #3B82F6; text-decoration: none;">
+          <i class="fas fa-key"></i> Change Password
+        </a></p>
+        <p><a href="change-pin.html" style="color: #3B82F6; text-decoration: none;">
+          <i class="fas fa-lock"></i> Change Withdrawal PIN
+        </a></p>
+        <p><a href="bind-wallet.html" style="color: #3B82F6; text-decoration: none;">
+          <i class="fas fa-university"></i> Update Bank Details
+        </a></p>
+      </div>
+    `,
+    confirmButtonColor: '#3B82F6'
+  });
+}
+
+function showSupportInfo() {
+  Swal.fire({
+    title: '💬 Help & Support',
+    html: `
+      <div style="text-align: center; font-size: 14px; line-height: 2.5;">
+        <p>
+          <a href="https://t.me/mm" target="_blank" style="color: #3B82F6; text-decoration: none;">
+            <i class="fab fa-telegram"></i> Telegram Support
+          </a>
+        </p>
+        <p>
+          <a href="https://wa.me/9167378733" target="_blank" style="color: #25D366; text-decoration: none;">
+            <i class="fab fa-whatsapp"></i> WhatsApp Support
+          </a>
+        </p>
+        <p>
+          <a href="mailto:support@kineticwealth.com" style="color: #3B82F6; text-decoration: none;">
+            <i class="fas fa-envelope"></i> Email Support
+          </a>
+        </p>
+      </div>
+    `,
+    confirmButtonColor: '#3B82F6'
+  });
+}
+
+function confirmLogout() {
+  Swal.fire({
+    title: 'Sign Out?',
+    text: 'Are you sure you want to sign out of your account?',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Yes, Sign Out',
+    cancelButtonText: 'Cancel',
+    confirmButtonColor: '#EF4444',
+    cancelButtonColor: '#3B82F6'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      auth.signOut().then(() => {
+        window.location.href = 'login.html';
+      });
+    }
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   EXPORT
+═══════════════════════════════════════════════════════════════════ */
+window.toggleTheme = toggleTheme;
+window.showNotifications = showNotifications;
+window.showSecuritySettings = showSecuritySettings;
+window.showSupportInfo = showSupportInfo;
+window.confirmLogout = confirmLogout;
+
+console.log('🚀 KineticWealth Dashboard Ready');
+</script>
+
+</body>
+</html>
