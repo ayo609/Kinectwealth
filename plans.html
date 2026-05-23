@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover"/>
+<title>Kinetic Wealth · Investment Plans</title>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   THEME VARIABLES (PREMIUM COBALT BLUE & WHITE SYSTEM)
+═══════════════════════════════════════════════════════════════════ */
+:root {
+  --primary:       #0052CC; /* Premium Kinetic Blue */
+  --primary-dark:  #003D99;
+  --primary-light: #E5EFFF;
+  --bg-main:       #F4F7FB;
+  --card-bg:       #FFFFFF;
+  --card-bg-inner: #F8FAFC;
+  --text-primary:  #0F172A;
+  --text-muted:    #64748B;
+  --border-light:  #E2E8F0;
+  --success:       #059669;
+  --success-light: #D1FAE5;
+  --danger:        #DC2626;
+  --danger-light:  #FEE2E2;
+  --warning:       #D97706;
+  --warning-light: #FEF3C7;
+}
+
+[data-theme="dark"] {
+  --primary:       #3B82F6;
+  --primary-dark:  #60A5FA;
+  --primary-light: #1E3A8A;
+  --bg-main:       #0F172A;
+  --card-bg:       #1E293B;
+  --card-bg-inner: #151D2A;
+  --text-primary:  #F8FAFC;
+  --text-muted:    #94A3B8;
+  --border-light:  #334155;
+  --success:       #10B981;
+  --success-light: #064E3B;
+  --danger:        #EF4444;
+  --danger-light:  #7F1D1D;
+  --warning:       #F59E0B;
+  --warning-light: #78350F;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+body {
+  background: var(--bg-main);
+  color: var(--text-primary);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: 100px;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* ========== APP HEADER ========== */
+.app-header {
+  background: var(--primary);
+  padding: 16px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 82, 204, 0.15);
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+.icon-circle {
+  width: 38px;
+  height: 38px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #FFFFFF;
+  font-size: 16px;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.icon-circle:active { background: rgba(255, 255, 255, 0.3); }
+
+/* ========== MAIN CONTAINER ========== */
+.main-container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+/* Balance Banner */
+.balance-banner {
+  background: linear-gradient(135deg, #0F172A, #1E293B);
+  border-radius: 20px;
+  padding: 20px;
+  margin: 20px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.balance-info .label {
+  font-size: 12px;
+  color: #94A3B8;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.balance-amount {
+  font-size: 26px;
+  font-weight: 800;
+  color: #FFFFFF;
+  letter-spacing: -0.5px;
+}
+
+.balance-icon {
+  width: 46px;
+  height: 46px;
+  background: rgba(59, 130, 246, 0.15);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #3B82F6;
+}
+
+/* Referral Banner */
+.referral-banner {
+  background: var(--card-bg);
+  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+
+.referral-banner h4 {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-primary);
+}
+
+.referral-banner h4 i { color: var(--warning); }
+
+.referral-levels {
+  display: flex;
+  gap: 10px;
+}
+
+.level {
+  flex: 1;
+  text-align: center;
+  padding: 10px 6px;
+  background: var(--card-bg-inner);
+  border-radius: 12px;
+  border: 1px solid var(--border-light);
+}
+
+.level .percent {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--primary);
+  margin-bottom: 2px;
+}
+
+.level .label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* Section Title */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.plan-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* Plans Grid / Cards */
+.plans-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.plan-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-light);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.plan-card:active { transform: scale(0.99); }
+
+.plan-card.purchased {
+  border-color: var(--success);
+}
+
+.plan-header {
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.plan-icon {
+  width: 44px;
+  height: 44px;
+  background: var(--primary-light);
+  color: var(--primary);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+.plan-card.purchased .plan-icon {
+  background: var(--success-light);
+  color: var(--success);
+}
+
+.plan-name-container { flex: 1; }
+
+.plan-name-container h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 30px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.badge.hot { background: var(--danger-light); color: var(--danger); }
+.badge.popular { background: var(--warning-light); color: var(--warning); }
+.badge.premium { background: var(--primary-light); color: var(--primary); }
+
+.plan-details {
+  padding: 16px 20px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.detail {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail .detail-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 3px;
+}
+
+.detail .detail-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.detail .detail-value.highlight {
+  color: var(--success);
+}
+
+.plan-footer {
+  padding: 14px 20px;
+  background: var(--card-bg-inner);
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.plan-price {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.invest-btn {
+  padding: 8px 18px;
+  background: var(--primary);
+  border: none;
+  border-radius: 30px;
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.invest-btn:active { background: var(--primary-dark); }
+
+.invest-btn:disabled {
+  background: var(--text-muted);
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.purchased-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--success);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* ========== BOTTOM TAB BAR ========== */
+.tab-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--card-bg); border-top: 1px solid var(--border-light);
+  display: flex; justify-content: space-around; padding: 12px 20px 24px;
+  max-width: 500px; margin: 0 auto; z-index: 100;
+}
+
+.tab-item {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  text-decoration: none; font-size: 11px; font-weight: 600; color: var(--text-muted);
+}
+
+.tab-item i { font-size: 20px; }
+.tab-item.active { color: var(--primary); }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="header-row">
+    <div class="header-left">
+      <a href="home.html" class="icon-circle">
+        <i class="fas fa-arrow-left"></i>
+      </a>
+      <div class="header-title">Invest</div>
+    </div>
+    <div class="icon-circle" onclick="toggleTheme()" id="themeToggleBtn">
+      <i class="fas fa-moon"></i>
+    </div>
+  </div>
+</div>
+
+<div class="main-container">
+  
+  <!-- Balance Banner -->
+  <div class="balance-banner">
+    <div class="balance-info">
+      <div class="label">Deposit Balance</div>
+      <div class="balance-amount" id="depositBalance">₦0</div>
+    </div>
+    <div class="balance-icon">
+      <i class="fas fa-wallet"></i>
+    </div>
+  </div>
+
+  <!-- Referral Incentives -->
+  <div class="referral-banner">
+    <h4><i class="fas fa-gift"></i> Referral Commission</h4>
+    <div class="referral-levels">
+      <div class="level">
+        <div class="percent">10%</div>
+        <div class="label">Tier 1 Downline</div>
+      </div>
+      <div class="level">
+        <div class="percent">3%</div>
+        <div class="label">Tier 2 Downline</div>
+      </div>
+      <div class="level">
+        <div class="percent">1%</div>
+        <div class="label">Tier 3 Downline</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section Title -->
+  <div class="section-header">
+    <div class="section-title">Available Infrastructure Portfolios</div>
+    <div class="plan-count" id="planCount">0 Plans</div>
+  </div>
+
+  <!-- Dynamic Plans Insertion -->
+  <div class="plans-grid" id="plansGrid"></div>
+
+</div>
+
+<!-- Universal App Navigation Tabbed Bar -->
+<div class="tab-bar">
+  <a href="home.html" class="tab-item"><i class="fas fa-house"></i><span>Home</span></a>
+  <a href="plans.html" class="tab-item active"><i class="fas fa-bolt"></i><span>Plans</span></a>
+  <a href="withdraw.html" class="tab-item"><i class="fas fa-money-bill-transfer"></i><span>Withdraw</span></a>
+  <a href="investments.html" class="tab-item"><i class="fas fa-chart-pie"></i><span>Portfolio</span></a>
+  <a href="dashboard.html" class="tab-item"><i class="fas fa-user"></i><span>Profile</span></a>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   FIREBASE INITIALIZATION
+═══════════════════════════════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "AIzaSyBl6HEVa9mUuROvnohMKzeEzzc0aTREU54",
+  authDomain: "kinetic-dc8e6.firebaseapp.com",
+  projectId: "kinetic-dc8e6",
+  storageBucket: "kinetic-dc8e6.firebasestorage.app",
+  messagingSenderId: "980527555815",
+  appId: "1:980527555815:web:131ccee594e0c8f122ee42"
+};
+
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const FV = firebase.firestore.FieldValue;
+
+/* ═══════════════════════════════════════════════════════════════════
+   THEME MANAGER
+═══════════════════════════════════════════════════════════════════ */
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  const newTheme = isDark ? 'light' : 'dark';
+  
+  html.setAttribute('data-theme', newTheme);
+  localStorage.setItem('kw-theme', newTheme);
+  
+  const icon = document.querySelector('#themeToggleBtn i');
+  if (icon) icon.className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+}
+
+const savedTheme = localStorage.getItem('kw-theme') || 'light';
+document.documentElement.setAttribute('data-theme', savedTheme);
+document.addEventListener('DOMContentLoaded', () => {
+  const icon = document.querySelector('#themeToggleBtn i');
+  if (icon) icon.className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+});
+
+/* ═══════════════════════════════════════════════════════════════════
+   INVESTMENT PORTFOLIO METADATA
+═══════════════════════════════════════════════════════════════════ */
+const INVESTMENT_PLANS = [
+  { id: 'spark', name: 'Spark', capital: 5000, dailyROI: 500, duration: 20, badge: 'hot', dailyPercent: 10 },
+  { id: 'pulse', name: 'Pulse', capital: 10000, dailyROI: 1080, duration: 20, badge: 'popular', dailyPercent: 10.8 },
+  { id: 'surge', name: 'Surge', capital: 30000, dailyROI: 3500, duration: 25, badge: 'hot', dailyPercent: 11.67 },
+  { id: 'flow', name: 'Flow', capital: 60000, dailyROI: 7500, duration: 25, badge: 'popular', dailyPercent: 12.5 },
+  { id: 'momentum', name: 'Momentum', capital: 130000, dailyROI: 16200, duration: 30, badge: '', dailyPercent: 12.46 },
+  { id: 'velocity', name: 'Velocity', capital: 220000, dailyROI: 24200, duration: 30, badge: 'premium', dailyPercent: 11 },
+  { id: 'reactor', name: 'Reactor', capital: 450000, dailyROI: 49000, duration: 35, badge: 'premium', dailyPercent: 10.89 },
+  { id: 'dynamo', name: 'Dynamo', capital: 550000, dailyROI: 60000, duration: 35, badge: 'premium', dailyPercent: 10.91 },
+  { id: 'apex', name: 'Apex', capital: 720000, dailyROI: 75000, duration: 40, badge: 'premium', dailyPercent: 10.42 },
+  { id: 'infinity', name: 'Infinity', capital: 950000, dailyROI: 98000, duration: 43, badge: 'premium', dailyPercent: 10.32 }
+];
+
+let currentUser = null;
+let depositBalance = 0;
+let purchasedPlans = new Set();
+
+const formatCur = (n) => '₦' + Number(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 0 });
+
+/* ═══════════════════════════════════════════════════════════════════
+   AUTHENTICATION SYNC
+═══════════════════════════════════════════════════════════════════ */
+auth.onAuthStateChanged(async (user) => {
+  if (!user) { window.location.href = 'login.html'; return; }
+  currentUser = user;
+  await loadUserData();
+  renderPlans();
+});
+
+async function loadUserData() {
+  try {
+    const doc = await db.collection('users').doc(currentUser.uid).get();
+    if (doc.exists) {
+      const data = doc.data();
+      depositBalance = data.depositBalance || 0;
+      purchasedPlans = new Set(data.purchasedPlans || []);
+      document.getElementById('depositBalance').textContent = formatCur(depositBalance);
+      document.getElementById('planCount').textContent = INVESTMENT_PLANS.length + ' Systems';
+    }
+  } catch (error) {
+    console.error('Error loading context profiles:', error);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   INTERFACE GENERATOR
+═══════════════════════════════════════════════════════════════════ */
+function renderPlans() {
+  const grid = document.getElementById('plansGrid');
+  
+  grid.innerHTML = INVESTMENT_PLANS.map(plan => {
+    const isPurchased = purchasedPlans.has(plan.id);
+    const totalReturn = plan.dailyROI * plan.duration;
+    const profit = totalReturn - plan.capital;
+    
+    return `
+      <div class="plan-card ${isPurchased ? 'purchased' : ''}">
+        <div class="plan-header">
+          <div class="plan-icon">
+            <i class="fas fa-bolt-lightning"></i>
+          </div>
+          <div class="plan-name-container">
+            <h3>${plan.name}</h3>
+            ${plan.badge ? `<span class="badge ${plan.badge}">${plan.badge}</span>` : ''}
+          </div>
+        </div>
+        <div class="plan-details">
+          <div class="detail">
+            <div class="detail-label">Capital Stake</div>
+            <div class="detail-value">${formatCur(plan.capital)}</div>
+          </div>
+          <div class="detail">
+            <div class="detail-label">Daily Yield</div>
+            <div class="detail-value highlight">${formatCur(plan.dailyROI)}</div>
+          </div>
+          <div class="detail">
+            <div class="detail-label">Life Term</div>
+            <div class="detail-value">${plan.duration} Days</div>
+          </div>
+          <div class="detail">
+            <div class="detail-label">Gross Return</div>
+            <div class="detail-value highlight">${formatCur(totalReturn)}</div>
+          </div>
+          <div class="detail">
+            <div class="detail-label">Net Return</div>
+            <div class="detail-value highlight">+${formatCur(profit)}</div>
+          </div>
+          <div class="detail">
+            <div class="detail-label">Daily ROI %</div>
+            <div class="detail-value">${plan.dailyPercent}%</div>
+          </div>
+        </div>
+        <div class="plan-footer">
+          <div class="plan-price">${formatCur(plan.capital)}</div>
+          ${isPurchased 
+            ? `<div class="purchased-badge"><i class="fas fa-circle-check"></i> Active Plan</div>`
+            : `<button class="invest-btn" onclick="purchasePlan('${plan.id}')">
+                Invest Now
+               </button>`
+          }
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   DELEGATED ACQUISITION WRITER
+═══════════════════════════════════════════════════════════════════ */
+async function purchasePlan(planId) {
+  const plan = INVESTMENT_PLANS.find(p => p.id === planId);
+  if (!plan) return;
+  
+  if (purchasedPlans.has(plan.id)) {
+    Swal.fire({ icon: 'info', title: 'Already Owned', text: 'This specific contract package is already running.', confirmButtonColor: '#0052CC' });
+    return;
+  }
+  
+  if (depositBalance < plan.capital) {
+    Swal.fire({
+      icon: 'warning', title: 'Insufficient Balance',
+      html: `System cost: ${formatCur(plan.capital)}<br>Your available balance: ${formatCur(depositBalance)}`,
+      confirmButtonText: 'Fund Deposit Wallet',
+      confirmButtonColor: '#0052CC',
+      showCancelButton: true,
+      cancelButtonColor: '#64748B'
+    }).then((result) => {
+      if (result.isConfirmed) window.location.href = 'deposit.html';
+    });
+    return;
+  }
+  
+  const totalReturn = plan.dailyROI * plan.duration;
+  const profit = totalReturn - plan.capital;
+  
+  const result = await Swal.fire({
+    title: `Confirming ${plan.name}`,
+    html: `
+      <div style="text-align: left; background: rgba(0,0,0,0.03); border-radius: 12px; padding: 16px; font-size: 14px;">
+        <div style="display: flex; justify-content: space-between; padding: 6px 0;">
+          <span>Principal Stake</span><span><strong>${formatCur(plan.capital)}</strong></span>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 6px 0;">
+          <span>Daily Distribution</span><span style="color: #059669;"><strong>${formatCur(plan.dailyROI)}</strong></span>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 6px 0;">
+          <span>Contract Duration</span><span><strong>${plan.duration} days</strong></span>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 6px 0; border-top: 1px solid rgba(0,0,0,0.08); margin-top: 6px; padding-top: 10px;">
+          <span>Estimated Profits</span><span style="color: #0052CC;"><strong>+${formatCur(profit)}</strong></span>
+        </div>
+      </div>
+    `,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Authenticate Stake',
+    confirmButtonColor: '#0052CC',
+    cancelButtonColor: '#64748B'
+  });
+  
+  if (!result.isConfirmed) return;
+  
+  Swal.fire({ title: 'Configuring Node Ledger...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+  
+  try {
+    const userSnap = await db.collection('users').doc(currentUser.uid).get();
+    const freshBalance = userSnap.data()?.depositBalance || 0;
+    
+    if (freshBalance < plan.capital) throw new Error('Balance context validation mismatch.');
+    
+    const batch = db.batch();
+    const now = new Date();
+    const nextClaim = new Date(now.getTime() + 86400000);
+    
+    const investmentRef = db.collection('investments').doc();
+    batch.set(investmentRef, {
+      userId: currentUser.uid,
+      planId: plan.id,
+      planName: plan.name,
+      capital: plan.capital,
+      dailyROI: plan.dailyROI,
+      duration: plan.duration,
+      claimedDays: 0,
+      daysRemaining: plan.duration,
+      totalEarned: 0,
+      status: 'active',
+      createdAt: FV.serverTimestamp(),
+      activatedAt: FV.serverTimestamp(),
+      nextClaimAt: nextClaim
+    });
+    
+    batch.update(db.collection('users').doc(currentUser.uid), {
+      depositBalance: FV.increment(-plan.capital),
+      totalInvested: FV.increment(plan.capital),
+      purchasedPlans: FV.arrayUnion(plan.id)
+    });
+    
+    batch.set(db.collection('transactions').doc(), {
+      userId: currentUser.uid,
+      type: 'investment',
+      amount: plan.capital,
+      planId: plan.id,
+      planName: plan.name,
+      description: `Contract Staking: ${plan.name}`,
+      wallet: 'deposit',
+      createdAt: FV.serverTimestamp()
+    });
+    
+    await batch.commit();
+    await payReferralBonuses(currentUser.uid, plan.capital, plan.name);
+    
+    depositBalance -= plan.capital;
+    purchasedPlans.add(plan.id);
+    document.getElementById('depositBalance').textContent = formatCur(depositBalance);
+    renderPlans();
+    
+    Swal.fire({
+      icon: 'success',
+      title: '🎉 Staking Protocol Active',
+      html: `<p>Portfolio node successfully linked. Daily distribution metrics return in 24 hours.</p>`,
+      confirmButtonColor: '#0052CC'
+    });
+    
+  } catch (error) {
+    console.error('Execution Error:', error);
+    Swal.fire({ icon: 'error', title: 'Staking Failed', text: error.message, confirmButtonColor: '#DC2626' });
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   AFFILIATE LEDGER HOOKS
+═══════════════════════════════════════════════════════════════════ */
+async function payReferralBonuses(userId, amount, planName) {
+  try {
+    const userSnap = await db.collection('users').doc(userId).get();
+    if (!userSnap.exists) return;
+    
+    let referrerUid = userSnap.data().referrerUid || userSnap.data().referredBy || userSnap.data().uplineUid;
+    if (!referrerUid || referrerUid === 'direct') return;
+    
+    const batch = db.batch();
+    let currentUid = referrerUid;
+    const levels = [
+      { level: 1, percent: 0.10 },
+      { level: 2, percent: 0.03 },
+      { level: 3, percent: 0.01 }
+    ];
+    
+    for (const lvl of levels) {
+      if (!currentUid || currentUid === 'direct') break;
+      
+      const uplineSnap = await db.collection('users').doc(currentUid).get();
+      if (!uplineSnap.exists) break;
+      
+      const bonus = Math.floor(amount * lvl.percent);
+      if (bonus > 0) {
+        batch.update(db.collection('users').doc(currentUid), {
+          depositBalance: FV.increment(bonus),
+          totalRefEarnings: FV.increment(bonus),
+          totalEarnings: FV.increment(bonus),
+          [`level${lvl.level}Count`]: FV.increment(1)
+        });
+        
+        batch.set(db.collection('transactions').doc(), {
+          userId: currentUid,
+          type: 'referral_bonus',
+          amount: bonus,
+          level: lvl.level,
+          fromUserId: userId,
+          planName: planName,
+          description: `Tier ${lvl.level} Affiliate Override (${lvl.percent * 100}%)`,
+          wallet: 'deposit',
+          createdAt: FV.serverTimestamp()
+        });
+      }
+      
+      const nextData = uplineSnap.data();
+      currentUid = nextData.referrerUid || nextData.referredBy || nextData.uplineUid;
+      if (!currentUid || currentUid === 'direct') break;
+    }
+    
+    await batch.commit();
+  } catch (error) {
+    console.error('Affiliate structural breakdown:', error);
+  }
+}
+
+window.toggleTheme = toggleTheme;
+window.purchasePlan = purchasePlan;
+</script>
+
+</body>
+</html>
