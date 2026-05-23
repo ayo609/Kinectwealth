@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover"/>
+<title>KineticWealth · Activity</title>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #F2F5F9;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  min-height: 100vh;
+  color: #1A2C3E;
+}
+
+/* ========== HEADER - PURPLE ACCENT ========== */
+.app-header {
+  background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+  padding: 20px 20px 40px;
+  border-radius: 0 0 30px 30px;
+  position: relative;
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.back-link {
+  color: white;
+  font-size: 20px;
+  text-decoration: none;
+  background: rgba(255,255,255,0.2);
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: white;
+}
+
+.header-placeholder {
+  width: 40px;
+}
+
+.header-stats {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.stat-card {
+  flex: 1;
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 14px;
+  text-align: center;
+}
+
+.stat-number {
+  font-size: 24px;
+  font-weight: 700;
+  color: white;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: rgba(255,255,255,0.8);
+  margin-top: 4px;
+}
+
+/* ========== MAIN CONTENT ========== */
+.main-content {
+  margin-top: -20px;
+  padding: 0 16px 100px;
+}
+
+/* Filter Bar */
+.filter-bar {
+  background: white;
+  border-radius: 20px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.filter-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+
+.filter-row::-webkit-scrollbar {
+  display: none;
+}
+
+.filter-pill {
+  padding: 8px 18px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 500;
+  background: #F0F2F5;
+  color: #6B7280;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.filter-pill.active {
+  background: #667EEA;
+  color: white;
+}
+
+/* Search */
+.search-box {
+  display: flex;
+  align-items: center;
+  background: #F0F2F5;
+  border-radius: 16px;
+  padding: 8px 16px;
+  gap: 10px;
+}
+
+.search-box i {
+  color: #9CA3AF;
+  font-size: 16px;
+}
+
+.search-box input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  outline: none;
+  padding: 8px 0;
+}
+
+/* Toggle View */
+.view-toggle {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  background: white;
+  border-radius: 40px;
+  padding: 4px;
+  width: fit-content;
+}
+
+.toggle-btn {
+  padding: 8px 20px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 500;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #6B7280;
+}
+
+.toggle-btn.active {
+  background: #667EEA;
+  color: white;
+}
+
+/* Stats Row */
+.stats-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.stats-box {
+  flex: 1;
+  background: white;
+  border-radius: 20px;
+  padding: 14px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.stats-box-value {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.stats-box-value.up {
+  color: #10B981;
+}
+
+.stats-box-value.down {
+  color: #EF4444;
+}
+
+.stats-box-label {
+  font-size: 11px;
+  color: #9CA3AF;
+  margin-top: 4px;
+}
+
+/* Activity List */
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.activity-item {
+  background: white;
+  border-radius: 20px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+
+.activity-item:hover {
+  border-color: #E0E7FF;
+}
+
+.activity-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.icon-deposit {
+  background: #E0E7FF;
+  color: #667EEA;
+}
+
+.icon-withdrawal {
+  background: #FEE2E2;
+  color: #EF4444;
+}
+
+.icon-invest {
+  background: #D1FAE5;
+  color: #10B981;
+}
+
+.icon-claim {
+  background: #FEF3C7;
+  color: #F59E0B;
+}
+
+.icon-bonus {
+  background: #F3E8FF;
+  color: #A855F7;
+}
+
+.activity-details {
+  flex: 1;
+}
+
+.activity-title {
+  font-weight: 600;
+  font-size: 15px;
+  color: #1F2937;
+  margin-bottom: 4px;
+}
+
+.activity-sub {
+  font-size: 12px;
+  color: #9CA3AF;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.activity-amount {
+  text-align: right;
+}
+
+.amount-value {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.amount-value.positive {
+  color: #10B981;
+}
+
+.amount-value.negative {
+  color: #EF4444;
+}
+
+.amount-badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-top: 4px;
+  display: inline-block;
+}
+
+.badge-completed {
+  background: #D1FAE5;
+  color: #059669;
+}
+
+.badge-pending {
+  background: #FEF3C7;
+  color: #D97706;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 60px 24px;
+  background: white;
+  border-radius: 24px;
+}
+
+.empty-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  color: #D1D5DB;
+}
+
+.empty-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #6B7280;
+  margin-bottom: 6px;
+}
+
+.empty-text {
+  font-size: 13px;
+  color: #9CA3AF;
+}
+
+/* Load More */
+.load-more {
+  text-align: center;
+  padding: 20px;
+}
+
+.load-more-btn {
+  background: #F0F2F5;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #667EEA;
+  cursor: pointer;
+}
+
+/* Bottom Tab Bar */
+.tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 1px solid #E5E7EB;
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 20px 20px;
+  max-width: 450px;
+  margin: 0 auto;
+}
+
+.tab-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+  font-size: 11px;
+  color: #9CA3AF;
+}
+
+.tab-item i {
+  font-size: 22px;
+}
+
+.tab-item.active {
+  color: #667EEA;
+}
+
+.spacer {
+  height: 20px;
+}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="header-top">
+    <a href="dashboard.html" class="back-link">
+      <i class="fas fa-arrow-left"></i>
+    </a>
+    <div class="header-title">Activity Log</div>
+    <div class="header-placeholder"></div>
+  </div>
+  <div class="header-stats">
+    <div class="stat-card">
+      <div class="stat-number" id="statTotal">0</div>
+      <div class="stat-label">Total</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="statCredits">₦0</div>
+      <div class="stat-label">Inflow</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="statDebits">₦0</div>
+      <div class="stat-label">Outflow</div>
+    </div>
+  </div>
+</div>
+
+<div class="main-content">
+  
+  <div class="filter-bar">
+    <div class="filter-row" id="filterRow">
+      <button class="filter-pill active" data-filter="all">All</button>
+      <button class="filter-pill" data-filter="deposit">Deposits</button>
+      <button class="filter-pill" data-filter="withdrawal">Withdrawals</button>
+      <button class="filter-pill" data-filter="investment_purchase">Investments</button>
+      <button class="filter-pill" data-filter="roi_claim">ROI Claims</button>
+      <button class="filter-pill" data-filter="referral_bonus">Referrals</button>
+      <button class="filter-pill" data-filter="welcome_bonus">Bonuses</button>
+    </div>
+    <div class="search-box">
+      <i class="fas fa-search"></i>
+      <input type="text" id="searchInput" placeholder="Search transactions...">
+    </div>
+  </div>
+
+  <div class="view-toggle">
+    <button class="toggle-btn active" data-view="all" onclick="setView('all')">All</button>
+    <button class="toggle-btn" data-view="inflow" onclick="setView('inflow')">Inflow</button>
+    <button class="toggle-btn" data-view="outflow" onclick="setView('outflow')">Outflow</button>
+  </div>
+
+  <div class="stats-row">
+    <div class="stats-box">
+      <div class="stats-box-value up" id="totalInflow">₦0</div>
+      <div class="stats-box-label">Total Inflow</div>
+    </div>
+    <div class="stats-box">
+      <div class="stats-box-value down" id="totalOutflow">₦0</div>
+      <div class="stats-box-label">Total Outflow</div>
+    </div>
+  </div>
+
+  <div class="activity-list" id="activityList">
+    <div class="empty-state">
+      <div class="empty-icon">📋</div>
+      <div class="empty-title">Loading activities...</div>
+    </div>
+  </div>
+
+  <div class="load-more" id="loadMoreBtn" style="display: none;">
+    <button class="load-more-btn" onclick="loadMore()">
+      <i class="fas fa-chevron-down"></i> Load More
+    </button>
+  </div>
+
+</div>
+
+<div class="tab-bar">
+  <a href="home.html" class="tab-item"><i class="fas fa-chart-line"></i><span>Home</span></a>
+  <a href="plans.html" class="tab-item"><i class="fas fa-layer-group"></i><span>Plans</span></a>
+  <a href="deposit.html" class="tab-item"><i class="fas fa-plus-circle"></i><span>Deposit</span></a>
+  <a href="withdraw.html" class="tab-item"><i class="fas fa-minus-circle"></i><span>Withdraw</span></a>
+  <a href="transactions.html" class="tab-item active"><i class="fas fa-list-ul"></i><span>Activity</span></a>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   FIREBASE CONFIG - YOUR CONFIG
+═══════════════════════════════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "AIzaSyBl6HEVa9mUuROvnohMKzeEzzc0aTREU54",
+  authDomain: "kinetic-dc8e6.firebaseapp.com",
+  projectId: "kinetic-dc8e6",
+  storageBucket: "kinetic-dc8e6.firebasestorage.app",
+  messagingSenderId: "980527555815",
+  appId: "1:980527555815:web:131ccee594e0c8f122ee42"
+};
+
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+/* ═══════════════════════════════════════════════════════════════════
+   CONSTANTS & HELPERS
+═══════════════════════════════════════════════════════════════════ */
+const INFLOW_TYPES = ['roi_claim', 'capital_return', 'referral_bonus', 'welcome_bonus'];
+const OUTFLOW_TYPES = ['deposit', 'withdrawal', 'investment_purchase', 'transfer'];
+
+const CATEGORY_CONFIG = {
+  deposit: { name: 'Deposit', icon: 'fa-credit-card', bg: 'icon-deposit' },
+  withdrawal: { name: 'Withdrawal', icon: 'fa-paper-plane', bg: 'icon-withdrawal' },
+  investment_purchase: { name: 'Investment', icon: 'fa-chart-line', bg: 'icon-invest' },
+  roi_claim: { name: 'ROI Claim', icon: 'fa-hand-holding-usd', bg: 'icon-claim' },
+  capital_return: { name: 'Capital Return', icon: 'fa-undo-alt', bg: 'icon-claim' },
+  referral_bonus: { name: 'Referral Bonus', icon: 'fa-users', bg: 'icon-bonus' },
+  welcome_bonus: { name: 'Welcome Bonus', icon: 'fa-gift', bg: 'icon-bonus' },
+  transfer: { name: 'Transfer', icon: 'fa-exchange-alt', bg: 'icon-deposit' }
+};
+
+function formatNum(n) {
+  return (Number(n) || 0).toLocaleString('en-NG');
+}
+
+function formatCurr(n) {
+  return '₦' + formatNum(n);
+}
+
+function isInflow(type) {
+  return INFLOW_TYPES.includes(type);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════════════════ */
+let currentUser = null;
+let allTransactions = [];
+let filteredTransactions = [];
+let currentFilter = 'all';
+let currentView = 'all';
+let currentLimit = 20;
+let searchQuery = '';
+
+/* ═══════════════════════════════════════════════════════════════════
+   AUTH
+═══════════════════════════════════════════════════════════════════ */
+auth.onAuthStateChanged(async (user) => {
+  if (!user) {
+    window.location.href = 'login.html';
+    return;
+  }
+  currentUser = user;
+  await loadTransactions();
+});
+
+/* ═══════════════════════════════════════════════════════════════════
+   LOAD TRANSACTIONS
+═══════════════════════════════════════════════════════════════════ */
+async function loadTransactions() {
+  try {
+    let snapshot;
+    try {
+      snapshot = await db.collection('transactions')
+        .where('userId', '==', currentUser.uid)
+        .orderBy('createdAt', 'desc')
+        .limit(100)
+        .get();
+    } catch (err) {
+      const rawSnap = await db.collection('transactions')
+        .where('userId', '==', currentUser.uid)
+        .get();
+      
+      const docs = rawSnap.docs.sort((a, b) => {
+        const aTime = a.data().createdAt?.toMillis() || 0;
+        const bTime = b.data().createdAt?.toMillis() || 0;
+        return bTime - aTime;
+      }).slice(0, 100);
+      
+      snapshot = { docs, empty: docs.length === 0 };
+    }
+    
+    allTransactions = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    
+    applyFilters();
+    updateStats();
+    
+  } catch (err) {
+    console.error(err);
+    document.getElementById('activityList').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">⚠️</div>
+        <div class="empty-title">Error loading</div>
+        <div class="empty-text">Please refresh</div>
+      </div>`;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   FILTERS
+═══════════════════════════════════════════════════════════════════ */
+function applyFilters() {
+  let filtered = [...allTransactions];
+  
+  // Category filter
+  if (currentFilter !== 'all') {
+    filtered = filtered.filter(tx => tx.type === currentFilter);
+  }
+  
+  // View filter (inflow/outflow)
+  if (currentView === 'inflow') {
+    filtered = filtered.filter(tx => isInflow(tx.type));
+  } else if (currentView === 'outflow') {
+    filtered = filtered.filter(tx => !isInflow(tx.type));
+  }
+  
+  // Search
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    filtered = filtered.filter(tx => {
+      const desc = (tx.description || tx.note || '').toLowerCase();
+      const plan = (tx.planName || '').toLowerCase();
+      const ref = (tx.refCode || '').toLowerCase();
+      return desc.includes(q) || plan.includes(q) || ref.includes(q);
+    });
+  }
+  
+  filteredTransactions = filtered;
+  renderList();
+}
+
+function setFilter(filter, btn) {
+  currentFilter = filter;
+  currentLimit = 20;
+  
+  document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  
+  applyFilters();
+  updateStats();
+}
+
+function setView(view) {
+  currentView = view;
+  currentLimit = 20;
+  
+  document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.toggle-btn[data-view="${view}"]`).classList.add('active');
+  
+  applyFilters();
+  updateStats();
+}
+
+function onSearch() {
+  searchQuery = document.getElementById('searchInput').value;
+  currentLimit = 20;
+  applyFilters();
+}
+
+function updateStats() {
+  const totalInflow = filteredTransactions
+    .filter(tx => isInflow(tx.type))
+    .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+  
+  const totalOutflow = filteredTransactions
+    .filter(tx => !isInflow(tx.type))
+    .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+  
+  document.getElementById('totalInflow').textContent = formatCurr(totalInflow);
+  document.getElementById('totalOutflow').textContent = formatCurr(totalOutflow);
+  
+  // Header stats
+  const allInflow = allTransactions.filter(tx => isInflow(tx.type)).reduce((s, tx) => s + (Number(tx.amount) || 0), 0);
+  const allOutflow = allTransactions.filter(tx => !isInflow(tx.type)).reduce((s, tx) => s + (Number(tx.amount) || 0), 0);
+  
+  document.getElementById('statTotal').textContent = allTransactions.length;
+  document.getElementById('statCredits').textContent = formatCurr(allInflow);
+  document.getElementById('statDebits').textContent = formatCurr(allOutflow);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   RENDER
+═══════════════════════════════════════════════════════════════════ */
+function renderList() {
+  const container = document.getElementById('activityList');
+  const toShow = filteredTransactions.slice(0, currentLimit);
+  const hasMore = filteredTransactions.length > currentLimit;
+  
+  document.getElementById('loadMoreBtn').style.display = hasMore ? 'block' : 'none';
+  
+  if (toShow.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <div class="empty-title">No activities found</div>
+        <div class="empty-text">${searchQuery ? 'Try different search' : 'Your transactions will appear here'}</div>
+      </div>`;
+    return;
+  }
+  
+  container.innerHTML = '';
+  
+  toShow.forEach((tx, idx) => {
+    const config = CATEGORY_CONFIG[tx.type] || { name: tx.type || 'Transaction', icon: 'fa-receipt', bg: 'icon-deposit' };
+    const isInflowTx = isInflow(tx.type);
+    const amount = Number(tx.amount) || 0;
+    const date = tx.createdAt?.toDate ? tx.createdAt.toDate() : new Date();
+    const dateStr = `${date.toLocaleDateString()} · ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    const status = tx.status || 'completed';
+    const desc = tx.description || tx.note || tx.planName || '';
+    
+    const item = document.createElement('div');
+    item.className = 'activity-item';
+    item.style.animation = `fadeInUp 0.3s ease ${idx * 0.03}s both`;
+    
+    item.innerHTML = `
+      <div class="activity-icon ${config.bg}">
+        <i class="fas ${config.icon}"></i>
+      </div>
+      <div class="activity-details">
+        <div class="activity-title">${config.name}</div>
+        <div class="activity-sub">
+          <span>${dateStr}</span>
+          ${desc ? `<span>• ${desc.substring(0, 30)}${desc.length > 30 ? '...' : ''}</span>` : ''}
+        </div>
+      </div>
+      <div class="activity-amount">
+        <div class="amount-value ${isInflowTx ? 'positive' : 'negative'}">
+          ${isInflowTx ? '+' : '-'}${formatCurr(amount)}
+        </div>
+        <div class="amount-badge badge-${status}">${status}</div>
+      </div>
+    `;
+    
+    container.appendChild(item);
+  });
+}
+
+function loadMore() {
+  currentLimit += 20;
+  renderList();
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   EVENT LISTENERS
+═══════════════════════════════════════════════════════════════════ */
+document.getElementById('searchInput').addEventListener('input', onSearch);
+
+document.querySelectorAll('.filter-pill').forEach(btn => {
+  btn.addEventListener('click', () => setFilter(btn.dataset.filter, btn));
+});
+
+// Animation
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+`;
+document.head.appendChild(style);
+</script>
+
+</body>
+</html>
