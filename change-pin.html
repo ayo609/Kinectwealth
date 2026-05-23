@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover"/>
+<title>KineticWealth · Security PIN</title>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #0F172A;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: #F1F5F9;
+  min-height: 100vh;
+}
+
+/* ========== HEADER ========== */
+.app-header {
+  background: #0F172A;
+  padding: 16px 20px;
+  border-bottom: 1px solid #1E293B;
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.back-link {
+  color: #F1F5F9;
+  font-size: 20px;
+  text-decoration: none;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.header-placeholder {
+  width: 40px;
+}
+
+/* ========== MAIN CONTENT ========== */
+.main-container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 20px 16px 100px;
+}
+
+/* Security Banner */
+.security-banner {
+  background: linear-gradient(135deg, #1E293B, #0F172A);
+  border-radius: 24px;
+  padding: 24px;
+  margin-bottom: 24px;
+  text-align: center;
+  border: 1px solid #2D4A6F;
+}
+
+.banner-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.banner-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.banner-sub {
+  font-size: 13px;
+  color: #94A3B8;
+}
+
+/* Status Card */
+.status-card {
+  background: #1E293B;
+  border-radius: 20px;
+  padding: 16px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid #334155;
+}
+
+.status-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.status-icon.active {
+  background: rgba(34,197,94,0.1);
+  color: #22C55E;
+}
+
+.status-icon.inactive {
+  background: rgba(245,158,11,0.1);
+  color: #F59E0B;
+}
+
+.status-info h4 {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.status-info p {
+  font-size: 12px;
+  color: #94A3B8;
+}
+
+/* Steps */
+.steps {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  padding: 0 8px;
+}
+
+.step {
+  text-align: center;
+  flex: 1;
+}
+
+.step-circle {
+  width: 40px;
+  height: 40px;
+  background: #1E293B;
+  border: 2px solid #334155;
+  border-radius: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  margin: 0 auto 8px;
+  transition: all 0.3s;
+}
+
+.step-circle.active {
+  background: #3B82F6;
+  border-color: #3B82F6;
+  color: white;
+}
+
+.step-circle.completed {
+  background: #22C55E;
+  border-color: #22C55E;
+  color: white;
+}
+
+.step-label {
+  font-size: 11px;
+  color: #94A3B8;
+}
+
+.step-line {
+  flex: 0.5;
+  height: 2px;
+  background: #334155;
+  margin-bottom: 28px;
+}
+
+.step-line.completed {
+  background: #22C55E;
+}
+
+/* Form Card */
+.form-card {
+  background: #1E293B;
+  border-radius: 24px;
+  padding: 24px;
+  border: 1px solid #334155;
+  margin-bottom: 24px;
+}
+
+.form-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-title i {
+  color: #3B82F6;
+}
+
+/* PIN Display */
+.pin-display {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.pin-box {
+  width: 60px;
+  height: 70px;
+  background: #0F172A;
+  border: 2px solid #334155;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 700;
+  transition: all 0.2s;
+}
+
+.pin-box.filled {
+  border-color: #3B82F6;
+  background: rgba(59,130,246,0.1);
+}
+
+.pin-box.active {
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+}
+
+.pin-box.error {
+  border-color: #EF4444;
+  animation: shake 0.4s ease;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.pin-hint {
+  text-align: center;
+  font-size: 12px;
+  color: #94A3B8;
+  margin-bottom: 24px;
+}
+
+.pin-hint.error {
+  color: #EF4444;
+}
+
+.pin-hint.success {
+  color: #22C55E;
+}
+
+/* Keypad */
+.keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.key {
+  background: #0F172A;
+  border: 1px solid #334155;
+  border-radius: 16px;
+  padding: 18px;
+  font-size: 22px;
+  font-weight: 600;
+  color: #F1F5F9;
+  cursor: pointer;
+  transition: all 0.1s;
+  text-align: center;
+}
+
+.key:active {
+  transform: scale(0.95);
+  background: #3B82F6;
+}
+
+.key.delete {
+  color: #EF4444;
+}
+
+.key.empty {
+  background: transparent;
+  border: none;
+  pointer-events: none;
+}
+
+/* Submit Button */
+.submit-btn {
+  width: 100%;
+  padding: 16px;
+  background: #3B82F6;
+  border: none;
+  border-radius: 40px;
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.submit-btn:disabled {
+  background: #334155;
+  cursor: not-allowed;
+}
+
+/* Info Box */
+.info-box {
+  background: rgba(245,158,11,0.08);
+  border: 1px solid rgba(245,158,11,0.2);
+  border-radius: 16px;
+  padding: 14px;
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.info-box i {
+  color: #F59E0B;
+  font-size: 18px;
+}
+
+.info-box p {
+  font-size: 12px;
+  color: #94A3B8;
+  line-height: 1.5;
+}
+
+/* Bottom Tab Bar */
+.tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #1E293B;
+  border-top: 1px solid #334155;
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 20px 20px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.tab-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+  font-size: 11px;
+  color: #94A3B8;
+}
+
+.tab-item i {
+  font-size: 22px;
+}
+
+.tab-item.active {
+  color: #3B82F6;
+}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="header-row">
+    <a href="dashboard.html" class="back-link">
+      <i class="fas fa-arrow-left"></i>
+    </a>
+    <div class="header-title">Security PIN</div>
+    <div class="header-placeholder"></div>
+  </div>
+</div>
+
+<div class="main-container">
+  
+  <div class="security-banner">
+    <div class="banner-icon">🔐</div>
+    <div class="banner-title">Withdrawal PIN</div>
+    <div class="banner-sub">4-digit code for secure withdrawals</div>
+  </div>
+
+  <div class="status-card" id="statusCard">
+    <div class="status-icon" id="statusIcon">
+      <i class="fas fa-check-circle"></i>
+    </div>
+    <div class="status-info">
+      <h4 id="statusTitle">PIN is Active</h4>
+      <p id="statusText">Your withdrawal PIN is protecting your funds</p>
+    </div>
+  </div>
+
+  <!-- Steps -->
+  <div class="steps" id="stepsContainer">
+    <div class="step">
+      <div class="step-circle" id="step1Circle">1</div>
+      <div class="step-label">Current</div>
+    </div>
+    <div class="step-line" id="stepLine1"></div>
+    <div class="step">
+      <div class="step-circle" id="step2Circle">2</div>
+      <div class="step-label">New PIN</div>
+    </div>
+    <div class="step-line" id="stepLine2"></div>
+    <div class="step">
+      <div class="step-circle" id="step3Circle">3</div>
+      <div class="step-label">Confirm</div>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <div class="form-card">
+    <div class="form-title">
+      <i class="fas fa-lock"></i>
+      <span id="formTitle">Enter Current PIN</span>
+    </div>
+
+    <div class="pin-display" id="pinDisplay">
+      <div class="pin-box" id="pin1">-</div>
+      <div class="pin-box" id="pin2">-</div>
+      <div class="pin-box" id="pin3">-</div>
+      <div class="pin-box" id="pin4">-</div>
+    </div>
+
+    <div class="pin-hint" id="pinHint">Tap the boxes and use the keypad below</div>
+
+    <div class="keypad">
+      <div class="key" onclick="addDigit('1')">1</div>
+      <div class="key" onclick="addDigit('2')">2</div>
+      <div class="key" onclick="addDigit('3')">3</div>
+      <div class="key" onclick="addDigit('4')">4</div>
+      <div class="key" onclick="addDigit('5')">5</div>
+      <div class="key" onclick="addDigit('6')">6</div>
+      <div class="key" onclick="addDigit('7')">7</div>
+      <div class="key" onclick="addDigit('8')">8</div>
+      <div class="key" onclick="addDigit('9')">9</div>
+      <div class="key empty"></div>
+      <div class="key" onclick="addDigit('0')">0</div>
+      <div class="key delete" onclick="deleteDigit()">
+        <i class="fas fa-backspace"></i>
+      </div>
+    </div>
+
+    <button class="submit-btn" id="submitBtn" onclick="processStep()" disabled>
+      <i class="fas fa-arrow-right"></i>
+      <span id="submitText">Enter 4-digit PIN</span>
+    </button>
+  </div>
+
+  <div class="info-box">
+    <i class="fas fa-shield-alt"></i>
+    <p>Your PIN is encrypted and never stored in plain text. You'll need it for every withdrawal request.</p>
+  </div>
+
+</div>
+
+<div class="tab-bar">
+  <a href="home.html" class="tab-item"><i class="fas fa-chart-line"></i><span>Home</span></a>
+  <a href="plans.html" class="tab-item"><i class="fas fa-layer-group"></i><span>Plans</span></a>
+  <a href="withdraw.html" class="tab-item"><i class="fas fa-money-bill-wave"></i><span>Withdraw</span></a>
+  <a href="investments.html" class="tab-item"><i class="fas fa-folder-open"></i><span>Portfolio</span></a>
+  <a href="dashboard.html" class="tab-item active"><i class="fas fa-user"></i><span>Profile</span></a>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   FIREBASE CONFIG - YOUR CONFIG
+═══════════════════════════════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "AIzaSyBl6HEVa9mUuROvnohMKzeEzzc0aTREU54",
+  authDomain: "kinetic-dc8e6.firebaseapp.com",
+  projectId: "kinetic-dc8e6",
+  storageBucket: "kinetic-dc8e6.firebasestorage.app",
+  messagingSenderId: "980527555815",
+  appId: "1:980527555815:web:131ccee594e0c8f122ee42"
+};
+
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+/* ═══════════════════════════════════════════════════════════════════
+   PIN HASHING
+═══════════════════════════════════════════════════════════════════ */
+function hashPin(pin) {
+  let hash = 0;
+  for (let i = 0; i < pin.length; i++) {
+    hash = ((hash << 5) - hash) + pin.charCodeAt(i);
+    hash |= 0;
+  }
+  return 'KW-' + Math.abs(hash).toString(16).toUpperCase();
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════════════════ */
+let currentStep = 1; // 1=Current, 2=New, 3=Confirm
+let currentPin = '';
+let hasExistingPin = false;
+let storedPinHash = '';
+let verifiedPin = '';
+let newPin = '';
+
+/* ═══════════════════════════════════════════════════════════════════
+   AUTH
+═══════════════════════════════════════════════════════════════════ */
+auth.onAuthStateChanged(async (user) => {
+  if (!user) {
+    window.location.href = 'login.html';
+    return;
+  }
+  await checkPinStatus();
+  resetPinInput();
+  focusPinInput();
+});
+
+async function checkPinStatus() {
+  const doc = await db.collection('users').doc(auth.currentUser.uid).get();
+  if (doc.exists) {
+    const data = doc.data();
+    if (data.withdrawalPin && data.withdrawalPin.length > 0) {
+      hasExistingPin = true;
+      storedPinHash = data.withdrawalPin;
+      document.getElementById('statusIcon').className = 'status-icon active';
+      document.getElementById('statusIcon').innerHTML = '<i class="fas fa-check-circle"></i>';
+      document.getElementById('statusTitle').textContent = 'PIN is Active';
+      document.getElementById('statusText').textContent = 'Your withdrawal PIN is protecting your funds';
+    } else {
+      hasExistingPin = false;
+      document.getElementById('statusIcon').className = 'status-icon inactive';
+      document.getElementById('statusIcon').innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+      document.getElementById('statusTitle').textContent = 'PIN Not Set';
+      document.getElementById('statusText').textContent = 'Create a PIN to secure your withdrawals';
+      
+      // Skip to step 2
+      currentStep = 2;
+      updateSteps();
+      document.getElementById('formTitle').innerHTML = '<i class="fas fa-key"></i> Create New PIN';
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   UI HELPERS
+═══════════════════════════════════════════════════════════════════ */
+function updateSteps() {
+  const step1 = document.getElementById('step1Circle');
+  const step2 = document.getElementById('step2Circle');
+  const step3 = document.getElementById('step3Circle');
+  const line1 = document.getElementById('stepLine1');
+  const line2 = document.getElementById('stepLine2');
+  
+  step1.classList.remove('active', 'completed');
+  step2.classList.remove('active', 'completed');
+  step3.classList.remove('active', 'completed');
+  line1.classList.remove('completed');
+  line2.classList.remove('completed');
+  
+  if (currentStep === 1) {
+    step1.classList.add('active');
+  } else if (currentStep === 2) {
+    step1.classList.add('completed');
+    step2.classList.add('active');
+    line1.classList.add('completed');
+  } else if (currentStep === 3) {
+    step1.classList.add('completed');
+    step2.classList.add('completed');
+    step3.classList.add('active');
+    line1.classList.add('completed');
+    line2.classList.add('completed');
+  }
+}
+
+function updatePinDisplay() {
+  const boxes = ['pin1', 'pin2', 'pin3', 'pin4'];
+  for (let i = 0; i < 4; i++) {
+    const box = document.getElementById(boxes[i]);
+    if (i < currentPin.length) {
+      box.textContent = '●';
+      box.classList.add('filled');
+    } else {
+      box.textContent = '-';
+      box.classList.remove('filled');
+    }
+    box.classList.remove('active', 'error');
+  }
+  if (currentPin.length < 4) {
+    document.getElementById(boxes[currentPin.length]).classList.add('active');
+  }
+}
+
+function showError(message) {
+  const hint = document.getElementById('pinHint');
+  hint.textContent = message;
+  hint.className = 'pin-hint error';
+  
+  const boxes = ['pin1', 'pin2', 'pin3', 'pin4'];
+  boxes.forEach(id => {
+    document.getElementById(id).classList.add('error');
+  });
+  
+  setTimeout(() => {
+    boxes.forEach(id => {
+      document.getElementById(id).classList.remove('error');
+    });
+  }, 1000);
+}
+
+function showSuccess(message) {
+  const hint = document.getElementById('pinHint');
+  hint.textContent = message;
+  hint.className = 'pin-hint success';
+}
+
+function resetPinInput() {
+  currentPin = '';
+  updatePinDisplay();
+  updateSubmitButton();
+}
+
+function updateSubmitButton() {
+  const btn = document.getElementById('submitBtn');
+  const text = document.getElementById('submitText');
+  
+  if (currentPin.length === 4) {
+    btn.disabled = false;
+    if (currentStep === 1) text.textContent = 'Verify PIN';
+    else if (currentStep === 2) text.textContent = 'Continue';
+    else text.textContent = 'Confirm & Save';
+  } else {
+    btn.disabled = true;
+    text.textContent = 'Enter 4-digit PIN';
+  }
+}
+
+function focusPinInput() {
+  // Visual feedback only
+}
+
+function addDigit(digit) {
+  if (currentPin.length < 4) {
+    currentPin += digit;
+    updatePinDisplay();
+    updateSubmitButton();
+  }
+}
+
+function deleteDigit() {
+  if (currentPin.length > 0) {
+    currentPin = currentPin.slice(0, -1);
+    updatePinDisplay();
+    updateSubmitButton();
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   STEP PROCESSING
+═══════════════════════════════════════════════════════════════════ */
+function processStep() {
+  if (currentPin.length !== 4) return;
+  
+  if (currentStep === 1) {
+    verifyCurrentPin();
+  } else if (currentStep === 2) {
+    verifyNewPin();
+  } else if (currentStep === 3) {
+    confirmAndSave();
+  }
+}
+
+function verifyCurrentPin() {
+  const enteredHash = hashPin(currentPin);
+  
+  if (enteredHash === storedPinHash) {
+    verifiedPin = currentPin;
+    showSuccess('✓ PIN verified!');
+    
+    setTimeout(() => {
+      currentStep = 2;
+      updateSteps();
+      document.getElementById('formTitle').innerHTML = '<i class="fas fa-key"></i> Enter New PIN';
+      resetPinInput();
+      showSuccess('Enter your new 4-digit PIN');
+    }, 800);
+  } else {
+    showError('✗ Incorrect PIN. Please try again.');
+    setTimeout(() => {
+      resetPinInput();
+    }, 1000);
+  }
+}
+
+function verifyNewPin() {
+  if (currentPin.length !== 4) return;
+  
+  // Check if same as old
+  if (hasExistingPin && hashPin(currentPin) === storedPinHash) {
+    showError('New PIN must be different from current PIN');
+    setTimeout(() => resetPinInput(), 1000);
+    return;
+  }
+  
+  // Check for repeated digits
+  if (/^(\d)\1{3}$/.test(currentPin)) {
+    showError('PIN cannot be all the same digit');
+    setTimeout(() => resetPinInput(), 1000);
+    return;
+  }
+  
+  // Check for sequences
+  if (/^(0123|1234|2345|3456|4567|5678|6789|7890)$/.test(currentPin)) {
+    showError('PIN cannot be a sequence');
+    setTimeout(() => resetPinInput(), 1000);
+    return;
+  }
+  
+  newPin = currentPin;
+  showSuccess('✓ New PIN accepted!');
+  
+  setTimeout(() => {
+    currentStep = 3;
+    updateSteps();
+    document.getElementById('formTitle').innerHTML = '<i class="fas fa-check-circle"></i> Confirm New PIN';
+    resetPinInput();
+    showSuccess('Enter your new PIN again to confirm');
+  }, 800);
+}
+
+async function confirmAndSave() {
+  if (currentPin !== newPin) {
+    showError('✗ PINs do not match. Please try again.');
+    setTimeout(() => resetPinInput(), 1000);
+    return;
+  }
+  
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  document.getElementById('submitText').textContent = 'Saving...';
+  
+  try {
+    const newHash = hashPin(newPin);
+    await db.collection('users').doc(auth.currentUser.uid).update({
+      withdrawalPin: newHash,
+      pinLastChanged: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
+    Swal.fire({
+      icon: 'success',
+      title: 'PIN Updated!',
+      html: `
+        <div style="font-size: 14px;">
+          <p>Your withdrawal PIN has been ${hasExistingPin ? 'updated' : 'set'} successfully.</p>
+          <p style="color: #22C55E; margin-top: 8px;">
+            <i class="fas fa-check-circle"></i> Your funds are now protected
+          </p>
+        </div>
+      `,
+      confirmButtonColor: '#3B82F6'
+    }).then(() => {
+      window.location.href = 'dashboard.html';
+    });
+    
+  } catch (err) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Failed',
+      text: err.message,
+      confirmButtonColor: '#EF4444'
+    });
+    btn.disabled = false;
+    document.getElementById('submitText').textContent = 'Confirm & Save';
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   KEYBOARD SUPPORT
+═══════════════════════════════════════════════════════════════════ */
+document.addEventListener('keydown', (e) => {
+  if (e.key >= '0' && e.key <= '9') {
+    e.preventDefault();
+    addDigit(e.key);
+  } else if (e.key === 'Backspace') {
+    e.preventDefault();
+    deleteDigit();
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (currentPin.length === 4) processStep();
+  }
+});
+
+window.addDigit = addDigit;
+window.deleteDigit = deleteDigit;
+window.processStep = processStep;
+</script>
+
+</body>
+</html>
