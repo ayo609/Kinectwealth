@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover"/>
+<title>Kinetic Wealth · Sign In</title>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   BLUE & WHITE THEME CONFIGURATION
+═══════════════════════════════════════════════════════════════════ */
+:root {
+  --primary:       #0052CC; /* Strong Kinetic Blue */
+  --primary-dark:  #003D99;
+  --primary-light: #E5EFFF;
+  --bg-light:      #F4F7FB; /* Very soft blue-tinted white */
+  --card-bg:       #FFFFFF;
+  --text-primary:  #0F172A;
+  --text-muted:    #64748B;
+  --border-light:  #E2E8F0;
+  --success:       #059669;
+  --danger:        #DC2626;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; font-family: 'Inter', sans-serif; }
+html { scroll-behavior:smooth; }
+
+body {
+  background-color: var(--bg-light);
+  color: var(--text-primary);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   HEADER & BRANDING
+═══════════════════════════════════════════════════════════════════ */
+.header-wrapper {
+  width: 100%;
+  background: var(--primary);
+  padding: 40px 20px 80px 20px;
+  text-align: center;
+  position: relative;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.logo-icon {
+  background: var(--card-bg);
+  color: var(--primary);
+  width: 45px; height: 45px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.logo-text {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--card-bg);
+  letter-spacing: -0.5px;
+}
+
+.bonus-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--card-bg);
+  color: var(--primary);
+  padding: 10px 20px;
+  border-radius: 30px;
+  font-weight: 700;
+  font-size: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   FORM CONTAINER
+═══════════════════════════════════════════════════════════════════ */
+.form-container {
+  width: 100%;
+  max-width: 480px;
+  padding: 0 20px;
+  margin-top: -40px;
+  z-index: 10;
+  margin-bottom: 30px;
+}
+
+.form-card {
+  background: var(--card-bg);
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 82, 204, 0.08);
+  border: 1px solid var(--border-light);
+  overflow: hidden;
+}
+
+.form-header {
+  padding: 24px;
+  text-align: center;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.form-header h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.form-body {
+  padding: 30px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   INPUT STYLING
+═══════════════════════════════════════════════════════════════════ */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  background: var(--card-bg);
+  border: 1.5px solid var(--border-light);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.input-wrapper:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.input-wrapper.error { border-color: var(--danger); background: #FEF2F2; }
+
+.input-prefix {
+  padding: 14px 0 14px 16px;
+  color: var(--text-muted);
+  font-size: 15px;
+}
+
+.input-wrapper:focus-within .input-prefix { color: var(--primary); }
+
+.input-field {
+  flex: 1;
+  padding: 14px;
+  font-size: 15px;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text-primary);
+  width: 100%;
+}
+
+.input-suffix {
+  padding: 0 16px;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.input-suffix:hover { color: var(--primary); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   OPTIONS & BUTTONS
+═══════════════════════════════════════════════════════════════════ */
+.options-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: -4px;
+}
+
+.remember-me {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.remember-me input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.remember-me span {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.forgot-link {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.forgot-link:hover { text-decoration: underline; }
+
+.btn-primary {
+  width: 100%;
+  padding: 16px;
+  background: var(--primary);
+  color: var(--card-bg);
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.btn-primary:hover { background: var(--primary-dark); }
+.btn-primary:disabled { background: var(--text-muted); cursor: not-allowed; }
+
+.login-footer {
+  padding: 24px;
+  text-align: center;
+  background: var(--bg-light);
+  font-size: 14px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border-light);
+}
+
+.login-footer a {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.login-footer a:hover { text-decoration: underline; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   TRUST INDICATORS
+═══════════════════════════════════════════════════════════════════ */
+.trust-indicators {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.trust-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.trust-item i {
+  color: var(--success);
+  font-size: 14px;
+}
+</style>
+</head>
+<body>
+
+<div class="header-wrapper">
+  <div class="logo-container">
+    <div class="logo-icon"><i class="fas fa-chart-line"></i></div>
+    <div class="logo-text">Kinetic Wealth</div>
+  </div>
+  <div class="bonus-badge">
+    <i class="fas fa-shield-alt"></i> Secure Login Connection
+  </div>
+</div>
+
+<div class="form-container">
+  <div class="form-card">
+    <div class="form-header">
+      <h2>Welcome Back</h2>
+    </div>
+
+    <div class="form-body">
+      <!-- Email -->
+      <div class="input-group">
+        <label class="input-label">Email Address</label>
+        <div class="input-wrapper" id="emailWrapper">
+          <span class="input-prefix"><i class="fas fa-envelope"></i></span>
+          <input 
+            type="email" 
+            id="emailInput" 
+            class="input-field" 
+            placeholder="your@email.com"
+            autocomplete="email"
+            oninput="clearError('emailWrapper')"
+          />
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="input-group">
+        <label class="input-label">Password</label>
+        <div class="input-wrapper" id="passwordWrapper">
+          <span class="input-prefix"><i class="fas fa-lock"></i></span>
+          <input 
+            type="password" 
+            id="passwordInput" 
+            class="input-field" 
+            placeholder="Enter your password"
+            autocomplete="current-password"
+            oninput="clearError('passwordWrapper')"
+          />
+          <button type="button" class="input-suffix" onclick="togglePassword()" id="toggleBtn">
+            <i class="fas fa-eye" id="toggleIcon"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Options -->
+      <div class="options-row">
+        <label class="remember-me">
+          <input type="checkbox" id="rememberMe" checked/>
+          <span>Remember me</span>
+        </label>
+        <a href="#" class="forgot-link" onclick="showForgotPassword()">Forgot password?</a>
+      </div>
+
+      <!-- Submit Button -->
+      <button class="btn-primary" onclick="handleLogin()" id="loginBtn">
+        <i class="fas fa-arrow-right-to-bracket"></i>
+        <span>Sign In</span>
+      </button>
+    </div>
+
+    <!-- Footer -->
+    <div class="login-footer">
+      New to Kinetic Wealth? <a href="signup.html">Create Account</a>
+    </div>
+  </div>
+
+  <div class="trust-indicators">
+    <div class="trust-item"><i class="fas fa-shield-halved"></i> 256-bit SSL Secure</div>
+    <div class="trust-item"><i class="fas fa-lock"></i> Bank-Level Encryption</div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   FIREBASE CONFIGURATION
+═══════════════════════════════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "AIzaSyBl6HEVa9mUuROvnohMKzeEzzc0aTREU54",
+  authDomain: "kinetic-dc8e6.firebaseapp.com",
+  projectId: "kinetic-dc8e6",
+  storageBucket: "kinetic-dc8e6.firebasestorage.app",
+  messagingSenderId: "980527555815",
+  appId: "1:980527555815:web:131ccee594e0c8f122ee42"
+};
+
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+/* ═══════════════════════════════════════════════════════════════════
+   UTILITY FUNCTIONS
+═══════════════════════════════════════════════════════════════════ */
+function togglePassword() {
+  const input = document.getElementById('passwordInput');
+  const icon = document.getElementById('toggleIcon');
+  
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.className = 'fas fa-eye-slash';
+  } else {
+    input.type = 'password';
+    icon.className = 'fas fa-eye';
+  }
+}
+
+function clearError(wrapperId) {
+  document.getElementById(wrapperId).classList.remove('error');
+}
+
+function showError(wrapperId) {
+  document.getElementById(wrapperId).classList.add('error');
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   FORGOT PASSWORD LOGIC
+═══════════════════════════════════════════════════════════════════ */
+async function showForgotPassword() {
+  const email = document.getElementById('emailInput').value.trim();
+  
+  const { value: resetEmail } = await Swal.fire({
+    title: 'Reset Password',
+    html: `
+      <p style="margin-bottom: 16px; color: #64748B; font-size: 14px;">Enter your email to receive a reset link.</p>
+      <input 
+        id="swalEmail" 
+        class="swal2-input" 
+        placeholder="your@email.com" 
+        value="${email}"
+        style="width: 80%; padding: 14px; border-radius: 12px; border: 2px solid #E2E8F0;"
+      />
+    `,
+    icon: 'info',
+    confirmButtonText: 'Send Reset Link',
+    confirmButtonColor: '#0052CC',
+    showCancelButton: true,
+    cancelButtonText: 'Cancel',
+    preConfirm: () => {
+      const emailInput = document.getElementById('swalEmail').value.trim();
+      if (!emailInput) { Swal.showValidationMessage('Please enter your email'); return false; }
+      if (!emailInput.includes('@')) { Swal.showValidationMessage('Enter a valid email'); return false; }
+      return emailInput;
+    }
+  });
+
+  if (resetEmail) {
+    try {
+      await auth.sendPasswordResetEmail(resetEmail);
+      Swal.fire({ icon: 'success', title: 'Email Sent!', text: `Check ${resetEmail} for the reset link.`, confirmButtonColor: '#0052CC' });
+    } catch (err) {
+      console.error(err);
+      let msg = 'Failed to send reset email.';
+      if (err.code === 'auth/user-not-found') msg = 'No account found with this email.';
+      else if (err.code === 'auth/invalid-email') msg = 'Invalid email address.';
+      else if (err.code === 'auth/too-many-requests') msg = 'Too many requests. Try again later.';
+      Swal.fire({ icon: 'error', title: 'Reset Failed', text: msg, confirmButtonColor: '#DC2626' });
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   HANDLE LOGIN LOGIC
+═══════════════════════════════════════════════════════════════════ */
+async function handleLogin() {
+  const email = document.getElementById('emailInput').value.trim();
+  const password = document.getElementById('passwordInput').value;
+  const btn = document.getElementById('loginBtn');
+
+  clearError('emailWrapper');
+  clearError('passwordWrapper');
+
+  if (!email || !email.includes('@')) {
+    showError('emailWrapper');
+    Swal.fire({ icon: 'warning', title: 'Invalid Email', text: 'Enter a valid email address', toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
+    return;
+  }
+
+  if (!password) {
+    showError('passwordWrapper');
+    Swal.fire({ icon: 'warning', title: 'Password Required', text: 'Please enter your password', toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Signing in...</span>';
+
+  try {
+    // 1. Set Persistence (Remember Me)
+    const rememberMe = document.getElementById('rememberMe').checked;
+    const persistenceType = rememberMe ? firebase.auth.Auth.Persistence.LOCAL : firebase.auth.Auth.Persistence.SESSION;
+    await auth.setPersistence(persistenceType);
+
+    // 2. Sign In
+    const userCredential = await auth.signInWithEmailAndPassword(email, password);
+    const user = userCredential.user;
+
+    // 3. Update Last Login
+    try { await db.collection('users').doc(user.uid).update({ lastLogin: new Date().toISOString() }); } 
+    catch (updateErr) { console.warn('Could not update last login'); }
+
+    // 4. Fetch User Name for Welcome Popup
+    let userName = 'Investor';
+    try {
+      const userDoc = await db.collection('users').doc(user.uid).get();
+      if (userDoc.exists) { userName = userDoc.data().fullName || userDoc.data().username || 'Investor'; }
+    } catch (docErr) { console.warn('Could not fetch user data'); }
+
+    // 5. Success Message & Redirect
+    Swal.fire({
+      icon: 'success',
+      title: 'Welcome Back!',
+      text: `Hello, ${userName.split(' ')[0]}!`,
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 2000
+    });
+
+    setTimeout(() => { window.location.href = 'home.html'; }, 800);
+
+  } catch (err) {
+    console.error('Login error:', err.code, err.message);
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-arrow-right-to-bracket"></i><span>Sign In</span>';
+
+    let msg = 'Login failed. Please try again.';
+    if (err.code === 'auth/user-not-found') { msg = 'No account found with this email.'; showError('emailWrapper'); } 
+    else if (err.code === 'auth/wrong-password') { msg = 'Incorrect password.'; showError('passwordWrapper'); } 
+    else if (err.code === 'auth/invalid-credential') { msg = 'Invalid email or password.'; showError('emailWrapper'); showError('passwordWrapper'); }
+    else if (err.code === 'auth/too-many-requests') { msg = 'Too many failed attempts. Try again later.'; }
+
+    Swal.fire({ icon: 'error', title: 'Login Failed', text: msg, toast: true, position: 'top-end', showConfirmButton: false, timer: 4000 });
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   EVENT LISTENERS
+═══════════════════════════════════════════════════════════════════ */
+document.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') handleLogin();
+});
+
+auth.onAuthStateChanged(user => {
+  if (user) window.location.href = 'home.html';
+});
+</script>
+
+</body>
+</html>
