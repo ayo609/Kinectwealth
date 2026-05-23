@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover"/>
+<title>Kinetic Wealth · My Portfolio</title>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   BLUE & WHITE THEME — MATCHES SIGNUP PAGE
+═══════════════════════════════════════════════════════════════════ */
+:root {
+  --primary:       #0052CC;
+  --primary-dark:  #003D99;
+  --primary-light: #E5EFFF;
+  --bg-main:       #F4F7FB;
+  --card-bg:       #FFFFFF;
+  --card-bg-inner: #F8FAFC;
+  --text-primary:  #0F172A;
+  --text-muted:    #64748B;
+  --border-light:  #E2E8F0;
+  --success:       #059669;
+  --success-light: #D1FAE5;
+  --danger:        #DC2626;
+  --danger-light:  #FEE2E2;
+  --warning:       #D97706;
+  --warning-light: #FEF3C7;
+  --accent:        #3B82F6;
+}
+
+[data-theme="dark"] {
+  --primary:       #3B82F6;
+  --primary-dark:  #60A5FA;
+  --primary-light: #1E3A8A;
+  --bg-main:       #0F172A;
+  --card-bg:       #1E293B;
+  --card-bg-inner: #151D2A;
+  --text-primary:  #F8FAFC;
+  --text-muted:    #94A3B8;
+  --border-light:  #334155;
+  --success:       #10B981;
+  --success-light: #064E3B;
+  --danger:        #EF4444;
+  --danger-light:  #7F1D1D;
+  --warning:       #F59E0B;
+  --warning-light: #78350F;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+body {
+  background: var(--bg-main);
+  color: var(--text-primary);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: 100px;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* ========== HEADER ========== */
+.app-header {
+  background: var(--primary);
+  padding: 16px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 82, 204, 0.15);
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 500px;
+  margin: 0 auto 14px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.back-btn {
+  width: 38px; height: 38px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #fff;
+  font-size: 15px;
+  text-decoration: none;
+  border: none;
+  transition: background 0.2s;
+}
+
+.back-btn:active { background: rgba(255,255,255,0.35); }
+
+.header-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.icon-btn {
+  width: 38px; height: 38px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #fff;
+  font-size: 15px;
+  border: none;
+  transition: background 0.2s;
+}
+
+.icon-btn:active { background: rgba(255,255,255,0.35); }
+
+/* Stats Row */
+.stats-row {
+  display: flex;
+  gap: 10px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.stat-mini {
+  flex: 1;
+  background: rgba(255,255,255,0.15);
+  border-radius: 12px;
+  padding: 10px;
+  text-align: center;
+  color: #fff;
+}
+
+.stat-mini-value {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.stat-mini-label {
+  font-size: 10px;
+  opacity: 0.8;
+  font-weight: 500;
+}
+
+/* ========== MAIN ========== */
+.main-container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 16px 16px 100px;
+}
+
+/* Filter Tabs */
+.filter-tabs {
+  display: flex;
+  gap: 6px;
+  background: var(--card-bg);
+  border-radius: 30px;
+  padding: 4px;
+  margin-bottom: 20px;
+  border: 1px solid var(--border-light);
+}
+
+.filter-tab {
+  flex: 1;
+  padding: 10px;
+  border-radius: 26px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: all 0.2s;
+  background: none;
+  border: none;
+  font-family: inherit;
+}
+
+.filter-tab.active {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* Investment Card */
+.investment-card {
+  background: var(--card-bg);
+  border-radius: 18px;
+  overflow: hidden;
+  margin-bottom: 14px;
+  border: 1px solid var(--border-light);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+}
+
+.investment-card.completed {
+  opacity: 0.7;
+}
+
+.card-header {
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.plan-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.plan-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--success);
+}
+
+.investment-card.completed .plan-dot {
+  background: var(--text-muted);
+}
+
+.plan-name {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+.status-badge {
+  font-size: 10px;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.status-badge.active {
+  background: var(--success-light);
+  color: var(--success);
+}
+
+.status-badge.completed {
+  background: var(--border-light);
+  color: var(--text-muted);
+}
+
+/* Stats Grid */
+.card-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  padding: 14px 16px;
+}
+
+.card-stat {
+  text-align: center;
+}
+
+.card-stat-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-bottom: 3px;
+  font-weight: 500;
+}
+
+.card-stat-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.card-stat-value.green {
+  color: var(--success);
+}
+
+/* Progress */
+.progress-area {
+  padding: 0 16px 10px;
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.progress-bar {
+  height: 6px;
+  background: var(--border-light);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+/* Claim Area */
+.claim-area {
+  background: var(--card-bg-inner);
+  margin: 12px 16px 16px;
+  border-radius: 14px;
+  padding: 14px;
+  border: 1px solid var(--border-light);
+}
+
+.claim-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.claim-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.claim-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--success);
+}
+
+.countdown-timer {
+  text-align: right;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'Inter', monospace;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+  color: var(--text-muted);
+}
+
+.countdown-timer.ready {
+  color: var(--success);
+}
+
+.claim-btn {
+  width: 100%;
+  padding: 12px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.claim-btn:disabled {
+  background: #94A3B8;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.claim-btn:not(:disabled):active {
+  background: var(--primary-dark);
+  transform: scale(0.97);
+}
+
+/* Completed State */
+.completed-notice {
+  margin: 12px 16px 16px;
+  padding: 14px;
+  background: var(--card-bg-inner);
+  border-radius: 14px;
+  text-align: center;
+  border: 1px solid var(--border-light);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.completed-notice i {
+  color: var(--success);
+  margin-right: 6px;
+}
+
+/* Total Earned Footer */
+.card-footer {
+  padding: 14px 16px;
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.footer-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.footer-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 50px 24px;
+  background: var(--card-bg);
+  border-radius: 20px;
+  border: 2px dashed var(--border-light);
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.empty-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.empty-text {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 18px;
+}
+
+.empty-btn {
+  display: inline-block;
+  padding: 12px 24px;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 25px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* Toast */
+.claim-toast {
+  position: fixed;
+  bottom: 90px;
+  left: 16px;
+  right: 16px;
+  max-width: 400px;
+  margin: 0 auto;
+  background: var(--card-bg);
+  border-left: 4px solid var(--success);
+  border-radius: 16px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  z-index: 999;
+  animation: slideUpToast 0.3s ease;
+}
+
+@keyframes slideUpToast {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.toast-icon {
+  width: 40px; height: 40px;
+  border-radius: 12px;
+  background: var(--success-light);
+  color: var(--success);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.toast-text strong {
+  color: var(--success);
+}
+
+.toast-text small {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+/* Bottom Tab Bar */
+.tab-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--card-bg); border-top: 1px solid var(--border-light);
+  display: flex; justify-content: space-around; padding: 10px 16px 22px;
+  max-width: 500px; margin: 0 auto; z-index: 100;
+}
+
+.tab-item {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  text-decoration: none; font-size: 10px; font-weight: 600; color: var(--text-muted);
+  transition: color 0.2s;
+}
+
+.tab-item i { font-size: 20px; }
+.tab-item.active { color: var(--primary); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="app-header">
+  <div class="header-top">
+    <div class="header-left">
+      <a href="home.html" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+      <div class="header-title">My Portfolio</div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" onclick="refreshAll()" title="Refresh"><i class="fas fa-sync-alt"></i></button>
+      <button class="icon-btn" onclick="toggleTheme()" id="themeToggleBtn"><i class="fas fa-moon"></i></button>
+    </div>
+  </div>
+  <div class="stats-row">
+    <div class="stat-mini">
+      <div class="stat-mini-value" id="statDeposit">₦0</div>
+      <div class="stat-mini-label">Deposit</div>
+    </div>
+    <div class="stat-mini">
+      <div class="stat-mini-value" id="statWithdraw">₦0</div>
+      <div class="stat-mini-label">Withdrawable</div>
+    </div>
+    <div class="stat-mini">
+      <div class="stat-mini-value" id="statEarned">₦0</div>
+      <div class="stat-mini-label">Earned</div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main-container">
+
+  <!-- Filter Tabs -->
+  <div class="filter-tabs">
+    <button class="filter-tab active" data-filter="active" onclick="setFilter('active', this)">Active</button>
+    <button class="filter-tab" data-filter="completed" onclick="setFilter('completed', this)">Completed</button>
+    <button class="filter-tab" data-filter="all" onclick="setFilter('all', this)">All</button>
+  </div>
+
+  <!-- Investment List -->
+  <div id="investmentList">
+    <div class="empty-state">
+      <div class="empty-icon"><i class="fas fa-spinner fa-spin" style="color:var(--primary);"></i></div>
+      <div class="empty-title">Loading your investments...</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Bottom Tab Bar -->
+<div class="tab-bar">
+  <a href="home.html" class="tab-item"><i class="fas fa-home"></i><span>Home</span></a>
+  <a href="plans.html" class="tab-item"><i class="fas fa-bolt"></i><span>Invest</span></a>
+  <a href="withdraw.html" class="tab-item"><i class="fas fa-money-bill-transfer"></i><span>Withdraw</span></a>
+  <a href="referrals.html" class="tab-item"><i class="fas fa-users"></i><span>Team</span></a>
+  <a href="dashboard.html" class="tab-item"><i class="fas fa-user"></i><span>Profile</span></a>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   FIREBASE CONFIG
+═══════════════════════════════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "AIzaSyBl6HEVa9mUuROvnohMKzeEzzc0aTREU54",
+  authDomain: "kinetic-dc8e6.firebaseapp.com",
+  projectId: "kinetic-dc8e6",
+  storageBucket: "kinetic-dc8e6.firebasestorage.app",
+  messagingSenderId: "980527555815",
+  appId: "1:980527555815:web:131ccee594e0c8f122ee42"
+};
+
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const FV = firebase.firestore.FieldValue;
+const MS_PER_DAY = 86400000;
+
+/* ═══════════════════════════════════════════════════════════════════
+   GLOBALS
+═══════════════════════════════════════════════════════════════════ */
+let currentUser = null;
+let authReady = false;
+let allInvestments = [];
+let currentFilter = 'active';
+let countdownInterval = null;
+
+/* ═══════════════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════════════ */
+const fmtNum = (n) => (Number(n) || 0).toLocaleString('en-NG');
+const fmtCur = (n) => '₦' + fmtNum(n);
+const fmtShort = (n) => {
+  const v = Number(n) || 0;
+  if (v >= 1e6) return '₦' + (v/1e6).toFixed(1) + 'M';
+  if (v >= 1e3) return '₦' + (v/1e3).toFixed(1) + 'K';
+  return '₦' + v.toFixed(0);
+};
+
+function setText(id, text) { const el = document.getElementById(id); if (el) el.textContent = text; }
+
+function getTimestamp(ts) {
+  if (!ts) return 0;
+  if (ts.toMillis) return ts.toMillis();
+  if (ts.seconds) return ts.seconds * 1000;
+  return Number(ts) || 0;
+}
+
+function formatCountdown(ms) {
+  if (ms <= 0) return 'Ready!';
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  const s = Math.floor((ms % 60000) / 1000);
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   THEME
+═══════════════════════════════════════════════════════════════════ */
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  const newTheme = isDark ? 'light' : 'dark';
+  html.setAttribute('data-theme', newTheme);
+  localStorage.setItem('kw-theme', newTheme);
+  const icon = document.querySelector('#themeToggleBtn i');
+  if (icon) icon.className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+}
+
+(function() {
+  const saved = localStorage.getItem('kw-theme') || 'light';
+  document.documentElement.setAttribute('data-theme', saved);
+  document.addEventListener('DOMContentLoaded', () => {
+    const icon = document.querySelector('#themeToggleBtn i');
+    if (icon) icon.className = saved === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════════════════
+   AUTH GUARD
+═══════════════════════════════════════════════════════════════════ */
+auth.onAuthStateChanged(async (user) => {
+  if (!user) {
+    window.location.replace('login.html');
+    return;
+  }
+  currentUser = user;
+  authReady = true;
+  
+  await loadUserBalances();
+  await loadInvestments();
+  
+  // Start countdown if there are active investments
+  startCountdownIfNeeded();
+});
+
+/* ═══════════════════════════════════════════════════════════════════
+   LOAD BALANCES
+═══════════════════════════════════════════════════════════════════ */
+async function loadUserBalances() {
+  try {
+    const doc = await db.collection('users').doc(currentUser.uid).get();
+    if (doc.exists) {
+      const data = doc.data();
+      setText('statDeposit', fmtShort(data.depositBalance || 0));
+      setText('statWithdraw', fmtShort(data.withdrawalBalance || 0));
+      setText('statEarned', fmtShort(data.totalEarnings || 0));
+    }
+  } catch (e) {
+    console.error('Balance load error:', e);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   LOAD INVESTMENTS
+═══════════════════════════════════════════════════════════════════ */
+async function loadInvestments() {
+  try {
+    const snap = await db.collection('investments')
+      .where('userId', '==', currentUser.uid)
+      .get();
+    
+    allInvestments = snap.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })).sort((a, b) => {
+      return getTimestamp(b.activatedAt || b.createdAt) - getTimestamp(a.activatedAt || a.createdAt);
+    });
+    
+    renderInvestments();
+  } catch (e) {
+    console.error('Investment load error:', e);
+    document.getElementById('investmentList').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">⚠️</div>
+        <div class="empty-title">Failed to load</div>
+        <div class="empty-text">Please check your connection</div>
+        <button class="empty-btn" onclick="refreshAll()">Retry</button>
+      </div>`;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   GET NEXT CLAIM TIME
+═══════════════════════════════════════════════════════════════════ */
+function getNextClaimTime(inv) {
+  const now = Date.now();
+  
+  if (inv.nextClaimAt) {
+    const ms = getTimestamp(inv.nextClaimAt);
+    if (ms > 0) return ms;
+  }
+  if (inv.lastClaimAt) {
+    const ms = getTimestamp(inv.lastClaimAt);
+    if (ms) return ms + MS_PER_DAY;
+  }
+  if (inv.activatedAt) {
+    const ms = getTimestamp(inv.activatedAt);
+    if (ms) return ms + MS_PER_DAY;
+  }
+  if (inv.createdAt) {
+    const ms = getTimestamp(inv.createdAt);
+    if (ms) return ms + MS_PER_DAY;
+  }
+  return now + MS_PER_DAY;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   RENDER
+═══════════════════════════════════════════════════════════════════ */
+function renderInvestments() {
+  const container = document.getElementById('investmentList');
+  
+  const filtered = allInvestments.filter(inv => {
+    if (currentFilter === 'active') return inv.status === 'active';
+    if (currentFilter === 'completed') return inv.status === 'completed';
+    return true;
+  });
+  
+  if (filtered.length === 0) {
+    const messages = {
+      active: { icon: '📊', title: 'No Active Investments', text: 'Start earning daily returns!', btn: true },
+      completed: { icon: '✅', title: 'No Completed Investments', text: 'Your finished plans will appear here', btn: false },
+      all: { icon: '📭', title: 'No Investments Yet', text: 'Choose a plan to get started', btn: true }
+    };
+    const msg = messages[currentFilter] || messages.all;
+    
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">${msg.icon}</div>
+        <div class="empty-title">${msg.title}</div>
+        <div class="empty-text">${msg.text}</div>
+        ${msg.btn ? '<a href="plans.html" class="empty-btn"><i class="fas fa-bolt"></i> View Plans</a>' : ''}
+      </div>`;
+    return;
+  }
+  
+  container.innerHTML = filtered.map(inv => buildCardHTML(inv)).join('');
+}
+
+function buildCardHTML(inv) {
+  const now = Date.now();
+  const isActive = inv.status === 'active';
+  const duration = Number(inv.duration) || 1;
+  const claimedDays = Number(inv.claimedDays) || 0;
+  const dailyROI = Number(inv.dailyROI) || 0;
+  const capital = Number(inv.capital) || 0;
+  const progress = Math.min((claimedDays / duration) * 100, 100);
+  const totalEarned = Number(inv.totalEarned) || 0;
+  const daysLeft = Math.max(0, duration - claimedDays);
+  const isFinal = daysLeft <= 1 && isActive;
+  
+  let nextClaimTime = getNextClaimTime(inv);
+  let timeLeft = Math.max(0, nextClaimTime - now);
+  let canClaim = isActive && timeLeft <= 0;
+  
+  const claimAmount = isFinal ? dailyROI + capital : dailyROI;
+  
+  return `
+    <div class="investment-card ${!isActive ? 'completed' : ''}" id="card_${inv.id}">
+      <div class="card-header">
+        <div class="plan-info">
+          <div class="plan-dot"></div>
+          <div class="plan-name">${inv.planName || 'Investment Plan'}</div>
+        </div>
+        <div class="status-badge ${isActive ? 'active' : 'completed'}">
+          ${isActive ? '● Active' : '✓ Completed'}
+        </div>
+      </div>
+      
+      <div class="card-stats">
+        <div class="card-stat">
+          <div class="card-stat-label">Capital</div>
+          <div class="card-stat-value">${fmtCur(capital)}</div>
+        </div>
+        <div class="card-stat">
+          <div class="card-stat-label">Daily ROI</div>
+          <div class="card-stat-value green">+${fmtCur(dailyROI)}</div>
+        </div>
+        <div class="card-stat">
+          <div class="card-stat-label">${isActive ? 'Remaining' : 'Status'}</div>
+          <div class="card-stat-value">${isActive ? daysLeft + ' days' : 'Done'}</div>
+        </div>
+      </div>
+      
+      <div class="progress-area">
+        <div class="progress-header">
+          <span>Day ${claimedDays} of ${duration}</span>
+          <span>${Math.round(progress)}%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:${progress}%"></div>
+        </div>
+      </div>
+      
+      ${isActive ? `
+        <div class="claim-area">
+          <div class="claim-top">
+            <span class="claim-label">${isFinal ? '🏁 Final Payout (incl. capital)' : 'Next Payout'}</span>
+            <span class="claim-value">+${fmtCur(claimAmount)}</span>
+          </div>
+          <div class="countdown-timer ${canClaim ? 'ready' : ''}" id="cd_${inv.id}" data-next="${nextClaimTime}">
+            ${canClaim ? '✅ Ready to claim!' : formatCountdown(timeLeft)}
+          </div>
+          <button class="claim-btn" id="claimBtn_${inv.id}" onclick="claimROI('${inv.id}')" ${!canClaim ? 'disabled' : ''}>
+            <i class="fas fa-hand-holding-usd"></i> ${isFinal ? 'Claim Final + Capital' : 'Claim to Withdrawal Wallet'}
+          </button>
+        </div>
+      ` : `
+        <div class="completed-notice">
+          <i class="fas fa-check-circle"></i> Investment completed — All returns paid to withdrawal wallet
+        </div>
+      `}
+      
+      <div class="card-footer">
+        <span class="footer-label">Total Earned</span>
+        <span class="footer-value">${fmtCur(totalEarned)}</span>
+      </div>
+    </div>
+  `;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   COUNTDOWN — ONLY RUNS IF ACTIVE INVESTMENTS EXIST
+═══════════════════════════════════════════════════════════════════ */
+function startCountdownIfNeeded() {
+  if (countdownInterval) clearInterval(countdownInterval);
+  
+  const hasActive = allInvestments.some(inv => inv.status === 'active');
+  if (!hasActive) return;
+  
+  countdownInterval = setInterval(updateAllCountdowns, 1000);
+}
+
+function updateAllCountdowns() {
+  const now = Date.now();
+  
+  document.querySelectorAll('[id^="cd_"]').forEach(el => {
+    const invId = el.id.replace('cd_', '');
+    const inv = allInvestments.find(i => i.id === invId);
+    if (!inv || inv.status !== 'active') return;
+    
+    const nextTime = getNextClaimTime(inv);
+    const timeLeft = Math.max(0, nextTime - now);
+    const canClaim = timeLeft <= 0;
+    
+    el.textContent = canClaim ? '✅ Ready to claim!' : formatCountdown(timeLeft);
+    el.classList.toggle('ready', canClaim);
+    
+    const btn = document.getElementById(`claimBtn_${invId}`);
+    if (btn) btn.disabled = !canClaim;
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   CLAIM ROI — GOES TO WITHDRAWAL WALLET
+═══════════════════════════════════════════════════════════════════ */
+async function claimROI(invId) {
+  if (!currentUser) return;
+  
+  const inv = allInvestments.find(i => i.id === invId);
+  if (!inv || inv.status !== 'active') {
+    Swal.fire({ icon: 'warning', title: 'Not Available', text: 'This investment is no longer active.', confirmButtonColor: '#0052CC' });
+    return;
+  }
+  
+  const now = Date.now();
+  const nextTime = getNextClaimTime(inv);
+  
+  if (now < nextTime) {
+    Swal.fire({ icon: 'warning', title: 'Not Ready', text: 'Please wait for the countdown to finish.', confirmButtonColor: '#0052CC' });
+    return;
+  }
+  
+  const duration = Number(inv.duration) || 1;
+  const claimedDays = Number(inv.claimedDays) || 0;
+  const isFinal = (claimedDays + 1) >= duration;
+  const dailyROI = Number(inv.dailyROI) || 0;
+  const capital = Number(inv.capital) || 0;
+  const claimAmount = isFinal ? dailyROI + capital : dailyROI;
+  
+  const confirm = await Swal.fire({
+    title: isFinal ? '🏁 Final Claim!' : '💰 Claim Daily ROI',
+    html: `
+      <div style="font-size:30px;font-weight:800;color:var(--success);">+${fmtCur(claimAmount)}</div>
+      <p style="margin-top:8px;color:var(--text-muted);">
+        ${isFinal ? 'Includes your capital back!' : `Day ${claimedDays + 1} of ${duration}`}
+      </p>
+      <p style="font-size:12px;color:var(--text-muted);margin-top:4px;">
+        <i class="fas fa-wallet"></i> Will be added to your <strong>withdrawal wallet</strong>
+      </p>
+    `,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: `Claim ${fmtCur(claimAmount)}`,
+    confirmButtonColor: '#0052CC',
+    cancelButtonColor: '#64748B'
+  });
+  
+  if (!confirm.isConfirmed) return;
+  
+  Swal.fire({ title: 'Processing...', html: 'Adding to withdrawal wallet', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+  
+  try {
+    const batch = db.batch();
+    const activationTime = getTimestamp(inv.activatedAt || inv.createdAt);
+    const daysSince = Math.floor((now - activationTime) / MS_PER_DAY);
+    const newNextClaim = new Date(activationTime + ((daysSince + 1) * MS_PER_DAY));
+    
+    // 🔥 UPDATE USER — CLAIM GOES TO WITHDRAWAL WALLET
+    batch.update(db.collection('users').doc(currentUser.uid), {
+      withdrawalBalance: FV.increment(claimAmount),
+      totalEarnings: FV.increment(claimAmount)
+    });
+    
+    // Update investment
+    if (isFinal) {
+      batch.update(db.collection('investments').doc(invId), {
+        status: 'completed',
+        completedAt: new Date().toISOString(),
+        lastClaimAt: new Date().toISOString(),
+        claimedDays: FV.increment(1),
+        daysRemaining: 0,
+        totalEarned: FV.increment(claimAmount)
+      });
+    } else {
+      batch.update(db.collection('investments').doc(invId), {
+        lastClaimAt: new Date().toISOString(),
+        nextClaimAt: newNextClaim.toISOString(),
+        claimedDays: FV.increment(1),
+        daysRemaining: FV.increment(-1),
+        totalEarned: FV.increment(dailyROI)
+      });
+    }
+    
+    // Log transaction
+    batch.set(db.collection('transactions').doc(), {
+      userId: currentUser.uid,
+      investmentId: invId,
+      type: isFinal ? 'roi_final' : 'roi_daily',
+      amount: claimAmount,
+      planName: inv.planName || 'Plan',
+      description: `${isFinal ? 'Final' : 'Daily'} ROI — ${inv.planName || 'Investment'}`,
+      wallet: 'withdrawal',
+      status: 'completed',
+      createdAt: new Date()
+    });
+    
+    await batch.commit();
+    
+    // Show toast
+    showToast(claimAmount, isFinal);
+    
+    // Refresh
+    await loadUserBalances();
+    await loadInvestments();
+    startCountdownIfNeeded();
+    
+    Swal.close();
+    
+  } catch (err) {
+    console.error('Claim error:', err);
+    Swal.fire({ icon: 'error', title: 'Claim Failed', text: err.message || 'Please try again', confirmButtonColor: '#DC2626' });
+  }
+}
+
+function showToast(amount, isFinal) {
+  const existing = document.querySelector('.claim-toast');
+  if (existing) existing.remove();
+  
+  const toast = document.createElement('div');
+  toast.className = 'claim-toast';
+  toast.innerHTML = `
+    <div class="toast-icon">${isFinal ? '🎉' : '💰'}</div>
+    <div class="toast-text">
+      <strong>+${fmtCur(amount)}</strong><br>
+      <small>Added to withdrawal wallet ${isFinal ? '(incl. capital)' : ''}</small>
+    </div>
+  `;
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s';
+    setTimeout(() => toast.remove(), 300);
+  }, 3500);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   FILTER & REFRESH
+═══════════════════════════════════════════════════════════════════ */
+function setFilter(filter, el) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderInvestments();
+  startCountdownIfNeeded();
+}
+
+async function refreshAll() {
+  const btn = document.querySelector('.icon-btn .fa-sync-alt');
+  if (btn) btn.classList.add('fa-spin');
+  
+  await loadUserBalances();
+  await loadInvestments();
+  startCountdownIfNeeded();
+  
+  setTimeout(() => { if (btn) btn.classList.remove('fa-spin'); }, 600);
+}
+
+// Cleanup
+window.addEventListener('beforeunload', () => {
+  if (countdownInterval) clearInterval(countdownInterval);
+});
+
+// Expose
+window.toggleTheme = toggleTheme;
+window.setFilter = setFilter;
+window.claimROI = claimROI;
+window.refreshAll = refreshAll;
+</script>
+
+</body>
+</html>
