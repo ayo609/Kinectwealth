@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+<title>KineticWealth · Dashboard</title>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+
+<style>
+[data-theme="light"] {
+  --bg: #F0F6FF; --bg2: #E8F0FE; --card: #FFFFFF; --card2: #F8FAFE;
+  --border: #DBEAFE; --text: #1E293B; --sub: #64748B; --muted: #94A3B8;
+  --topbar-bg: rgba(255,255,255,0.95); --ticker-bg: #EFF6FF;
+  --shadow: 0 4px 20px rgba(30,64,175,0.08);
+}
+[data-theme="dark"] {
+  --bg: #0F172A; --bg2: #1E293B; --card: #1E293B; --card2: #273548;
+  --border: rgba(59,130,246,0.15); --text: #F1F5F9; --sub: #94A3B8; --muted: #64748B;
+  --topbar-bg: rgba(15,23,42,0.97); --ticker-bg: #1E293B;
+  --shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+:root {
+  --primary: #1E40AF; --primary-dark: #1E3A8A; --secondary: #3B82F6; --accent: #06B6D4;
+  --success: #10B981; --danger: #EF4444; --warning: #F59E0B; --gold: #F59E0B;
+  --gradient-1: #1E40AF; --gradient-2: #3B82F6; --gradient-3: #06B6D4;
+  --nav-h: 64px; --bot-h: 72px; --radius-sm: 12px; --radius: 16px; --radius-lg: 20px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text);
+  padding-bottom: calc(var(--bot-h) + 16px); -webkit-font-smoothing: antialiased;
+  transition: background 0.3s, color 0.3s; overflow-x: hidden; line-height: 1.5;
+}
+
+/* TOP BAR */
+.topbar { position:sticky; top:0; z-index:900; height:var(--nav-h); background:var(--topbar-bg);
+  backdrop-filter:blur(20px); border-bottom:1px solid var(--border); display:flex;
+  align-items:center; justify-content:space-between; padding:0 20px; box-shadow:var(--shadow); }
+.topbar-left { display:flex; align-items:center; gap:12px; }
+.logo-icon { width:42px; height:42px; border-radius:var(--radius-sm);
+  background:linear-gradient(135deg,var(--gradient-1),var(--gradient-2));
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 4px 12px rgba(30,64,175,0.3); position:relative; overflow:hidden; }
+.logo-icon::after { content:''; position:absolute; width:16px; height:16px;
+  background:rgba(255,255,255,0.2); border-radius:50%; top:30%; left:30%; }
+.logo-icon i { font-size:20px; color:white; position:relative; z-index:1; }
+.brand-name { font-family:'Plus Jakarta Sans',sans-serif; font-size:20px; font-weight:800;
+  background:linear-gradient(135deg,var(--gradient-1),var(--gradient-3));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; letter-spacing:-0.5px; }
+.topbar-right { display:flex; align-items:center; gap:12px; }
+.theme-btn { width:40px; height:40px; border-radius:var(--radius-sm); background:var(--card2);
+  border:1px solid var(--border); cursor:pointer; display:flex; align-items:center; justify-content:center;
+  font-size:18px; transition:all 0.3s; }
+.theme-btn:hover { transform:scale(1.05); }
+.notification-btn { width:40px; height:40px; border-radius:var(--radius-sm); background:var(--card2);
+  border:1px solid var(--border); cursor:pointer; display:flex; align-items:center; justify-content:center;
+  font-size:18px; position:relative; transition:all 0.3s; }
+.notification-dot { position:absolute; top:8px; right:8px; width:8px; height:8px;
+  background:var(--danger); border-radius:50%; border:2px solid var(--card); }
+.avatar-btn { width:42px; height:42px; border-radius:var(--radius-sm);
+  background:linear-gradient(135deg,var(--secondary),var(--accent));
+  display:flex; align-items:center; justify-content:center; color:white;
+  font-weight:800; font-size:16px; cursor:pointer; text-decoration:none;
+  transition:all 0.3s; box-shadow:0 4px 12px rgba(59,130,246,0.3); }
+.avatar-btn:hover { transform:scale(1.05); }
+
+/* TICKER */
+.ticker-wrap { background:var(--ticker-bg); border-bottom:1px solid var(--border); overflow:hidden; padding:10px 0; }
+.ticker-inner { display:flex; gap:0; animation:ticker 30s linear infinite; white-space:nowrap; }
+@keyframes ticker { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} }
+.ticker-item { display:inline-flex; align-items:center; gap:8px; padding:0 32px;
+  font-size:12px; font-weight:600; color:var(--sub); }
+.ticker-item i { color:var(--secondary); }
+.ticker-item b { color:var(--secondary); font-weight:700; }
+
+/* MAIN CONTENT */
+.main-content { padding:0 16px; display:flex; flex-direction:column; gap:16px; }
+
+/* Welcome Card */
+.welcome-card { background:linear-gradient(135deg,var(--gradient-1),var(--gradient-2));
+  border-radius:var(--radius-lg); padding:24px 20px; color:white; position:relative;
+  overflow:hidden; margin-top:16px; box-shadow:0 8px 30px rgba(30,64,175,0.3); }
+.welcome-card::before { content:''; position:absolute; width:200px; height:200px;
+  background:rgba(6,182,212,0.15); border-radius:50%; top:-60px; right:-60px; }
+.welcome-card::after { content:''; position:absolute; width:150px; height:150px;
+  background:rgba(255,255,255,0.05); border-radius:50%; bottom:-40px; left:-40px; }
+.welcome-content { position:relative; z-index:1; }
+.welcome-greeting { font-family:'Plus Jakarta Sans',sans-serif; font-size:24px; font-weight:800;
+  margin-bottom:6px; letter-spacing:-0.5px; }
+.welcome-subtitle { font-size:14px; opacity:0.9; font-weight:500; margin-bottom:16px; }
+.welcome-stats-mini { display:flex; gap:16px; }
+.welcome-stat-mini { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600;
+  background:rgba(255,255,255,0.1); padding:8px 14px; border-radius:30px; backdrop-filter:blur(10px); }
+.welcome-stat-mini i { font-size:16px; }
+
+/* Wallet Cards */
+.wallets-container { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.wallet-card { border-radius:var(--radius); padding:18px 16px; color:white; position:relative;
+  overflow:hidden; cursor:pointer; transition:all 0.3s; }
+.wallet-card:hover { transform:translateY(-2px); }
+.wallet-card:active { transform:scale(0.98); }
+.wallet-card.deposit { background:linear-gradient(135deg,#1E40AF,#3B82F6);
+  box-shadow:0 8px 25px rgba(30,64,175,0.3); }
+.wallet-card.withdrawal { background:linear-gradient(135deg,#059669,#10B981);
+  box-shadow:0 8px 25px rgba(16,185,129,0.3); }
+.wallet-card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.wallet-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em;
+  opacity:0.9; display:flex; align-items:center; gap:6px; }
+.wallet-icon { width:32px; height:32px; border-radius:10px; background:rgba(255,255,255,0.2);
+  display:flex; align-items:center; justify-content:center; font-size:14px; }
+.wallet-amount { font-family:'Plus Jakarta Sans',sans-serif; font-size:24px; font-weight:800;
+  margin-bottom:12px; letter-spacing:-0.5px; }
+.wallet-action-btn { display:inline-flex; align-items:center; gap:6px;
+  background:rgba(255,255,255,0.2); padding:8px 14px; border-radius:25px;
+  font-size:11px; font-weight:700; color:white; text-decoration:none; transition:all 0.3s; }
+.wallet-action-btn:hover { background:rgba(255,255,255,0.3); }
+
+/* Quick Actions */
+.quick-actions { background:var(--card); border-radius:var(--radius); padding:16px;
+  border:1px solid var(--border); box-shadow:var(--shadow); }
+.qa-title { font-family:'Plus Jakarta Sans',sans-serif; font-size:15px; font-weight:700;
+  color:var(--text); margin-bottom:14px; }
+.qa-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+.qa-item { display:flex; flex-direction:column; align-items:center; gap:8px; padding:14px 8px;
+  border-radius:var(--radius-sm); background:var(--bg2); text-decoration:none; cursor:pointer;
+  border:1px solid transparent; transition:all 0.3s; }
+.qa-item:hover { border-color:var(--secondary); transform:translateY(-2px);
+  box-shadow:0 4px 12px rgba(59,130,246,0.1); }
+.qa-item:active { transform:scale(0.95); }
+.qa-icon { width:44px; height:44px; border-radius:12px; display:flex; align-items:center;
+  justify-content:center; font-size:20px; }
+.qa-icon.blue { background:rgba(59,130,246,0.12); color:var(--secondary); }
+.qa-icon.green { background:rgba(16,185,129,0.12); color:var(--success); }
+.qa-icon.amber { background:rgba(245,158,11,0.12); color:var(--warning); }
+.qa-icon.cyan { background:rgba(6,182,212,0.12); color:var(--accent); }
+.qa-icon.red { background:rgba(239,68,68,0.12); color:var(--danger); }
+.qa-icon.purple { background:rgba(139,92,246,0.12); color:#8B5CF6; }
+.qa-label { font-size:11px; font-weight:600; color:var(--sub); text-align:center; }
+
+/* Active Investment */
+.section-card { background:var(--card); border-radius:var(--radius); border:1px solid var(--border);
+  box-shadow:var(--shadow); overflow:hidden; }
+.section-header { display:flex; align-items:center; justify-content:space-between;
+  padding:16px 18px; border-bottom:1px solid var(--border); }
+.section-title { font-family:'Plus Jakarta Sans',sans-serif; font-size:16px; font-weight:700; color:var(--text); }
+.section-link { font-size:12px; font-weight:700; color:var(--secondary); text-decoration:none;
+  display:flex; align-items:center; gap:4px; }
+.section-link:hover { text-decoration:underline; }
+.section-body { padding:18px; }
+
+/* Active Plan */
+.active-plan { display:flex; align-items:center; gap:14px; padding:14px; background:var(--bg2);
+  border-radius:var(--radius-sm); margin-bottom:12px; }
+.plan-icon { width:48px; height:48px; border-radius:12px;
+  background:linear-gradient(135deg,var(--gradient-1),var(--gradient-2));
+  display:flex; align-items:center; justify-content:center; color:white; font-size:22px; flex-shrink:0; }
+.plan-info { flex:1; }
+.plan-name { font-weight:700; color:var(--text); font-size:14px; margin-bottom:2px; }
+.plan-daily { font-size:11px; color:var(--sub); font-weight:500; }
+.plan-status { padding:4px 12px; border-radius:20px; font-size:10px; font-weight:700;
+  background:rgba(16,185,129,0.1); color:var(--success); }
+.progress-section { margin-bottom:14px; }
+.progress-header { display:flex; justify-content:space-between; margin-bottom:6px;
+  font-size:11px; font-weight:600; color:var(--sub); }
+.progress-bar { height:8px; background:var(--bg2); border-radius:10px; overflow:hidden; }
+.progress-fill { height:100%; background:linear-gradient(90deg,var(--secondary),var(--accent));
+  border-radius:10px; transition:width 0.6s ease; }
+.claim-section { display:flex; align-items:center; gap:12px; padding:14px; background:var(--bg2);
+  border-radius:var(--radius-sm); }
+.claim-info { flex:1; }
+.claim-label { font-size:13px; font-weight:700; color:var(--text); margin-bottom:2px; }
+.claim-amount { font-size:11px; color:var(--sub); font-weight:500; }
+.claim-countdown { font-family:'Plus Jakarta Sans',sans-serif; font-size:15px; font-weight:800;
+  color:var(--warning); white-space:nowrap; }
+.claim-btn { padding:10px 20px; background:linear-gradient(135deg,var(--gradient-1),var(--gradient-2));
+  color:white; border:none; border-radius:25px; font-weight:700; font-size:12px; cursor:pointer;
+  white-space:nowrap; transition:all 0.3s; box-shadow:0 4px 12px rgba(30,64,175,0.3); }
+.claim-btn:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 6px 20px rgba(30,64,175,0.4); }
+.claim-btn:disabled { background:var(--muted); cursor:not-allowed; box-shadow:none; }
+
+/* No Plan */
+.no-plan { text-align:center; padding:32px 16px; }
+.no-plan-icon { font-size:48px; margin-bottom:12px; }
+.no-plan-title { font-family:'Plus Jakarta Sans',sans-serif; font-size:18px; font-weight:700;
+  color:var(--text); margin-bottom:6px; }
+.no-plan-text { font-size:13px; color:var(--sub); margin-bottom:16px; }
+.invest-btn { display:inline-flex; align-items:center; gap:8px; padding:12px 24px;
+  background:linear-gradient(135deg,var(--gradient-1),var(--gradient-2)); color:white;
+  border-radius:30px; text-decoration:none; font-weight:700; font-size:14px;
+  box-shadow:0 4px 15px rgba(30,64,175,0.3); transition:all 0.3s; }
+.invest-btn:hover { transform:translateY(-2px); box-shadow:0 8px 25px rgba(30,64,175,0.4); }
+
+/* Stats Grid */
+.stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.stat-card { background:var(--card); border-radius:var(--radius); padding:16px 12px;
+  text-align:center; border:1px solid var(--border); box-shadow:var(--shadow); transition:all 0.3s; }
+.stat-card:hover { transform:translateY(-2px); border-color:var(--secondary); }
+.stat-icon { font-size:24px; margin-bottom:8px; }
+.stat-value { font-family:'Plus Jakarta Sans',sans-serif; font-size:20px; font-weight:800;
+  color:var(--text); margin-bottom:4px; }
+.stat-label { font-size:10px; font-weight:600; color:var(--sub); text-transform:uppercase; letter-spacing:0.05em; }
+
+/* BOTTOM NAV */
+.bottom-nav { position:fixed; bottom:0; left:0; right:0; height:var(--bot-h); background:var(--topbar-bg);
+  backdrop-filter:blur(20px); border-top:1px solid var(--border); display:flex;
+  align-items:center; justify-content:space-around; padding:0 8px; z-index:800;
+  box-shadow:0 -4px 20px rgba(0,0,0,0.05); }
+.nav-item { display:flex; flex-direction:column; align-items:center; gap:4px; color:var(--muted);
+  text-decoration:none; font-size:10px; font-weight:600; padding:8px 12px;
+  border-radius:12px; transition:all 0.3s; position:relative; }
+.nav-item i { font-size:22px; transition:all 0.3s; }
+.nav-item.active { color:var(--secondary); }
+.nav-item.active::before { content:''; position:absolute; top:0; left:50%; transform:translateX(-50%);
+  width:24px; height:3px; background:var(--secondary); border-radius:0 0 3px 3px; }
+.nav-item:hover { color:var(--secondary); }
+
+/* WELCOME MODAL */
+.modal-overlay { position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.7);
+  backdrop-filter:blur(8px); display:none; align-items:center; justify-content:center;
+  padding:20px; animation:fadeIn 0.3s ease; }
+.modal-overlay.show { display:flex; }
+@keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+.modal-box { background:var(--card); border-radius:var(--radius-lg); max-width:420px; width:100%;
+  max-height:90vh; overflow-y:auto; border:1px solid var(--border);
+  box-shadow:0 25px 50px rgba(0,0,0,0.3); animation:modalSlideUp 0.4s cubic-bezier(0.16,1,0.3,1); }
+@keyframes modalSlideUp { from{opacity:0;transform:translateY(30px) scale(0.95);} to{opacity:1;transform:translateY(0) scale(1);} }
+.modal-head { background:linear-gradient(135deg,var(--gradient-1),var(--gradient-2));
+  border-radius:var(--radius-lg) var(--radius-lg) 0 0; padding:28px 24px 24px;
+  text-align:center; position:relative; color:white; }
+.modal-close { position:absolute; top:14px; right:14px; width:34px; height:34px; border-radius:10px;
+  background:rgba(255,255,255,0.2); border:none; color:white; font-size:16px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; transition:all 0.3s; }
+.modal-close:hover { background:rgba(255,255,255,0.3); }
+.modal-icon { font-size:48px; margin-bottom:12px; }
+.modal-title { font-family:'Plus Jakarta Sans',sans-serif; font-size:22px; font-weight:800; margin-bottom:4px; }
+.modal-subtitle { font-size:14px; opacity:0.9; }
+.modal-body { padding:20px 24px; }
+.bonus-highlight { background:linear-gradient(135deg,rgba(245,158,11,0.1),rgba(245,158,11,0.05));
+  border:1px solid rgba(245,158,11,0.2); border-radius:var(--radius-sm); padding:16px;
+  text-align:center; margin-bottom:16px; }
+.bonus-amount { font-family:'Plus Jakarta Sans',sans-serif; font-size:32px; font-weight:800;
+  color:var(--warning); margin-bottom:4px; }
+.bonus-label { font-size:12px; color:var(--warning); font-weight:600; }
+.features-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px; }
+.feature-item { background:var(--bg2); border-radius:var(--radius-sm); padding:14px;
+  text-align:center; border:1px solid var(--border); }
+.feature-icon { font-size:24px; margin-bottom:6px; }
+.feature-value { font-family:'Plus Jakarta Sans',sans-serif; font-size:16px; font-weight:800;
+  color:var(--text); margin-bottom:2px; }
+.feature-label { font-size:10px; color:var(--sub); font-weight:600; }
+.getting-started { background:rgba(59,130,246,0.05); border:1px solid rgba(59,130,246,0.15);
+  border-radius:var(--radius-sm); padding:16px; margin-bottom:16px; }
+.gs-title { font-weight:700; color:var(--secondary); margin-bottom:10px; font-size:14px; }
+.gs-list { list-style:none; display:flex; flex-direction:column; gap:8px; }
+.gs-list li { font-size:12px; color:var(--sub); font-weight:500; padding-left:18px; position:relative; }
+.gs-list li::before { content:'✓'; position:absolute; left:0; color:var(--success); font-weight:800; }
+.modal-actions { display:flex; flex-direction:column; gap:8px; }
+.modal-btn { width:100%; padding:14px; border-radius:var(--radius-sm); font-family:'Inter',sans-serif;
+  font-size:14px; font-weight:700; cursor:pointer; border:none;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  transition:all 0.3s; text-decoration:none; }
+.modal-btn:active { transform:scale(0.97); }
+.modal-btn.primary { background:linear-gradient(135deg,var(--gradient-1),var(--gradient-2));
+  color:white; box-shadow:0 4px 15px rgba(30,64,175,0.3); }
+.modal-btn.secondary { background:var(--bg2); color:var(--text); border:1px solid var(--border); }
+.dont-show-row { display:flex; align-items:center; gap:8px; padding:12px; margin-top:12px;
+  background:var(--bg2); border-radius:var(--radius-sm); }
+.dont-show-row input { width:18px; height:18px; accent-color:var(--secondary); cursor:pointer; }
+.dont-show-row label { font-size:12px; font-weight:600; color:var(--sub); cursor:pointer; }
+
+/* LOADING OVERLAY */
+.loading-overlay { position:fixed; inset:0; z-index:10000; background:var(--bg);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:20px; transition:opacity 0.3s; }
+.loading-overlay.hidden { opacity:0; pointer-events:none; }
+.loading-spinner { width:48px; height:48px; border:4px solid var(--border);
+  border-top-color:var(--secondary); border-radius:50%; animation:spin 1s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg);} }
+.loading-text { font-size:14px; color:var(--sub); font-weight:600; }
+
+@media (max-width:360px) {
+  .wallets-container { grid-template-columns:1fr; }
+  .qa-grid { grid-template-columns:repeat(3,1fr); }
+}
+</style>
+</head>
+<body>
+
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Loading your dashboard...</div>
+</div>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo-icon"><i class="fas fa-chart-line"></i></div>
+    <span class="brand-name">KineticWealth</span>
+  </div>
+  <div class="topbar-right">
+    <button class="theme-btn" onclick="toggleTheme()" id="themeBtn"><i class="fas fa-moon"></i></button>
+    <button class="notification-btn" onclick="showNotifications()">
+      <i class="fas fa-bell"></i>
+      <span class="notification-dot" id="notifDot" style="display:none;"></span>
+    </button>
+    <a href="dashboard.html" class="avatar-btn" id="avatarBtn">K</a>
+  </div>
+</div>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker-inner">
+    <span class="ticker-item"><i class="fas fa-gift"></i> <b>₦1,000</b> Welcome Bonus for new users!</span>
+    <span class="ticker-item"><i class="fas fa-chart-line"></i> Earn up to <b>20% daily</b> returns</span>
+    <span class="ticker-item"><i class="fas fa-users"></i> <b>3-Level</b> Referral Program</span>
+    <span class="ticker-item"><i class="fas fa-shield-alt"></i> Bank-Level <b>Security</b></span>
+    <span class="ticker-item"><i class="fas fa-clock"></i> Claim rewards <b>every 24 hours</b></span>
+    <span class="ticker-item"><i class="fas fa-gift"></i> <b>₦1,000</b> Welcome Bonus for new users!</span>
+    <span class="ticker-item"><i class="fas fa-chart-line"></i> Earn up to <b>20% daily</b> returns</span>
+    <span class="ticker-item"><i class="fas fa-users"></i> <b>3-Level</b> Referral Program</span>
+    <span class="ticker-item"><i class="fas fa-shield-alt"></i> Bank-Level <b>Security</b></span>
+    <span class="ticker-item"><i class="fas fa-clock"></i> Claim rewards <b>every 24 hours</b></span>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main-content">
+  <div class="welcome-card">
+    <div class="welcome-content">
+      <div class="welcome-greeting" id="welcomeGreeting">Welcome back! 👋</div>
+      <div class="welcome-subtitle" id="welcomeSubtitle">Your wealth journey continues</div>
+      <div class="welcome-stats-mini">
+        <div class="welcome-stat-mini"><i class="fas fa-wallet"></i><span id="totalBalance">₦0</span></div>
+        <div class="welcome-stat-mini"><i class="fas fa-chart-simple"></i><span id="activePlansCount">0 Active</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wallets-container">
+    <div class="wallet-card deposit" onclick="window.location.href='deposit.html'">
+      <div class="wallet-card-header">
+        <span class="wallet-label"><i class="fas fa-arrow-down"></i> Deposit Wallet</span>
+        <div class="wallet-icon"><i class="fas fa-wallet"></i></div>
+      </div>
+      <div class="wallet-amount" id="depositBalance">₦0.00</div>
+      <a href="deposit.html" class="wallet-action-btn"><i class="fas fa-plus"></i> Top Up</a>
+    </div>
+    <div class="wallet-card withdrawal" onclick="window.location.href='withdraw.html'">
+      <div class="wallet-card-header">
+        <span class="wallet-label"><i class="fas fa-arrow-up"></i> Withdrawal Wallet</span>
+        <div class="wallet-icon"><i class="fas fa-building-columns"></i></div>
+      </div>
+      <div class="wallet-amount" id="withdrawalBalance">₦0.00</div>
+      <a href="withdraw.html" class="wallet-action-btn"><i class="fas fa-paper-plane"></i> Withdraw</a>
+    </div>
+  </div>
+
+  <div class="quick-actions">
+    <div class="qa-title">Quick Actions</div>
+    <div class="qa-grid">
+      <a href="deposit.html" class="qa-item"><div class="qa-icon blue"><i class="fas fa-credit-card"></i></div><div class="qa-label">Deposit</div></a>
+      <a href="withdraw.html" class="qa-item"><div class="qa-icon green"><i class="fas fa-paper-plane"></i></div><div class="qa-label">Withdraw</div></a>
+      <a href="plans.html" class="qa-item"><div class="qa-icon amber"><i class="fas fa-chart-line"></i></div><div class="qa-label">Invest</div></a>
+      <a href="referrals.html" class="qa-item"><div class="qa-icon purple"><i class="fas fa-users"></i></div><div class="qa-label">Referrals</div></a>
+    </div>
+  </div>
+
+  <div class="section-card">
+    <div class="section-header">
+      <div class="section-title">Active Investment</div>
+      <a href="investments.html" class="section-link">View All <i class="fas fa-arrow-right"></i></a>
+    </div>
+    <div class="section-body" id="activePlanContainer"></div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-value" id="statInvestments">0</div><div class="stat-label">Investments</div></div>
+    <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-value" id="statReferrals">0</div><div class="stat-label">Referrals</div></div>
+    <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-value" id="statEarnings">₦0</div><div class="stat-label">Total Earned</div></div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <a href="home.html" class="nav-item active"><i class="fas fa-house"></i><span>Home</span></a>
+  <a href="plans.html" class="nav-item"><i class="fas fa-cube"></i><span>Plans</span></a>
+  <a href="referrals.html" class="nav-item"><i class="fas fa-users"></i><span>Team</span></a>
+  <a href="dashboard.html" class="nav-item"><i class="fas fa-user"></i><span>Profile</span></a>
+</div>
+
+<!-- WELCOME MODAL -->
+<div class="modal-overlay" id="welcomeModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <button class="modal-close" onclick="closeWelcomeModal()"><i class="fas fa-times"></i></button>
+      <div class="modal-icon">🚀</div>
+      <div class="modal-title" id="modalGreeting">Welcome to KineticWealth!</div>
+      <div class="modal-subtitle">Your smart investment platform</div>
+    </div>
+    <div class="modal-body">
+      <div class="bonus-highlight">
+        <div class="bonus-amount">₦1,000</div>
+        <div class="bonus-label">🎁 Welcome Bonus Added to Deposit Wallet</div>
+      </div>
+      <div class="features-grid">
+        <div class="feature-item"><div class="feature-icon">📈</div><div class="feature-value">Daily ROI</div><div class="feature-label">Up to 20%</div></div>
+        <div class="feature-item"><div class="feature-icon">⭐</div><div class="feature-value">VIP Plans</div><div class="feature-label">Exclusive</div></div>
+        <div class="feature-item"><div class="feature-icon">💵</div><div class="feature-value">Min ₦10k</div><div class="feature-label">To Start</div></div>
+        <div class="feature-item"><div class="feature-icon">⚡</div><div class="feature-value">24/7</div><div class="feature-label">Mining</div></div>
+      </div>
+      <div class="getting-started">
+        <div class="gs-title"><i class="fas fa-rocket"></i> Getting Started</div>
+        <ul class="gs-list">
+          <li>₦1,000 bonus added to your deposit wallet</li>
+          <li>Top up to ₦10,000+ to activate first plan</li>
+          <li>Claim daily ROI every 24 hours</li>
+          <li>Earnings go directly to withdrawal wallet</li>
+          <li>Refer friends — earn <strong>10% commission</strong></li>
+        </ul>
+      </div>
+      <div class="modal-actions">
+        <a href="plans.html" class="modal-btn primary"><i class="fas fa-bolt"></i> Start Investing Now</a>
+        <a href="deposit.html" class="modal-btn secondary"><i class="fas fa-credit-card"></i> Top Up Deposit Wallet</a>
+        <button class="modal-btn secondary" onclick="closeWelcomeModal()"><i class="fas fa-home"></i> Go to Dashboard</button>
+      </div>
+      <div class="dont-show-row">
+        <input type="checkbox" id="dontShowAgain" onchange="saveDontShow()"/>
+        <label for="dontShowAgain">Don't show this again today</label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* FIREBASE INIT */
+const firebaseConfig = {
+  apiKey: "AIzaSyCFwefJ8rxZUDLbDsRHnHdA-28zPs49rlo",
+  authDomain: "cashpoint-ac4f4.firebaseapp.com",
+  projectId: "cashpoint-ac4f4",
+  storageBucket: "cashpoint-ac4f4.firebasestorage.app",
+  messagingSenderId: "16133206416",
+  appId: "1:16133206416:web:a093f4e153ad2c9bcc8315"
+};
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const FV = firebase.firestore.FieldValue;
+const MS = 86400000;
+
+/* THEME */
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = document.getElementById('themeBtn');
+  if (btn) btn.innerHTML = theme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+  localStorage.setItem('kw-theme', theme);
+}
+function toggleTheme() {
+  applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+}
+applyTheme(localStorage.getItem('kw-theme') || 'light');
+
+/* STATE */
+let currentUser = null, activePlan = null, countdownInterval = null;
+
+/* UTILS */
+const formatCurrency = (n) => Number(n||0).toLocaleString('en-NG',{minimumFractionDigits:2});
+const formatShort = (n) => {
+  const num = Number(n||0);
+  if (num >= 1e6) return '₦'+(num/1e6).toFixed(1)+'M';
+  if (num >= 1e3) return '₦'+(num/1e3).toFixed(1)+'K';
+  return '₦'+num.toFixed(0);
+};
+const escapeHtml = (s) => s?s.replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]||m)):'';
+
+/* LOADING */
+function showLoading() { document.getElementById('loadingOverlay')?.classList.remove('hidden'); }
+function hideLoading() { document.getElementById('loadingOverlay')?.classList.add('hidden'); }
+
+/* AUTH */
+auth.onAuthStateChanged(async (user) => {
+  if (!user) { window.location.href = 'login.html'; return; }
+  currentUser = user;
+  await loadAllData();
+  showWelcomeModal();
+});
+
+/* WELCOME MODAL */
+function showWelcomeModal() {
+  const today = new Date().toDateString();
+  if (localStorage.getItem('kw-modal-date') === today) return;
+  setTimeout(() => document.getElementById('welcomeModal')?.classList.add('show'), 1000);
+}
+function closeWelcomeModal() {
+  document.getElementById('welcomeModal')?.classList.remove('show');
+  if (document.getElementById('dontShowAgain')?.checked) localStorage.setItem('kw-modal-date', new Date().toDateString());
+}
+function saveDontShow() {
+  const cb = document.getElementById('dontShowAgain');
+  if (cb?.checked) localStorage.setItem('kw-modal-date', new Date().toDateString());
+  else localStorage.removeItem('kw-modal-date');
+}
+
+/* LOAD ALL DATA — FIXED */
+async function loadAllData() {
+  showLoading();
+  try {
+    const userDoc = await db.collection('users').doc(currentUser.uid).get();
+
+    if (!userDoc.exists) {
+      console.error('User document not found for uid:', currentUser.uid);
+      const fallbackName = currentUser.displayName || currentUser.email || 'User';
+      const firstName = fallbackName.split(' ')[0];
+      document.getElementById('avatarBtn').textContent = fallbackName.charAt(0).toUpperCase();
+      document.getElementById('welcomeGreeting').textContent = 'Welcome, ' + firstName + '! 👋';
+      document.getElementById('modalGreeting').textContent = 'Welcome, ' + firstName + '! 🚀';
+      document.getElementById('welcomeSubtitle').textContent = 'Complete your profile setup';
+      document.getElementById('depositBalance').textContent = '₦0.00';
+      document.getElementById('withdrawalBalance').textContent = '₦0.00';
+      document.getElementById('totalBalance').textContent = '₦0';
+      document.getElementById('statInvestments').textContent = '0';
+      document.getElementById('statReferrals').textContent = '0';
+      document.getElementById('statEarnings').textContent = '₦0';
+      document.getElementById('activePlansCount').textContent = '0 Active';
+      renderNoActivePlan();
+      Swal.fire({ icon:'warning', title:'Profile Setup Needed',
+        text:'Your account data was not found. Please log out and sign up again, or contact support.',
+        confirmButtonColor:'#3B82F6' });
+      hideLoading();
+      return;
+    }
+
+    const data = userDoc.data();
+    const name = data.fullName || data.username || 'User';
+    const firstName = name.split(' ')[0];
+
+    document.getElementById('avatarBtn').textContent = name.charAt(0).toUpperCase();
+    document.getElementById('welcomeGreeting').textContent = 'Welcome back, ' + firstName + '! 👋';
+    document.getElementById('modalGreeting').textContent = 'Welcome, ' + firstName + '! 🚀';
+
+    const depositBal = data.depositBalance || 0;
+    const withdrawalBal = data.withdrawalBalance || 0;
+    const totalBal = depositBal + withdrawalBal;
+
+    document.getElementById('depositBalance').textContent = '₦' + formatCurrency(depositBal);
+    document.getElementById('withdrawalBalance').textContent = '₦' + formatCurrency(withdrawalBal);
+    document.getElementById('totalBalance').textContent = formatShort(totalBal);
+
+    document.getElementById('statReferrals').textContent = data.referralCount || 0;
+    document.getElementById('statEarnings').textContent = formatShort(data.totalEarnings || 0);
+
+    const investmentsSnapshot = await db.collection('investments')
+      .where('userId', '==', currentUser.uid).where('status', '==', 'active').get();
+
+    document.getElementById('statInvestments').textContent = investmentsSnapshot.size;
+    document.getElementById('activePlansCount').textContent = investmentsSnapshot.size + ' Active';
+
+    if (!investmentsSnapshot.empty) {
+      const plans = investmentsSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      plans.sort((a,b) => {
+        const aTime = a.activatedAt?.toMillis?.() || a.createdAt?.toMillis?.() || 0;
+        const bTime = b.activatedAt?.toMillis?.() || b.createdAt?.toMillis?.() || 0;
+        return bTime - aTime;
+      });
+      activePlan = plans[0];
+      document.getElementById('welcomeSubtitle').textContent = (activePlan.planName || 'Investment') + ' • Earning Daily';
+      renderActivePlan();
+    } else {
+      activePlan = null;
+      document.getElementById('welcomeSubtitle').textContent = 'Start investing to earn daily returns';
+      renderNoActivePlan();
+    }
+
+    await db.collection('users').doc(currentUser.uid).update({ lastLogin: FV.serverTimestamp() });
+
+  } catch (error) {
+    console.error('Error loading data:', error);
+    document.getElementById('welcomeGreeting').textContent = 'Welcome! 👋';
+    document.getElementById('welcomeSubtitle').textContent = 'Unable to load data';
+    document.getElementById('avatarBtn').textContent = 'U';
+    document.getElementById('depositBalance').textContent = '₦0.00';
+    document.getElementById('withdrawalBalance').textContent = '₦0.00';
+    document.getElementById('totalBalance').textContent = '₦0';
+    renderNoActivePlan();
+    Swal.fire({ icon:'error', title:'Error Loading Data',
+      text: error.message || 'Could not load your dashboard. Please check your connection or refresh.',
+      confirmButtonColor:'#3B82F6' });
+  } finally {
+    hideLoading();
+  }
+}
+
+/* RENDER ACTIVE PLAN */
+function renderNoActivePlan() {
+  document.getElementById('activePlanContainer').innerHTML =
+    '<div class="no-plan"><div class="no-plan-icon">📊</div><div class="no-plan-title">No Active Investment</div>' +
+    '<div class="no-plan-text">Start investing to earn daily returns!</div>' +
+    '<a href="plans.html" class="invest-btn"><i class="fas fa-bolt"></i> View Investment Plans</a></div>';
+  if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+}
+
+function renderActivePlan() {
+  if (!activePlan) { renderNoActivePlan(); return; }
+  const now = Date.now();
+  const activatedAt = activePlan.activatedAt?.toMillis?.() || activePlan.createdAt?.toMillis?.() || now;
+  const lastClaim = activePlan.lastClaimAt?.toMillis?.() || activatedAt;
+  const nextClaim = activePlan.nextClaimAt?.toMillis?.() || (lastClaim + MS);
+  const canClaim = now >= nextClaim;
+  const duration = Number(activePlan.duration) || 1;
+  const claimedDays = Number(activePlan.claimedDays) || 0;
+  const progress = Math.min((claimedDays/duration)*100, 100);
+  const dailyROI = Number(activePlan.dailyROI) || 0;
+  const capital = Number(activePlan.capital) || 0;
+  const daysRemaining = Number(activePlan.daysRemaining) || (duration - claimedDays);
+  const isFinalClaim = daysRemaining <= 1;
+
+  document.getElementById('activePlanContainer').innerHTML =
+    '<div class="active-plan"><div class="plan-icon"><i class="fas fa-chart-line"></i></div>' +
+    '<div class="plan-info"><div class="plan-name">' + escapeHtml(activePlan.planName || 'Investment Plan') + '</div>' +
+    '<div class="plan-daily">Daily: ₦' + dailyROI.toLocaleString() + ' • Capital: ₦' + capital.toLocaleString() + '</div></div>' +
+    '<div class="plan-status">● Active</div></div>' +
+    '<div class="progress-section"><div class="progress-header"><span>Progress</span><span>' + claimedDays + '/' + duration + ' days</span></div>' +
+    '<div class="progress-bar"><div class="progress-fill" style="width:' + progress + '%"></div></div></div>' +
+    '<div class="claim-section"><div class="claim-info"><div class="claim-label">' +
+    (canClaim ? '🎉 Ready to Claim!' : 'Next Claim Available') + '</div>' +
+    '<div class="claim-amount">' + (isFinalClaim ? '💰 Including capital return!' : 'Earning: ₦' + dailyROI.toLocaleString()) + '</div></div>' +
+    '<div class="claim-countdown" id="claimCountdown">' + (canClaim ? 'Now!' : '--:--:--') + '</div>' +
+    '<button class="claim-btn" id="claimBtn" onclick="claimDailyROI('' + activePlan.id + '')" ' + (!canClaim ? 'disabled' : '') + '>' +
+    '<i class="fas fa-hand-holding-dollar"></i> Claim</button></div>';
+
+  if (countdownInterval) clearInterval(countdownInterval);
+  if (!canClaim) {
+    countdownInterval = setInterval(() => {
+      const timeLeft = Math.max(0, nextClaim - Date.now());
+      const el = document.getElementById('claimCountdown');
+      const btn = document.getElementById('claimBtn');
+      if (!el) { clearInterval(countdownInterval); return; }
+      if (timeLeft === 0) {
+        el.textContent = 'Now!'; if (btn) btn.disabled = false;
+        clearInterval(countdownInterval); setTimeout(() => loadAllData(), 2000);
+      } else {
+        const h = Math.floor(timeLeft/3600000), m = Math.floor((timeLeft%3600000)/60000), s = Math.floor((timeLeft%60000)/1000);
+        el.textContent = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+      }
+    }, 1000);
+  }
+}
+
+/* CLAIM DAILY ROI */
+async function claimDailyROI(investmentId) {
+  if (!activePlan || activePlan.id !== investmentId) {
+    Swal.fire({ icon:'error', title:'Error', text:'Investment plan not found.', confirmButtonColor:'#3B82F6' });
+    return;
+  }
+  const now = Date.now();
+  const activatedAt = activePlan.activatedAt?.toMillis?.() || activePlan.createdAt?.toMillis?.() || now;
+  const lastClaim = activePlan.lastClaimAt?.toMillis?.() || activatedAt;
+  const nextClaim = activePlan.nextClaimAt?.toMillis?.() || (lastClaim + MS);
+  if (now < nextClaim) {
+    Swal.fire({ icon:'warning', title:'Not Ready Yet',
+      text:'You can claim in approximately ' + Math.floor((nextClaim-now)/3600000) + ' hour(s).',
+      confirmButtonColor:'#3B82F6' });
+    return;
+  }
+  const duration = Number(activePlan.duration) || 1;
+  const claimedDays = Number(activePlan.claimedDays) || 0;
+  const isFinalClaim = (claimedDays + 1) >= duration;
+  const dailyROI = Number(activePlan.dailyROI) || 0;
+  const capital = Number(activePlan.capital) || 0;
+  const claimAmount = isFinalClaim ? (dailyROI + capital) : dailyROI;
+
+  const result = await Swal.fire({
+    title: isFinalClaim ? '🏁 Final Claim!' : '💰 Claim Daily Income',
+    html: '<div style="font-size:16px;"><p>Claiming: <strong style="color:#10B981;font-size:20px;">₦' + claimAmount.toLocaleString() + '</strong></p>' +
+      (isFinalClaim ? '<p style="font-size:13px;color:#64748B;">Includes ₦' + capital.toLocaleString() + ' capital return</p>' : '') +
+      '<p style="font-size:13px;color:#64748B;">Amount will be added to your withdrawal wallet</p></div>',
+    icon:'question', showCancelButton:true, confirmButtonText:'Claim Now!', cancelButtonText:'Cancel', confirmButtonColor:'#3B82F6'
+  });
+  if (!result.isConfirmed) return;
+
+  Swal.fire({ title:'Processing claim...', html:'Please wait while we process your earnings',
+    allowOutsideClick:false, didOpen:()=>Swal.showLoading() });
+
+  try {
+    const batch = db.batch();
+    const newNextClaim = firebase.firestore.Timestamp.fromMillis(Date.now() + MS);
+    batch.update(db.collection('users').doc(currentUser.uid), {
+      withdrawalBalance: FV.increment(claimAmount), totalEarnings: FV.increment(claimAmount) });
+    if (isFinalClaim) {
+      batch.update(db.collection('investments').doc(investmentId), {
+        status:'completed', completedAt:FV.serverTimestamp(), lastClaimAt:FV.serverTimestamp(),
+        claimedDays:FV.increment(1), daysRemaining:0, totalEarned:FV.increment(claimAmount) });
+    } else {
+      batch.update(db.collection('investments').doc(investmentId), {
+        lastClaimAt:FV.serverTimestamp(), nextClaimAt:newNextClaim, claimedDays:FV.increment(1),
+        daysRemaining:FV.increment(-1), totalEarned:FV.increment(dailyROI) });
+    }
+    batch.set(db.collection('transactions').doc(), {
+      userId:currentUser.uid, type:isFinalClaim?'capital_return':'roi_claim', amount:claimAmount,
+      planId:activePlan.planId||investmentId, planName:activePlan.planName||'Investment',
+      description:isFinalClaim?'Final claim + capital return from '+activePlan.planName:'Daily claim from '+activePlan.planName,
+      wallet:'withdrawal', createdAt:FV.serverTimestamp() });
+    await batch.commit();
+
+    Swal.fire({ icon:'success', title:'Claimed Successfully! 🎉',
+      html:'<div style="font-size:15px;"><p><strong style="color:#10B981;font-size:22px;">₦' + claimAmount.toLocaleString() + '</strong></p>' +
+        '<p>Added to your withdrawal wallet!</p>' + (isFinalClaim?'<p style="margin-top:8px;color:#3B82F6;">🏁 Investment plan completed!</p>':'') + '</div>',
+      confirmButtonColor:'#3B82F6' });
+    await loadAllData();
+  } catch (error) {
+    console.error('Claim error:', error);
+    Swal.fire({ icon:'error', title:'Claim Failed', text:error.message||'An error occurred. Please try again.', confirmButtonColor:'#EF4444' });
+  }
+}
+
+/* NOTIFICATIONS */
+function showNotifications() {
+  Swal.fire({ icon:'info', title:'Notifications', text:'Notification system coming soon!', confirmButtonColor:'#3B82F6' });
+}
+
+/* GIFT CLAIM MODAL */
+function openGiftModal() {
+  Swal.fire({
+    title: '🎁 Claim Your Gift',
+    html: '<div style="text-align:center;">' +
+      '<input id="giftCodeInput" class="swal2-input" placeholder="Enter gift code" style="width:80%;margin:10px auto;">' +
+      '</div>',
+    showCancelButton: true,
+    confirmButtonText: 'Claim Gift',
+    cancelButtonText: 'Cancel',
+    confirmButtonColor: '#3B82F6',
+    preConfirm: () => {
+      const code = document.getElementById('giftCodeInput').value.trim();
+      if (!code) { Swal.showValidationMessage('Please enter a gift code'); }
+      return code;
+    }
+  }).then(async (result) => {
+    if (result.isConfirmed) {
+      const code = result.value;
+      Swal.fire({ title:'Verifying...', allowOutsideClick:false, didOpen:()=>Swal.showLoading() });
+      try {
+        // Check if gift code exists and is unused
+        const giftSnapshot = await db.collection('giftCodes').where('code','==',code.toUpperCase()).where('used','==',false).limit(1).get();
+        if (giftSnapshot.empty) {
+          Swal.fire({ icon:'error', title:'Invalid Code', text:'This gift code is invalid or has already been used.', confirmButtonColor:'#EF4444' });
+          return;
+        }
+        const giftDoc = giftSnapshot.docs[0];
+        const giftData = giftDoc.data();
+        const batch = db.batch();
+        batch.update(db.collection('users').doc(currentUser.uid), {
+          depositBalance: FV.increment(giftData.amount || 0) });
+        batch.update(db.collection('giftCodes').doc(giftDoc.id), { used:true, usedBy:currentUser.uid, usedAt:FV.serverTimestamp() });
+        batch.set(db.collection('transactions').doc(), {
+          userId:currentUser.uid, type:'gift_claim', amount:giftData.amount||0,
+          description:'Gift code claim: ' + code.toUpperCase(), wallet:'deposit', createdAt:FV.serverTimestamp() });
+        await batch.commit();
+        Swal.fire({ icon:'success', title:'Gift Claimed! 🎉',
+          html:'<p><strong style="color:#10B981;font-size:20px;">₦' + (giftData.amount||0).toLocaleString() + '</strong></p><p>Added to your deposit wallet!</p>',
+          confirmButtonColor:'#3B82F6' });
+        await loadAllData();
+      } catch (err) {
+        Swal.fire({ icon:'error', title:'Claim Failed', text:err.message||'Could not claim gift.', confirmButtonColor:'#EF4444' });
+      }
+    }
+  });
+}
+
+/* EXPORT */
+window.toggleTheme = toggleTheme;
+window.claimDailyROI = claimDailyROI;
+window.closeWelcomeModal = closeWelcomeModal;
+window.saveDontShow = saveDontShow;
+window.showNotifications = showNotifications;
+window.openGiftModal = openGiftModal;
+
+console.log('🚀 KineticWealth Dashboard Ready');
+console.log('💰 Welcome Bonus: ₦1,000');
+</script>
+
+</body>
+</html>
