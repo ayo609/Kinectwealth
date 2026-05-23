@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover"/>
+<title>KineticWealth · My Account</title>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #0D0B1A;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: #FFFFFF;
+  min-height: 100vh;
+}
+
+/* ========== HEADER ========== */
+.app-header {
+  background: rgba(13, 11, 26, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.icon-circle {
+  width: 38px;
+  height: 38px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #FFFFFF;
+  font-size: 16px;
+}
+
+/* ========== MAIN CONTENT ========== */
+.main-container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 0 16px 100px;
+}
+
+/* Profile Card */
+.profile-card {
+  background: linear-gradient(135deg, #7C3AED 0%, #C026D3 100%);
+  border-radius: 32px;
+  padding: 28px 24px;
+  margin: 20px 0;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.profile-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -30%;
+  width: 200px;
+  height: 200px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 50%;
+}
+
+.avatar {
+  width: 80px;
+  height: 80px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  font-weight: 700;
+  margin: 0 auto 12px;
+  border: 2px solid rgba(255,255,255,0.3);
+}
+
+.user-name {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.user-email {
+  font-size: 12px;
+  opacity: 0.8;
+  margin-bottom: 12px;
+}
+
+.user-badges {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.badge {
+  padding: 4px 12px;
+  border-radius: 40px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(255,255,255,0.15);
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.stat-block {
+  background: #15132B;
+  border-radius: 20px;
+  padding: 16px;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: #A855F7;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: #888;
+}
+
+/* Wallet Cards */
+.wallets-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.wallet-box {
+  flex: 1;
+  background: #15132B;
+  border-radius: 20px;
+  padding: 16px;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.wallet-box.deposit {
+  border-left: 3px solid #A855F7;
+}
+
+.wallet-box.withdraw {
+  border-left: 3px solid #10B981;
+}
+
+.wallet-label {
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wallet-amount {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.wallet-action {
+  font-size: 12px;
+  color: #A855F7;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+/* Section Title */
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Menu Grid */
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.menu-item {
+  background: #15132B;
+  border-radius: 20px;
+  padding: 16px;
+  text-align: center;
+  text-decoration: none;
+  border: 1px solid rgba(255,255,255,0.06);
+  transition: all 0.2s;
+}
+
+.menu-item:active {
+  transform: scale(0.97);
+}
+
+.menu-icon {
+  width: 48px;
+  height: 48px;
+  background: rgba(168,85,247,0.12);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 10px;
+  font-size: 22px;
+  color: #A855F7;
+}
+
+.menu-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #FFFFFF;
+}
+
+.menu-badge {
+  font-size: 10px;
+  color: #A855F7;
+  margin-top: 4px;
+}
+
+/* Quick Links */
+.links-list {
+  background: #15132B;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: 24px;
+}
+
+.link-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.link-item:last-child {
+  border-bottom: none;
+}
+
+.link-item:active {
+  background: rgba(255,255,255,0.03);
+}
+
+.link-icon {
+  width: 42px;
+  height: 42px;
+  background: rgba(168,85,247,0.1);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #A855F7;
+}
+
+.link-content {
+  flex: 1;
+}
+
+.link-title {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.link-sub {
+  font-size: 11px;
+  color: #888;
+}
+
+.link-arrow {
+  color: #888;
+  font-size: 14px;
+}
+
+/* Logout Button */
+.logout-btn {
+  width: 100%;
+  padding: 14px;
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.2);
+  border-radius: 30px;
+  color: #EF4444;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.logout-btn:active {
+  transform: scale(0.98);
+}
+
+/* Bottom Tab Bar */
+.tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #15132B;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 20px 20px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.tab-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+  font-size: 11px;
+  color: #888;
+}
+
+.tab-item i {
+  font-size: 22px;
+}
+
+.tab-item.active {
+  color: #A855F7;
+}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="header-row">
+    <div class="header-title">My Account</div>
+    <div class="header-actions">
+      <div class="icon-circle" onclick="showNotifications()">
+        <i class="fas fa-bell"></i>
+      </div>
+      <div class="icon-circle" onclick="toggleTheme()">
+        <i class="fas fa-moon"></i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="main-container">
+  
+  <!-- Profile Card -->
+  <div class="profile-card">
+    <div class="avatar" id="userAvatar">K</div>
+    <div class="user-name" id="userName">Loading...</div>
+    <div class="user-email" id="userEmail">—</div>
+    <div class="user-badges">
+      <span class="badge"><i class="fas fa-check-circle"></i> Verified</span>
+      <span class="badge" id="vipBadge"><i class="fas fa-star"></i> Member</span>
+    </div>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="stats-grid">
+    <div class="stat-block">
+      <div class="stat-value" id="activePlans">0</div>
+      <div class="stat-label">Active Plans</div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-value" id="totalEarned">₦0</div>
+      <div class="stat-label">Total Earned</div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-value" id="referralsCount">0</div>
+      <div class="stat-label">Team Members</div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-value" id="refEarnings">₦0</div>
+      <div class="stat-label">Referral Bonus</div>
+    </div>
+  </div>
+
+  <!-- Wallet Cards -->
+  <div class="wallets-row">
+    <div class="wallet-box deposit">
+      <div class="wallet-label"><i class="fas fa-download"></i> Deposit</div>
+      <div class="wallet-amount" id="depositWallet">₦0</div>
+      <a href="deposit.html" class="wallet-action">Add Funds →</a>
+    </div>
+    <div class="wallet-box withdraw">
+      <div class="wallet-label"><i class="fas fa-upload"></i> Withdrawal</div>
+      <div class="wallet-amount" id="withdrawWallet">₦0</div>
+      <a href="withdraw.html" class="wallet-action">Withdraw →</a>
+    </div>
+  </div>
+
+  <!-- Quick Menu -->
+  <div class="section-title">
+    <i class="fas fa-th-large"></i> Quick Menu
+  </div>
+  <div class="menu-grid">
+    <a href="investments.html" class="menu-item">
+      <div class="menu-icon"><i class="fas fa-chart-line"></i></div>
+      <div class="menu-label">Portfolio</div>
+      <div class="menu-badge">View</div>
+    </a>
+    <a href="plans.html" class="menu-item">
+      <div class="menu-icon"><i class="fas fa-crown"></i></div>
+      <div class="menu-label">Invest</div>
+      <div class="menu-badge">New Plans</div>
+    </a>
+    <a href="transactions.html" class="menu-item">
+      <div class="menu-icon"><i class="fas fa-history"></i></div>
+      <div class="menu-label">History</div>
+      <div class="menu-badge">Activity</div>
+    </a>
+    <a href="referrals.html" class="menu-item">
+      <div class="menu-icon"><i class="fas fa-users"></i></div>
+      <div class="menu-label">Team</div>
+      <div class="menu-badge" id="teamBadge">0</div>
+    </a>
+  </div>
+
+  <!-- Account Settings -->
+  <div class="section-title">
+    <i class="fas fa-cog"></i> Account Settings
+  </div>
+  <div class="links-list">
+    <div class="link-item" onclick="goTo('bind-wallet.html')">
+      <div class="link-icon"><i class="fas fa-university"></i></div>
+      <div class="link-content">
+        <div class="link-title">Bank Account</div>
+        <div class="link-sub">Link your withdrawal account</div>
+      </div>
+      <div class="link-arrow"><i class="fas fa-chevron-right"></i></div>
+    </div>
+    <div class="link-item" onclick="goTo('change-password.html')">
+      <div class="link-icon"><i class="fas fa-key"></i></div>
+      <div class="link-content">
+        <div class="link-title">Security</div>
+        <div class="link-sub">Change password & PIN</div>
+      </div>
+      <div class="link-arrow"><i class="fas fa-chevron-right"></i></div>
+    </div>
+    <div class="link-item" onclick="showSupport()">
+      <div class="link-icon"><i class="fas fa-headset"></i></div>
+      <div class="link-content">
+        <div class="link-title">Support</div>
+        <div class="link-sub">24/7 customer service</div>
+      </div>
+      <div class="link-arrow"><i class="fas fa-chevron-right"></i></div>
+    </div>
+    <div class="link-item" onclick="showAbout()">
+      <div class="link-icon"><i class="fas fa-info-circle"></i></div>
+      <div class="link-content">
+        <div class="link-title">About</div>
+        <div class="link-sub">App version 2.0.0</div>
+      </div>
+      <div class="link-arrow"><i class="fas fa-chevron-right"></i></div>
+    </div>
+  </div>
+
+  <!-- Logout -->
+  <button class="logout-btn" onclick="confirmLogout()">
+    <i class="fas fa-sign-out-alt"></i> Sign Out
+  </button>
+
+</div>
+
+<div class="tab-bar">
+  <a href="home.html" class="tab-item"><i class="fas fa-chart-line"></i><span>Home</span></a>
+  <a href="plans.html" class="tab-item"><i class="fas fa-layer-group"></i><span>Plans</span></a>
+  <a href="withdraw.html" class="tab-item"><i class="fas fa-money-bill-wave"></i><span>Withdraw</span></a>
+  <a href="investments.html" class="tab-item"><i class="fas fa-folder-open"></i><span>Portfolio</span></a>
+  <a href="dashboard.html" class="tab-item active"><i class="fas fa-user"></i><span>Profile</span></a>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   FIREBASE CONFIG - YOUR CONFIG
+═══════════════════════════════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "AIzaSyBl6HEVa9mUuROvnohMKzeEzzc0aTREU54",
+  authDomain: "kinetic-dc8e6.firebaseapp.com",
+  projectId: "kinetic-dc8e6",
+  storageBucket: "kinetic-dc8e6.firebasestorage.app",
+  messagingSenderId: "980527555815",
+  appId: "1:980527555815:web:131ccee594e0c8f122ee42"
+};
+
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const FV = firebase.firestore.FieldValue;
+
+/* ═══════════════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════════════ */
+function formatNum(n) {
+  return (Number(n) || 0).toLocaleString('en-NG');
+}
+
+function formatCurr(n) {
+  return '₦' + formatNum(n);
+}
+
+function formatShort(n) {
+  const v = Number(n) || 0;
+  if (v >= 1e6) return '₦' + (v / 1e6).toFixed(1) + 'M';
+  if (v >= 1e3) return '₦' + (v / 1e3).toFixed(1) + 'K';
+  return '₦' + v.toFixed(0);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   THEME
+═══════════════════════════════════════════════════════════════════ */
+function toggleTheme() {
+  const body = document.body;
+  const isDark = body.style.background === '#0D0B1A' || !body.style.background;
+  body.style.background = isDark ? '#F5F0E8' : '#0D0B1A';
+  body.style.color = isDark ? '#2C2418' : '#FFFFFF';
+  
+  const icon = document.querySelector('.icon-circle:last-child i');
+  if (icon) icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+  
+  localStorage.setItem('kw-theme', isDark ? 'light' : 'dark');
+}
+
+const savedTheme = localStorage.getItem('kw-theme');
+if (savedTheme === 'light') {
+  document.body.style.background = '#F5F0E8';
+  document.body.style.color = '#2C2418';
+  document.querySelector('.icon-circle:last-child i').className = 'fas fa-sun';
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   LOAD DATA
+═══════════════════════════════════════════════════════════════════ */
+auth.onAuthStateChanged(async (user) => {
+  if (!user) {
+    window.location.href = 'login.html';
+    return;
+  }
+  await loadProfile();
+});
+
+async function loadProfile() {
+  const doc = await db.collection('users').doc(auth.currentUser.uid).get();
+  if (!doc.exists) return;
+  
+  const data = doc.data();
+  const name = data.fullName || data.username || 'User';
+  const firstName = name.split(' ')[0];
+  
+  document.getElementById('userAvatar').textContent = name.charAt(0).toUpperCase();
+  document.getElementById('userName').textContent = name;
+  document.getElementById('userEmail').textContent = auth.currentUser.email || '—';
+  document.getElementById('depositWallet').textContent = formatCurr(data.depositBalance || 0);
+  document.getElementById('withdrawWallet').textContent = formatCurr(data.withdrawalBalance || 0);
+  document.getElementById('totalEarned').textContent = formatShort(data.totalEarnings || 0);
+  document.getElementById('referralsCount').textContent = data.referralCount || 0;
+  document.getElementById('refEarnings').textContent = formatShort(data.totalRefEarnings || 0);
+  document.getElementById('teamBadge').textContent = data.referralCount || 0;
+  
+  const purchasedPlans = data.purchasedPlans || [];
+  const vipLevel = getVIPLevel(purchasedPlans);
+  const vipBadge = document.getElementById('vipBadge');
+  if (vipLevel > 0) {
+    vipBadge.innerHTML = `<i class="fas fa-star"></i> VIP ${vipLevel}`;
+  } else {
+    vipBadge.innerHTML = `<i class="fas fa-user"></i> Member`;
+  }
+  
+  const invSnap = await db.collection('investments')
+    .where('userId', '==', auth.currentUser.uid)
+    .where('status', '==', 'active')
+    .get();
+  document.getElementById('activePlans').textContent = invSnap.size;
+  
+  await db.collection('users').doc(auth.currentUser.uid).update({
+    lastLogin: FV.serverTimestamp()
+  }).catch(() => {});
+}
+
+function getVIPLevel(purchasedPlans) {
+  if (!purchasedPlans || purchasedPlans.length === 0) return 0;
+  const vipIds = ['vip1', 'vip2', 'vip3', 'vip4', 'vip5', 'vip6', 'vip7', 'vip8', 'vip9', 'vip10'];
+  const levels = purchasedPlans.filter(id => vipIds.includes(id)).map(id => parseInt(id.replace('vip', '')) || 0);
+  return Math.max(...levels, 0);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ACTIONS
+═══════════════════════════════════════════════════════════════════ */
+function goTo(page) {
+  window.location.href = page;
+}
+
+function showNotifications() {
+  Swal.fire({
+    title: '📢 Notifications',
+    html: `
+      <div style="text-align: left;">
+        <p>✅ Welcome to KineticWealth!</p>
+        <p>💰 Claim your daily ROI every 24h</p>
+        <p>👥 Earn 10%/3%/1% on referrals</p>
+        <p>🎁 Share your link to earn more</p>
+      </div>
+    `,
+    confirmButtonColor: '#A855F7'
+  });
+}
+
+function showSupport() {
+  Swal.fire({
+    title: '📞 Support Center',
+    html: `
+      <div style="text-align: center;">
+        <p><a href="https://wa.me/420722586066" target="_blank" style="color: #A855F7;">📱 WhatsApp Support</a></p>
+        <p><a href="mailto:support@kineticwealth.com" style="color: #A855F7;">✉️ Email Support</a></p>
+        <p style="margin-top: 12px;">Response within 24 hours</p>
+      </div>
+    `,
+    confirmButtonColor: '#A855F7'
+  });
+}
+
+function showAbout() {
+  Swal.fire({
+    title: 'About KineticWealth',
+    html: `
+      <div style="text-align: center;">
+        <p><strong>Version</strong> 2.0.0</p>
+        <p>Smart Investment Platform</p>
+        <p style="margin-top: 12px;">© 2024 KineticWealth. All rights reserved.</p>
+      </div>
+    `,
+    confirmButtonColor: '#A855F7'
+  });
+}
+
+function confirmLogout() {
+  Swal.fire({
+    title: 'Sign out?',
+    text: 'Are you sure you want to leave?',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Yes, sign out',
+    confirmButtonColor: '#EF4444',
+    cancelButtonColor: '#A855F7'
+  }).then(result => {
+    if (result.isConfirmed) {
+      auth.signOut().then(() => window.location.href = 'login.html');
+    }
+  });
+}
+
+window.toggleTheme = toggleTheme;
+window.goTo = goTo;
+window.showNotifications = showNotifications;
+window.showSupport = showSupport;
+window.showAbout = showAbout;
+window.confirmLogout = confirmLogout;
+</script>
+
+</body>
+</html>
