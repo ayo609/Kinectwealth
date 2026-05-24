@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover"/>
+<title>Kinetic Wealth · Referrals</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --primary: #0052CC; --primary-dark: #003D99; --primary-light: #E5EFFF;
+  --bg-main: #F4F7FB; --card-bg: #FFFFFF; --card-bg-inner: #F8FAFC;
+  --text-primary: #0F172A; --text-muted: #64748B; --border-light: #E2E8F0;
+  --success: #059669; --success-light: #D1FAE5;
+  --danger: #DC2626; --danger-light: #FEE2E2;
+  --warning: #D97706; --warning-light: #FEF3C7;
+  --l1: #0052CC; --l2: #06B6D4; --l3: #7C3AED;
+}
+[data-theme="dark"] {
+  --primary: #3B82F6; --primary-dark: #60A5FA; --primary-light: #1E3A8A;
+  --bg-main: #0F172A; --card-bg: #1E293B; --card-bg-inner: #151D2A;
+  --text-primary: #F8FAFC; --text-muted: #94A3B8; --border-light: #334155;
+  --success: #10B981; --success-light: #064E3B;
+  --danger: #EF4444; --danger-light: #7F1D1D;
+  --warning: #F59E0B; --warning-light: #78350F;
+  --l1: #3B82F6; --l2: #06B6D4; --l3: #A78BFA;
+}
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Inter',sans-serif; }
+body { background:var(--bg-main); color:var(--text-primary); min-height:100vh; -webkit-font-smoothing:antialiased; padding-bottom:100px; transition:background-color 0.3s,color 0.3s; }
+
+.app-header { background:var(--primary); padding:16px 20px; position:sticky; top:0; z-index:100; box-shadow:0 4px 12px rgba(0,82,204,0.15); }
+.header-row { display:flex; align-items:center; justify-content:space-between; max-width:500px; margin:0 auto 14px; }
+.header-left { display:flex; align-items:center; gap:12px; }
+.back-btn { width:38px; height:38px; background:rgba(255,255,255,0.2); border-radius:12px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#fff; font-size:15px; text-decoration:none; border:none; }
+.header-title { font-size:18px; font-weight:700; color:#fff; }
+.header-actions { display:flex; gap:8px; }
+.icon-btn { width:38px; height:38px; background:rgba(255,255,255,0.2); border-radius:12px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#fff; font-size:15px; border:none; }
+.stats-pills { display:flex; gap:10px; max-width:500px; margin:0 auto; }
+.stat-pill { background:rgba(255,255,255,0.15); border-radius:20px; padding:6px 14px; display:flex; align-items:center; gap:8px; font-size:12px; color:#fff; font-weight:500; }
+
+.main-container { max-width:500px; margin:0 auto; padding:16px 16px 100px; }
+
+.ref-card { background:var(--card-bg); border-radius:20px; padding:20px; margin-bottom:18px; border:1px solid var(--border-light); }
+.ref-card-title { font-size:11px; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); margin-bottom:12px; display:flex; align-items:center; gap:6px; font-weight:600; }
+.ref-link-row { display:flex; gap:8px; margin-bottom:14px; }
+.ref-link-input { flex:1; background:var(--card-bg-inner); border:1px solid var(--border-light); border-radius:12px; padding:13px 14px; font-size:12px; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.copy-btn { background:var(--primary); border:none; border-radius:12px; padding:0 18px; color:#fff; font-weight:600; font-size:13px; cursor:pointer; display:flex; align-items:center; gap:6px; font-family:inherit; white-space:nowrap; }
+.share-btns { display:flex; gap:10px; }
+.share-btn { flex:1; background:var(--card-bg-inner); border:1px solid var(--border-light); border-radius:12px; padding:10px; display:flex; align-items:center; justify-content:center; gap:6px; color:var(--text-primary); font-size:12px; font-weight:500; cursor:pointer; font-family:inherit; }
+
+.earnings-banner { background:linear-gradient(135deg,var(--primary),var(--primary-dark)); border-radius:18px; padding:18px 20px; margin-bottom:18px; display:flex; justify-content:space-between; align-items:center; color:#fff; }
+.earnings-text { font-size:12px; opacity:0.85; margin-bottom:4px; font-weight:500; }
+.earnings-amount { font-size:28px; font-weight:800; letter-spacing:-0.5px; }
+.earnings-icon { font-size:36px; opacity:0.3; }
+
+.level-tabs { display:flex; gap:10px; margin-bottom:18px; }
+.level-tab { flex:1; background:var(--card-bg); border-radius:16px; padding:14px 10px; text-align:center; border:2px solid var(--border-light); cursor:pointer; transition:all 0.2s; }
+.level-tab.active { border-color:var(--primary); background:var(--primary-light); }
+.level-tag { font-size:22px; font-weight:800; }
+.level-tab.l1 .level-tag { color:var(--l1); } .level-tab.l2 .level-tag { color:var(--l2); } .level-tab.l3 .level-tag { color:var(--l3); }
+.level-pct { font-size:13px; font-weight:700; margin:4px 0; }
+.level-num { font-size:22px; font-weight:800; color:var(--text-primary); }
+.level-lbl { font-size:10px; color:var(--text-muted); font-weight:500; }
+
+.stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:18px; }
+.stat-block { background:var(--card-bg); border-radius:16px; padding:14px; text-align:center; border:1px solid var(--border-light); }
+.stat-block.wide { grid-column:span 2; }
+.stat-value { font-size:22px; font-weight:700; color:var(--primary); margin-bottom:3px; }
+.stat-label { font-size:11px; color:var(--text-muted); font-weight:500; }
+
+.team-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.team-title { font-size:15px; font-weight:700; display:flex; align-items:center; gap:8px; }
+.team-count { font-size:11px; color:var(--text-muted); background:var(--card-bg-inner); padding:4px 10px; border-radius:20px; }
+
+.search-box { background:var(--card-bg); border:1px solid var(--border-light); border-radius:14px; padding:12px 16px; display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+.search-box i { color:var(--text-muted); }
+.search-box input { flex:1; background:transparent; border:none; outline:none; color:var(--text-primary); font-size:14px; font-family:inherit; }
+
+.member-list { display:flex; flex-direction:column; gap:10px; }
+.member-card { background:var(--card-bg); border-radius:16px; padding:14px; display:flex; align-items:center; gap:12px; border:1px solid var(--border-light); }
+.member-avatar { width:46px; height:46px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:17px; color:#fff; flex-shrink:0; }
+.avatar-l1 { background:var(--l1); } .avatar-l2 { background:var(--l2); } .avatar-l3 { background:var(--l3); }
+.member-info { flex:1; min-width:0; }
+.member-name { font-weight:600; font-size:14px; color:var(--text-primary); margin-bottom:2px; display:flex; align-items:center; gap:6px; }
+.plan-tag { font-size:9px; padding:2px 8px; border-radius:20px; background:var(--success-light); color:var(--success); font-weight:600; }
+.plan-tag.inactive { background:var(--border-light); color:var(--text-muted); }
+.member-email { font-size:11px; color:var(--text-muted); margin-bottom:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.member-meta { font-size:10px; color:var(--text-muted); display:flex; gap:10px; }
+.member-stats { text-align:right; flex-shrink:0; }
+.member-invest { font-size:13px; font-weight:600; color:var(--text-primary); margin-bottom:2px; }
+.member-bonus { font-size:14px; font-weight:700; color:var(--success); }
+
+.empty-state { text-align:center; padding:40px 20px; background:var(--card-bg); border-radius:18px; border:2px dashed var(--border-light); }
+.empty-icon { font-size:44px; margin-bottom:10px; opacity:0.4; }
+.empty-title { font-size:15px; font-weight:700; color:var(--text-primary); margin-bottom:4px; }
+.empty-text { font-size:12px; color:var(--text-muted); }
+
+.tab-bar { position:fixed; bottom:0; left:0; right:0; background:var(--card-bg); border-top:1px solid var(--border-light); display:flex; justify-content:space-around; padding:10px 16px 22px; max-width:500px; margin:0 auto; z-index:100; }
+.tab-item { display:flex; flex-direction:column; align-items:center; gap:4px; text-decoration:none; font-size:10px; font-weight:600; color:var(--text-muted); }
+.tab-item i { font-size:20px; } .tab-item.active { color:var(--primary); }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="header-row">
+    <div class="header-left"><a href="home.html" class="back-btn"><i class="fas fa-arrow-left"></i></a><div class="header-title">Referrals</div></div>
+    <div class="header-actions"><button class="icon-btn" onclick="refreshData()"><i class="fas fa-sync-alt"></i></button><button class="icon-btn" onclick="toggleTheme()" id="themeToggleBtn"><i class="fas fa-moon"></i></button></div>
+  </div>
+  <div class="stats-pills">
+    <div class="stat-pill"><i class="fas fa-users"></i> <span id="headerTeamCount">—</span></div>
+    <div class="stat-pill"><i class="fas fa-coins"></i> <span id="headerEarnings">—</span></div>
+  </div>
+</div>
+
+<div class="main-container">
+  <div class="ref-card">
+    <div class="ref-card-title"><i class="fas fa-link"></i> Your Referral Link</div>
+    <div class="ref-link-row"><div class="ref-link-input" id="refLinkDisplay">Loading...</div><button class="copy-btn" onclick="copyLink()"><i class="fas fa-copy"></i> Copy</button></div>
+    <div class="share-btns">
+      <button class="share-btn" onclick="shareTo('whatsapp')"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+      <button class="share-btn" onclick="shareTo('telegram')"><i class="fab fa-telegram"></i> Telegram</button>
+      <button class="share-btn" onclick="shareTo('more')"><i class="fas fa-share-alt"></i> Share</button>
+    </div>
+  </div>
+
+  <div class="earnings-banner"><div><div class="earnings-text">Total Referral Earnings</div><div class="earnings-amount" id="totalEarningsDisplay">₦0</div></div><div class="earnings-icon"><i class="fas fa-gift"></i></div></div>
+
+  <div class="level-tabs">
+    <div class="level-tab l1 active" onclick="selectLevel('A')"><div class="level-tag">L1</div><div class="level-pct">10%</div><div class="level-num" id="levelACount">0</div><div class="level-lbl">Level 1</div></div>
+    <div class="level-tab l2" onclick="selectLevel('B')"><div class="level-tag">L2</div><div class="level-pct">3%</div><div class="level-num" id="levelBCount">0</div><div class="level-lbl">Level 2</div></div>
+    <div class="level-tab l3" onclick="selectLevel('C')"><div class="level-tag">L3</div><div class="level-pct">1%</div><div class="level-num" id="levelCCount">0</div><div class="level-lbl">Level 3</div></div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-block"><div class="stat-value" id="teamMembersCount">—</div><div class="stat-label">Total Members</div></div>
+    <div class="stat-block"><div class="stat-value" id="activeInvestorsCount">—</div><div class="stat-label">Active Investors</div></div>
+    <div class="stat-block wide"><div class="stat-value" id="teamInvestedAmount">—</div><div class="stat-label">Team Total Investment</div></div>
+  </div>
+
+  <div class="team-header"><div class="team-title"><i class="fas fa-list-ul" style="color:var(--primary);"></i> Team Members</div><div class="team-count" id="teamListCount">0</div></div>
+  <div class="search-box"><i class="fas fa-search"></i><input type="text" id="searchInput" placeholder="Search by name or email..." oninput="renderTeamList()"></div>
+  <div class="member-list" id="memberList"><div class="empty-state"><div class="empty-icon"><i class="fas fa-spinner fa-spin" style="color:var(--primary);"></i></div><div class="empty-title">Loading team data...</div></div></div>
+</div>
+
+<div class="tab-bar">
+  <a href="home.html" class="tab-item"><i class="fas fa-home"></i><span>Home</span></a>
+  <a href="plans.html" class="tab-item"><i class="fas fa-bolt"></i><span>Invest</span></a>
+  <a href="withdraw.html" class="tab-item"><i class="fas fa-money-bill-transfer"></i><span>Withdraw</span></a>
+  <a href="referrals.html" class="tab-item active"><i class="fas fa-users"></i><span>Team</span></a>
+  <a href="dashboard.html" class="tab-item"><i class="fas fa-user"></i><span>Profile</span></a>
+</div>
+
+<script>
+const fc={apiKey:"AIzaSyBl6HEVa9mUuROvnohMKzeEzzc0aTREU54",authDomain:"kinetic-dc8e6.firebaseapp.com",projectId:"kinetic-dc8e6",storageBucket:"kinetic-dc8e6.firebasestorage.app",messagingSenderId:"980527555815",appId:"1:980527555815:web:131ccee594e0c8f122ee42"};
+firebase.initializeApp(fc);
+const auth=firebase.auth(),db=firebase.firestore();
+
+const LEVEL_RATES={A:10,B:3,C:1};
+let currentUser=null,myReferralCode='',myReferralLink='',allMembers=[],currentLevel='A';
+
+const fm=n=>(Number(n)||0).toLocaleString('en-NG'),fc2=n=>'₦'+fm(n);
+function st(id,t){const e=document.getElementById(id);if(e)e.textContent=t;}
+
+function toggleTheme(){const h=document.documentElement,d=h.getAttribute('data-theme')==='dark',t=d?'light':'dark';h.setAttribute('data-theme',t);localStorage.setItem('kw-theme',t);const i=document.querySelector('#themeToggleBtn i');if(i)i.className=t==='dark'?'fas fa-sun':'fas fa-moon';}
+(function(){const s=localStorage.getItem('kw-theme')||'light';document.documentElement.setAttribute('data-theme',s);document.addEventListener('DOMContentLoaded',()=>{const i=document.querySelector('#themeToggleBtn i');if(i)i.className=s==='dark'?'fas fa-sun':'fas fa-moon';});})();
+
+auth.onAuthStateChanged(async(u)=>{
+  if(!u){window.location.replace('login.html');return;}
+  currentUser=u;
+  try{
+    const ud=await db.collection('users').doc(currentUser.uid).get();
+    if(!ud.exists){window.location.replace('login.html');return;}
+    const udd=ud.data();
+    myReferralCode=udd.referralCode||('KW'+currentUser.uid.slice(0,8).toUpperCase());
+    myReferralLink=window.location.origin+'/signup.html?ref='+myReferralCode;
+    st('refLinkDisplay',myReferralLink);
+    if(!udd.referralCode){await db.collection('users').doc(currentUser.uid).update({referralCode:myReferralCode}).catch(()=>{});}
+    await loadTeamData();
+  }catch(e){document.getElementById('memberList').innerHTML='<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Error loading</div><div class="empty-text">Please refresh</div></div>';}
+});
+
+async function loadTeamData(){
+  try{
+    const allSnap=await db.collection('users').get();
+    const allUsers=allSnap.docs.map(d=>({uid:d.id,...d.data()}));
+    
+    const l1Users=[],l2Users=[],l3Users=[];
+    
+    // 🔥 Level 1: Check both referrerUid AND referredBy (in case signup saved differently)
+    for(const u of allUsers){
+      if(u.referrerUid===currentUser.uid||u.referredBy===myReferralCode||u.referrerUid===currentUser.uid){
+        // Avoid adding yourself
+        if(u.uid!==currentUser.uid)l1Users.push(u);
+      }
+    }
+    const l1Uids=new Set(l1Users.map(u=>u.uid));
+    
+    // Level 2
+    for(const u of allUsers){
+      if(u.uid===currentUser.uid||l1Uids.has(u.uid))continue;
+      if(l1Uids.has(u.referrerUid))l2Users.push(u);
+    }
+    const l2Uids=new Set(l2Users.map(u=>u.uid));
+    
+    // Level 3
+    for(const u of allUsers){
+      if(u.uid===currentUser.uid||l1Uids.has(u.uid)||l2Uids.has(u.uid))continue;
+      if(l2Uids.has(u.referrerUid))l3Users.push(u);
+    }
+    
+    // Enrich
+    allMembers=[];
+    for(const u of l1Users)allMembers.push(await enrichMember(u,'A'));
+    for(const u of l2Users)allMembers.push(await enrichMember(u,'B'));
+    for(const u of l3Users)allMembers.push(await enrichMember(u,'C'));
+    
+    const l1c=allMembers.filter(m=>m.level==='A').length;
+    const l2c=allMembers.filter(m=>m.level==='B').length;
+    const l3c=allMembers.filter(m=>m.level==='C').length;
+    const te=allMembers.reduce((s,m)=>s+m.bonus,0);
+    const ac=allMembers.filter(m=>m.isActive).length;
+    const ti=allMembers.reduce((s,m)=>s+m.invested,0);
+    
+    st('levelACount',l1c);st('levelBCount',l2c);st('levelCCount',l3c);
+    st('headerTeamCount',allMembers.length);st('headerEarnings',fc2(te));st('totalEarningsDisplay',fc2(te));
+    st('teamMembersCount',allMembers.length);st('activeInvestorsCount',ac);st('teamInvestedAmount',fc2(ti));
+    
+    selectLevel('A');renderTeamList();
+  }catch(e){document.getElementById('memberList').innerHTML='<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Failed to load</div><div class="empty-text">'+e.message+'</div></div>';}
+}
+
+async function enrichMember(user,level){
+  const rate=LEVEL_RATES[level],inv=Number(user.totalInvested)||0;
+  let plan='No Plan';
+  if(inv>=10000){try{const s=await db.collection('investments').where('userId','==',user.uid).where('status','==','active').limit(1).get();if(!s.empty)plan=s.docs[0].data().planName||'Active Plan';}catch(e){}}
+  let joinedAt=new Date();
+  try{if(user.createdAt){if(user.createdAt.toDate)joinedAt=user.createdAt.toDate();else if(user.createdAt.seconds)joinedAt=new Date(user.createdAt.seconds*1000);else{const d=new Date(user.createdAt);if(!isNaN(d.getTime()))joinedAt=d;}}}catch(e){}
+  return{level,uid:user.uid,name:user.fullName||user.username||'User',email:user.email||'—',plan,invested:inv,bonus:Math.floor(inv*rate/100),isActive:inv>=10000,joinedAt};
+}
+
+function selectLevel(l){
+  currentLevel=l;
+  document.querySelectorAll('.level-tab').forEach(t=>t.classList.remove('active'));
+  const tab=document.querySelector('.level-tab.l'+(l==='A'?'1':l==='B'?'2':'3'));
+  if(tab)tab.classList.add('active');
+  renderTeamList();
+}
+
+function renderTeamList(){
+  const q=(document.getElementById('searchInput')?.value||'').toLowerCase();
+  const f=allMembers.filter(m=>m.level===currentLevel&&(!q||m.name.toLowerCase().includes(q)||m.email.toLowerCase().includes(q)));
+  st('teamListCount',String(f.length));
+  const c=document.getElementById('memberList');
+  if(!f.length){c.innerHTML='<div class="empty-state"><div class="empty-icon"><i class="fas fa-user-friends"></i></div><div class="empty-title">'+(q?'No matches':'No Level '+currentLevel+' referrals yet')+'</div><div class="empty-text">'+(q?'Try different search':'Share your referral link to start building your team!')+'</div></div>';return;}
+  c.innerHTML=f.map((m,i)=>{
+    const ac=m.level==='A'?'avatar-l1':(m.level==='B'?'avatar-l2':'avatar-l3');
+    let jd;try{jd=m.joinedAt.toLocaleDateString('en-NG',{day:'2-digit',month:'short',year:'2-digit'});}catch(e){jd='—';}
+    return'<div class="member-card"><div class="member-avatar '+ac+'">'+m.name.charAt(0).toUpperCase()+'</div><div class="member-info"><div class="member-name">'+m.name+' <span class="plan-tag'+(m.isActive?'':' inactive')+'">'+m.plan+'</span></div><div class="member-email">'+m.email+'</div><div class="member-meta"><span><i class="far fa-calendar"></i> '+jd+'</span><span style="color:'+(m.isActive?'var(--success)':'var(--text-muted)')+';">'+(m.isActive?'● Active':'○ Inactive')+'</span></div></div><div class="member-stats"><div class="member-invest">'+fc2(m.invested)+'</div><div class="member-bonus">+'+fc2(m.bonus)+'</div></div></div>';
+  }).join('');
+}
+
+function copyLink(){if(!myReferralLink)return;navigator.clipboard.writeText(myReferralLink).then(()=>Swal.fire({icon:'success',title:'Copied!',toast:true,position:'top-end',showConfirmButton:false,timer:2000}));}
+function shareTo(p){if(!myReferralLink)return;const t='🚀 Join me on Kinetic Wealth!',et=encodeURIComponent(t),el=encodeURIComponent(myReferralLink);if(p==='whatsapp')window.open('https://wa.me/?text='+et+'%20'+el,'_blank');else if(p==='telegram')window.open('https://t.me/share/url?url='+el+'&text='+et,'_blank');else if(p==='more'){if(navigator.share)navigator.share({title:'Kinetic Wealth',text:t,url:myReferralLink}).catch(()=>{});else copyLink();}}
+async function refreshData(){const i=document.querySelector('.fa-sync-alt');if(i)i.classList.add('fa-spin');await loadTeamData();setTimeout(()=>{if(i)i.classList.remove('fa-spin');},500);}
+
+window.toggleTheme=toggleTheme;window.selectLevel=selectLevel;window.renderTeamList=renderTeamList;
+window.copyLink=copyLink;window.shareTo=shareTo;window.refreshData=refreshData;
+</script>
+
+</body>
+</html>
