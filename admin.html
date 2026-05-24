@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover"/>
+<title>Kinetic Wealth · Admin Panel</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════ TOKENS ═══════════ */
+:root{
+  --gold:#F5C842;--gold-dim:#C9A227;--gold-glow:rgba(245,200,66,0.14);
+  --blue:#3B8BEB;--success:#22C55E;--danger:#F43F5E;
+  --warning:#FB923C;--info:#38BDF8;--purple:#A78BFA;
+  --bg:#07080D;--surface:#0D1017;--surface2:#12161E;--surface3:#1A1F2C;
+  --border:rgba(255,255,255,0.055);--border-hi:rgba(255,255,255,0.10);
+  --text:#E9EAED;--text-dim:#8B95A7;--text-faint:#404A5C;
+  --r:14px;--rs:9px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:99px}
+
+/* ── Grain + Orbs ── */
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:0.55}
+.orb{position:fixed;border-radius:50%;filter:blur(120px);pointer-events:none;z-index:0}
+.orb1{width:600px;height:600px;background:radial-gradient(circle,rgba(26,58,110,0.45),transparent);top:-200px;left:-150px;animation:orb-drift 18s ease-in-out infinite}
+.orb2{width:450px;height:450px;background:radial-gradient(circle,rgba(50,30,10,0.4),transparent);bottom:-120px;right:-100px;animation:orb-drift 22s ease-in-out infinite reverse;animation-delay:-8s}
+.orb3{width:300px;height:300px;background:radial-gradient(circle,rgba(14,30,55,0.35),transparent);top:45%;left:35%;animation:orb-drift 14s ease-in-out infinite;animation-delay:-4s}
+@keyframes orb-drift{0%,100%{transform:translate(0,0)}33%{transform:translate(30px,-40px)}66%{transform:translate(-20px,25px)}}
+
+/* ═══════════ SIDEBAR ═══════════ */
+.sidebar{
+  width:272px;background:var(--surface);border-right:1px solid var(--border);
+  position:fixed;left:0;top:0;bottom:0;z-index:900;
+  display:flex;flex-direction:column;transition:transform 0.32s cubic-bezier(.4,0,.2,1);
+  overflow-y:auto;overflow-x:hidden;
+}
+/* gold left accent */
+.sidebar::before{content:'';position:absolute;top:0;left:0;bottom:0;width:2px;background:linear-gradient(180deg,transparent,var(--gold),var(--gold-dim),transparent);opacity:0.5}
+
+.sidebar-header{padding:24px 20px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:13px;position:relative}
+.logo-icon{width:44px;height:44px;background:linear-gradient(135deg,var(--gold),#C8960A);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:19px;color:#07080D;flex-shrink:0;box-shadow:0 4px 18px rgba(245,200,66,0.28)}
+.logo-text{font-size:17px;font-weight:800;color:#fff;letter-spacing:-0.3px;line-height:1.15}
+.logo-sub{font-size:8.5px;font-weight:700;color:var(--gold);letter-spacing:2.5px;font-family:'JetBrains Mono',monospace}
+.online-chip{display:flex;align-items:center;gap:6px;margin-top:14px;font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text-faint);letter-spacing:1px}
+.online-dot{width:6px;height:6px;border-radius:50%;background:var(--success);box-shadow:0 0 8px var(--success);animation:blink 2.2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.45}}
+
+.sidebar-nav{padding:14px 9px;flex:1}
+.nav-sec{font-size:8.5px;font-weight:700;color:var(--text-faint);letter-spacing:2.2px;padding:10px 13px 5px;text-transform:uppercase}
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 13px;border-radius:var(--rs);
+  cursor:pointer;transition:all 0.18s;margin-bottom:2px;
+  color:var(--text-dim);font-size:12px;font-weight:500;
+  position:relative;
+}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{
+  background:linear-gradient(135deg,rgba(245,200,66,0.13),rgba(245,200,66,0.04));
+  color:var(--gold);border:1px solid rgba(245,200,66,0.14);
+}
+.nav-item .ni{width:17px;font-size:12.5px;text-align:center;flex-shrink:0;transition:color 0.18s}
+.nav-item.active .ni{color:var(--gold)}
+.nav-badge{background:var(--danger);color:#fff;padding:2px 6px;border-radius:20px;font-size:9.5px;font-weight:700;font-family:'JetBrains Mono',monospace;margin-left:auto;min-width:20px;text-align:center}
+
+.sidebar-footer{padding:14px;border-top:1px solid var(--border)}
+.admin-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:11px;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.admin-av{width:40px;height:40px;background:linear-gradient(135deg,var(--gold),#B8880A);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;color:#07080D;flex-shrink:0}
+.admin-name{font-size:12px;font-weight:700;color:#fff;line-height:1.3}
+.admin-role{font-size:8.5px;color:var(--gold);font-weight:700;letter-spacing:1.2px;text-transform:uppercase}
+.logout-btn{width:100%;padding:9px;border-radius:var(--rs);background:transparent;border:1px solid rgba(244,63,94,0.28);color:var(--danger);cursor:pointer;font-size:11px;font-weight:600;font-family:'Sora',sans-serif;display:flex;align-items:center;justify-content:center;gap:7px;transition:all 0.18s}
+.logout-btn:hover{background:rgba(244,63,94,0.09);border-color:rgba(244,63,94,0.5)}
+
+/* ═══════════ MAIN ═══════════ */
+.main-content{margin-left:272px;min-height:100vh;padding:26px 26px 48px;position:relative;z-index:1}
+
+/* Top Bar */
+.top-bar{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:26px;flex-wrap:wrap;gap:12px}
+.page-bread{font-size:9.5px;color:var(--text-faint);font-family:'JetBrains Mono',monospace;letter-spacing:1.5px;margin-bottom:4px}
+.page-title{font-size:27px;font-weight:800;color:#fff;letter-spacing:-0.6px}
+.top-actions{display:flex;gap:9px;align-items:center;padding-top:4px}
+.clock-chip{padding:9px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text-dim);letter-spacing:0.5px}
+.refresh-btn{padding:9px 17px;background:var(--surface2);border:1px solid var(--border-hi);border-radius:var(--rs);cursor:pointer;font-size:11px;font-weight:600;color:var(--text-dim);font-family:'Sora',sans-serif;display:flex;align-items:center;gap:7px;transition:all 0.2s}
+.refresh-btn:hover{border-color:var(--gold);color:var(--gold)}
+.refresh-btn:hover .ri{transform:rotate(180deg)}
+.ri{transition:transform 0.42s ease}
+
+/* ═══════════ STAT CARDS ═══════════ */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:13px;margin-bottom:22px}
+.stat-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:18px;
+  position:relative;overflow:hidden;
+  transition:transform 0.22s,border-color 0.22s;cursor:default;
+}
+.stat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:0;transition:opacity 0.22s}
+.stat-card:hover{transform:translateY(-3px);border-color:rgba(245,200,66,0.18)}
+.stat-card:hover::after{opacity:1}
+.si{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;margin-bottom:13px}
+.si.gold{background:rgba(245,200,66,0.11);color:var(--gold)}
+.si.blue{background:rgba(59,139,235,0.11);color:var(--blue)}
+.si.green{background:rgba(34,197,94,0.11);color:var(--success)}
+.si.red{background:rgba(244,63,94,0.11);color:var(--danger)}
+.si.orange{background:rgba(251,146,60,0.11);color:var(--warning)}
+.si.cyan{background:rgba(56,189,248,0.11);color:var(--info)}
+.si.purple{background:rgba(167,139,250,0.11);color:var(--purple)}
+.stat-val{font-size:25px;font-weight:800;color:#fff;letter-spacing:-1px;line-height:1;margin-bottom:4px}
+.stat-lbl{font-size:10px;color:var(--text-dim);font-weight:500}
+
+/* ═══════════ TABLE CARD ═══════════ */
+.tc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:20px}
+.th{padding:15px 19px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;background:linear-gradient(180deg,var(--surface2) 0%,var(--surface) 100%)}
+.tt{font-size:13.5px;font-weight:700;color:#fff;display:flex;align-items:center;gap:8px}
+.tdot{width:7px;height:7px;border-radius:50%;background:var(--gold);flex-shrink:0;box-shadow:0 0 6px var(--gold)}
+.ta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.si-wrap{position:relative}
+.si-wrap .fa-search{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text-faint);font-size:11px;pointer-events:none}
+.search-input,.filter-sel{padding:8px 13px;background:var(--surface3);border:1px solid var(--border-hi);border-radius:var(--rs);font-size:11.5px;color:var(--text);font-family:'Sora',sans-serif;outline:none;transition:border-color 0.18s}
+.search-input{padding-left:32px}
+.search-input::placeholder{color:var(--text-faint)}
+.search-input:focus,.filter-sel:focus{border-color:var(--gold)}
+.filter-sel option{background:var(--surface2)}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead tr{background:var(--surface2)}
+th{text-align:left;padding:10px 16px;font-size:9px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:1.1px;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:11px 16px;font-size:12px;color:var(--text-dim);border-bottom:1px solid var(--border);vertical-align:middle}
+td strong{color:var(--text);font-weight:600}
+tbody tr{transition:background 0.13s}
+tbody tr:hover{background:rgba(255,255,255,0.022)}
+tbody tr:last-child td{border-bottom:none}
+
+/* Mono / amounts */
+.mono{font-family:'JetBrains Mono',monospace;font-size:11px}
+.amt{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:12px}
+.amt.pos{color:var(--success)}
+.amt.neg{color:var(--danger)}
+.amt.neu{color:var(--gold)}
+
+/* ═══════════ BADGES ═══════════ */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:9.5px;font-weight:700;letter-spacing:0.3px;white-space:nowrap}
+.bdot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.badge.active,.badge.approved,.badge.completed{background:rgba(34,197,94,0.09);color:var(--success);border:1px solid rgba(34,197,94,0.18)}
+.badge.active .bdot,.badge.approved .bdot,.badge.completed .bdot{background:var(--success)}
+.badge.pending{background:rgba(251,146,60,0.09);color:var(--warning);border:1px solid rgba(251,146,60,0.18)}
+.badge.pending .bdot{background:var(--warning)}
+.badge.rejected,.badge.banned{background:rgba(244,63,94,0.09);color:var(--danger);border:1px solid rgba(244,63,94,0.18)}
+.badge.rejected .bdot,.badge.banned .bdot{background:var(--danger)}
+.badge.suspended{background:rgba(56,189,248,0.09);color:var(--info);border:1px solid rgba(56,189,248,0.18)}
+.badge.suspended .bdot{background:var(--info)}
+
+/* ═══════════ BUTTONS ═══════════ */
+.btn{padding:8px 14px;border-radius:var(--rs);font-size:11px;font-weight:600;cursor:pointer;border:none;font-family:'Sora',sans-serif;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;transition:all 0.18s;outline:none}
+.btn:active{transform:scale(0.96)}
+.btn-primary{background:linear-gradient(135deg,var(--gold),#B8880A);color:#07080D;box-shadow:0 3px 14px rgba(245,200,66,0.22)}
+.btn-primary:hover{box-shadow:0 4px 22px rgba(245,200,66,0.38);transform:translateY(-1px)}
+.btn-success{background:linear-gradient(135deg,#15803D,#14532D);color:#fff}
+.btn-success:hover{box-shadow:0 3px 14px rgba(34,197,94,0.28)}
+.btn-danger{background:linear-gradient(135deg,#BE123C,#9F1239);color:#fff}
+.btn-danger:hover{box-shadow:0 3px 14px rgba(244,63,94,0.28)}
+.btn-warning{background:linear-gradient(135deg,#C2410C,#9A3412);color:#fff}
+.btn-outline{background:transparent;border:1px solid var(--border-hi);color:var(--text-dim)}
+.btn-outline:hover{border-color:var(--gold);color:var(--gold)}
+.btn-ghost{background:var(--surface2);border:1px solid var(--border);color:var(--text-dim)}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+.btn-sm{padding:5px 9px;font-size:10px;border-radius:7px}
+.btn-icon{width:29px;height:29px;padding:0;justify-content:center;border-radius:7px}
+
+/* ═══════════ SECTIONS ═══════════ */
+.ps{display:none;animation:fade-up 0.28s ease}
+.ps.active{display:block}
+@keyframes fade-up{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+
+/* ═══════════ MODALS ═══════════ */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.72);backdrop-filter:blur(8px);z-index:2000;align-items:center;justify-content:center;padding:18px}
+.modal.active{display:flex}
+.mc{background:var(--surface);border:1px solid var(--border-hi);border-radius:18px;width:100%;max-width:490px;max-height:88vh;overflow-y:auto;box-shadow:0 30px 80px rgba(0,0,0,0.65);animation:modal-pop 0.26s cubic-bezier(.34,1.56,.64,1)}
+@keyframes modal-pop{from{opacity:0;transform:scale(0.91)}to{opacity:1;transform:scale(1)}}
+.mc.wide{max-width:660px}
+.mh{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.mt{font-size:14.5px;font-weight:700;color:#fff}
+.mx{width:29px;height:29px;border-radius:7px;border:none;background:var(--surface2);color:var(--text-dim);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all 0.15s}
+.mx:hover{background:var(--surface3);color:#fff}
+.mb{padding:20px}
+.mf{padding:15px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+
+/* Form */
+.fg{margin-bottom:15px}
+.fl{display:block;font-size:9.5px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.fi,.fsel,.fta{width:100%;padding:10px 13px;background:var(--surface2);border:1px solid var(--border-hi);border-radius:var(--rs);font-size:13px;color:var(--text);font-family:'Sora',sans-serif;outline:none;transition:border-color 0.18s}
+.fi:focus,.fsel:focus,.fta:focus{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold-glow)}
+.fi::placeholder{color:var(--text-faint)}
+.fsel option{background:var(--surface2)}
+.fta{resize:vertical;min-height:80px}
+
+/* Alert boxes */
+.ab{padding:11px 13px;border-radius:var(--rs);font-size:11px;display:flex;align-items:flex-start;gap:8px;line-height:1.55}
+.ab-danger{background:rgba(244,63,94,0.07);border:1px solid rgba(244,63,94,0.2);color:#FDA4AF}
+.ab-warning{background:rgba(251,146,60,0.07);border:1px solid rgba(251,146,60,0.2);color:#FCA87A}
+
+/* Progress bar */
+.prog-wrap{display:flex;align-items:center;gap:7px}
+.prog-track{flex:1;background:var(--surface3);border-radius:99px;height:4px;min-width:52px;overflow:hidden}
+.prog-fill{height:4px;border-radius:99px;background:linear-gradient(90deg,var(--gold),var(--blue));transition:width 0.5s}
+.prog-lbl{font-size:9.5px;font-family:'JetBrains Mono',monospace;color:var(--text-faint);white-space:nowrap}
+
+/* Empty / Spinner */
+.empty{text-align:center;padding:48px 20px;color:var(--text-faint)}
+.empty i{font-size:36px;margin-bottom:12px;opacity:0.35;display:block}
+.empty p{font-size:12px}
+.spin{width:17px;height:17px;border:2px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin 0.6s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Mobile */
+.menu-toggle{display:none;position:fixed;top:13px;left:13px;z-index:1100;background:var(--surface);border:1px solid var(--border-hi);width:41px;height:41px;border-radius:10px;font-size:17px;cursor:pointer;color:var(--text);align-items:center;justify-content:center}
+.sov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.52);z-index:850;backdrop-filter:blur(4px)}
+
+@media(max-width:950px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0);box-shadow:24px 0 60px rgba(0,0,0,0.55)}
+  .sov.show{display:block}
+  .main-content{margin-left:0;padding:74px 15px 36px}
+  .menu-toggle{display:flex}
+  .page-title{font-size:22px}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:500px){.stats-grid{grid-template-columns:1fr 1fr}.stat-val{font-size:20px}}
+
+/* Swal dark override */
+.swal2-popup{font-family:'Sora',sans-serif!important;border-radius:18px!important;border:1px solid rgba(255,255,255,0.07)!important}
+.swal2-textarea{background:#141820!important;border:1px solid rgba(255,255,255,0.1)!important;color:#E8EAED!important;border-radius:10px!important;font-family:'Sora',sans-serif!important}
+</style>
+</head>
+<body>
+
+<!-- background -->
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+
+<!-- mobile toggle + overlay -->
+<button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+<div class="sov" id="sov" onclick="toggleSidebar()"></div>
+
+<div style="display:flex">
+
+<!-- ═══════ SIDEBAR ═══════ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="logo-icon"><i class="fas fa-bolt"></i></div>
+    <div>
+      <div class="logo-text">Kinetic Wealth</div>
+      <div class="logo-sub">ADMIN CONTROL</div>
+    </div>
+    <div class="online-chip" style="position:absolute;bottom:14px;left:78px">
+      <div class="online-dot"></div>LIVE
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-sec">Overview</div>
+    <div class="nav-item active" data-page="dashboard"><i class="fas fa-th-large ni"></i> Dashboard</div>
+
+    <div class="nav-sec" style="margin-top:10px">Management</div>
+    <div class="nav-item" data-page="users"><i class="fas fa-users ni"></i> Users <span class="nav-badge" id="userBadge">0</span></div>
+    <div class="nav-item" data-page="deposits"><i class="fas fa-credit-card ni"></i> Deposits <span class="nav-badge" id="pendingDepBadge">0</span></div>
+    <div class="nav-item" data-page="withdrawals"><i class="fas fa-paper-plane ni"></i> Withdrawals <span class="nav-badge" id="pendingWitBadge">0</span></div>
+    <div class="nav-item" data-page="investments"><i class="fas fa-chart-line ni"></i> Investments</div>
+
+    <div class="nav-sec" style="margin-top:10px">Finance</div>
+    <div class="nav-item" data-page="transactions"><i class="fas fa-receipt ni"></i> Transactions</div>
+    <div class="nav-item" data-page="referrals"><i class="fas fa-user-plus ni"></i> Referrals</div>
+
+    <div class="nav-sec" style="margin-top:10px">System</div>
+    <div class="nav-item" data-page="admins"><i class="fas fa-shield-halved ni"></i> Admins</div>
+    <div class="nav-item" data-page="audit"><i class="fas fa-history ni"></i> Audit Logs</div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="admin-card">
+      <div class="admin-av" id="adminAvatar">A</div>
+      <div>
+        <div class="admin-name" id="adminName">Admin</div>
+        <div class="admin-role" id="adminRole">ADMIN</div>
+      </div>
+    </div>
+    <button class="logout-btn" onclick="adminLogout()"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+  </div>
+</aside>
+
+<!-- ═══════ MAIN ═══════ -->
+<main class="main-content">
+
+  <div class="top-bar">
+    <div>
+      <div class="page-bread" id="breadcrumb">KINETIC WEALTH / DASHBOARD</div>
+      <h1 class="page-title" id="pageTitle">Dashboard</h1>
+    </div>
+    <div class="top-actions">
+      <div class="clock-chip" id="clockChip">00:00:00</div>
+      <button class="refresh-btn" onclick="refreshPage()"><i class="fas fa-sync-alt ri" id="ri"></i> Refresh</button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="ps active" id="page-dashboard">
+    <div class="stats-grid" id="dashStats">
+      <div class="stat-card"><div class="si gold"><i class="fas fa-users"></i></div><div class="stat-val">—</div><div class="stat-lbl">Loading…</div></div>
+    </div>
+  </div>
+
+  <!-- USERS -->
+  <div class="ps" id="page-users">
+    <div class="tc">
+      <div class="th">
+        <div class="tt"><div class="tdot"></div>User Management</div>
+        <div class="ta">
+          <div class="si-wrap"><i class="fas fa-search"></i><input type="text" class="search-input" id="userSearch" placeholder="Search name or email…" oninput="loadUsers()"></div>
+        </div>
+      </div>
+      <div class="tw"><table><thead><tr><th>Name</th><th>Email</th><th>Deposit Bal</th><th>Withdraw Bal</th><th>Invested</th><th>Status</th><th>Actions</th></tr></thead><tbody id="usersTable"><tr><td colspan="7"><div class="empty"><div class="spin"></div></div></td></tr></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- DEPOSITS -->
+  <div class="ps" id="page-deposits">
+    <div class="tc">
+      <div class="th">
+        <div class="tt"><div class="tdot"></div>Deposit Requests</div>
+        <div class="ta"><select class="filter-sel" id="depositFilter" onchange="loadDeposits()"><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="all">All</option></select></div>
+      </div>
+      <div class="tw"><table><thead><tr><th>User</th><th>Amount</th><th>Sender Name</th><th>Gateway · Account</th><th>Ref Code</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead><tbody id="depositsTable"><tr><td colspan="8"><div class="empty"><div class="spin"></div></div></td></tr></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- WITHDRAWALS -->
+  <div class="ps" id="page-withdrawals">
+    <div class="tc">
+      <div class="th">
+        <div class="tt"><div class="tdot"></div>Withdrawal Requests</div>
+        <div class="ta"><select class="filter-sel" id="withdrawFilter" onchange="loadWithdrawals()"><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="all">All</option></select></div>
+      </div>
+      <div class="tw"><table><thead><tr><th>User</th><th>Amount</th><th>Fee</th><th>Receive</th><th>Bank</th><th>Account</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead><tbody id="withdrawalsTable"><tr><td colspan="9"><div class="empty"><div class="spin"></div></div></td></tr></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- INVESTMENTS -->
+  <div class="ps" id="page-investments">
+    <div class="tc">
+      <div class="th"><div class="tt"><div class="tdot"></div>Investments</div></div>
+      <div class="tw"><table><thead><tr><th>User</th><th>Plan</th><th>Capital</th><th>Daily ROI</th><th>Progress</th><th>Status</th><th>Date</th></tr></thead><tbody id="investmentsTable"><tr><td colspan="7"><div class="empty"><div class="spin"></div></div></td></tr></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- TRANSACTIONS -->
+  <div class="ps" id="page-transactions">
+    <div class="tc">
+      <div class="th"><div class="tt"><div class="tdot"></div>Transaction Ledger</div></div>
+      <div class="tw"><table><thead><tr><th>User ID</th><th>Type</th><th>Amount</th><th>Description</th><th>Date</th></tr></thead><tbody id="transactionsTable"><tr><td colspan="5"><div class="empty"><div class="spin"></div></div></td></tr></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- REFERRALS -->
+  <div class="ps" id="page-referrals">
+    <div class="tc">
+      <div class="th"><div class="tt"><div class="tdot"></div>Referral Network</div></div>
+      <div class="tw"><table><thead><tr><th>User</th><th>Code</th><th>L1</th><th>L2</th><th>L3</th><th>Total Refs</th><th>Earnings</th><th>Actions</th></tr></thead><tbody id="referralsTable"><tr><td colspan="8"><div class="empty"><div class="spin"></div></div></td></tr></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- ADMINS -->
+  <div class="ps" id="page-admins">
+    <div class="tc">
+      <div class="th">
+        <div class="tt"><div class="tdot"></div>Admin Users</div>
+        <div class="ta"><button class="btn btn-primary" onclick="showAddAdmin()"><i class="fas fa-plus"></i> Add Admin</button></div>
+      </div>
+      <div class="tw"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Actions</th></tr></thead><tbody id="adminsTable"><tr><td colspan="4"><div class="empty"><div class="spin"></div></div></td></tr></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- AUDIT -->
+  <div class="ps" id="page-audit">
+    <div class="tc">
+      <div class="th"><div class="tt"><div class="tdot"></div>Audit Logs</div></div>
+      <div class="tw"><table><thead><tr><th>Admin</th><th>Action</th><th>Target ID</th><th>Details</th><th>Date</th></tr></thead><tbody id="auditTable"><tr><td colspan="5"><div class="empty"><div class="spin"></div></div></td></tr></tbody></table></div>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<!-- ═══════ MODALS ═══════ -->
+
+<!-- Add Admin -->
+<div class="modal" id="addAdminModal">
+  <div class="mc">
+    <div class="mh"><div class="mt"><i class="fas fa-shield-halved" style="color:var(--gold);margin-right:8px"></i>Add Admin</div><button class="mx" onclick="closeM('addAdminModal')">&times;</button></div>
+    <div class="mb">
+      <div class="fg"><label class="fl">User Email</label><input type="email" class="fi" id="adminEmail" placeholder="user@email.com"></div>
+      <div class="ab ab-warning"><i class="fas fa-triangle-exclamation"></i> This grants full admin access. Only add trusted individuals.</div>
+    </div>
+    <div class="mf"><button class="btn btn-outline" onclick="closeM('addAdminModal')">Cancel</button><button class="btn btn-primary" onclick="addAdmin()"><i class="fas fa-check"></i> Grant Access</button></div>
+  </div>
+</div>
+
+<!-- Action Modal (balance / suspend / ban) -->
+<div class="modal" id="actionModal">
+  <div class="mc">
+    <div class="mh"><div class="mt" id="actionTitle">Action</div><button class="mx" onclick="closeM('actionModal')">&times;</button></div>
+    <div class="mb" id="actionBody"></div>
+    <div class="mf"><button class="btn btn-outline" onclick="closeM('actionModal')">Cancel</button><button class="btn btn-primary" id="actionBtn" onclick="execAction()">Confirm</button></div>
+  </div>
+</div>
+
+<!-- Referral Tree Modal -->
+<div class="modal" id="treeModal">
+  <div class="mc wide">
+    <div class="mh"><div class="mt"><i class="fas fa-sitemap" style="color:var(--gold);margin-right:8px"></i>Referral Tree</div><button class="mx" onclick="closeM('treeModal')">&times;</button></div>
+    <div class="mb" id="treeBody"></div>
+  </div>
+</div>
+
+<!-- ═══════ JS ═══════ -->
+<script>
+/* ── Firebase ── */
+const fc={apiKey:"AIzaSyBl6HEVa9mUuROvnohMKzeEzzc0aTREU54",authDomain:"kinetic-dc8e6.firebaseapp.com",projectId:"kinetic-dc8e6",storageBucket:"kinetic-dc8e6.firebasestorage.app",messagingSenderId:"980527555815",appId:"1:980527555815:web:131ccee594e0c8f122ee42"};
+firebase.initializeApp(fc);
+const auth=firebase.auth(),db=firebase.firestore(),FV=firebase.firestore.FieldValue;
+
+/* ── Utils ── */
+const $=id=>document.getElementById(id);
+const fm=n=>(Number(n)||0).toLocaleString('en-NG');
+const fc2=n=>'₦'+fm(n);
+const fs=n=>{const v=Number(n)||0;return v>=1e6?'₦'+(v/1e6).toFixed(2)+'M':v>=1e3?'₦'+(v/1e3).toFixed(1)+'K':'₦'+v};
+const fmtDate=ts=>{if(!ts)return'—';try{const d=ts.toDate?.()??new Date(ts.seconds?ts.seconds*1000:ts);return isNaN(d)?'—':d.toLocaleDateString('en-NG',{day:'2-digit',month:'short',year:'numeric'});}catch{return'—';}};
+const fmtDT=ts=>{if(!ts)return'—';try{const d=ts.toDate?.()??new Date(ts.seconds?ts.seconds*1000:ts);return isNaN(d)?'—':d.toLocaleString('en-NG',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});}catch{return'—';}};
+const badge=s=>`<span class="badge ${s||'active'}"><span class="bdot"></span>${s||'active'}</span>`;
+const spinTd=(n,txt='')=>`<tr><td colspan="${n}"><div class="empty">${txt?`<i class="fas fa-${txt}"></i>`:'<div class="spin"></div>'}</div></td></tr>`;
+
+/* ── Clock ── */
+setInterval(()=>{$('clockChip').textContent=new Date().toLocaleTimeString('en-NG',{hour12:false})},1000);
+
+/* ── Sidebar toggle ── */
+function toggleSidebar(){$('sidebar').classList.toggle('open');$('sov').classList.toggle('show')}
+
+/* ── State ── */
+let admin=null,actionUid=null,currentAction=null;
+
+/* ── AUTH ── */
+auth.onAuthStateChanged(async u=>{
+  if(!u){window.location.replace('admin-login.html');return}
+  try{
+    const d=await db.collection('users').doc(u.uid).get();
+    if(!d.exists||!d.data().isAdmin){auth.signOut();window.location.replace('login.html');return}
+    admin={uid:u.uid,...d.data()};
+    $('adminAvatar').textContent=(admin.fullName||admin.username||'A').charAt(0).toUpperCase();
+    $('adminName').textContent=admin.fullName||admin.username||'Admin';
+    $('adminRole').textContent=(admin.adminRole||'Admin').toUpperCase();
+    initNav();loadDashboard();updateBadges();
+  }catch(e){console.error('Auth error:',e)}
+});
+
+/* ── NAV ── */
+function initNav(){
+  document.querySelectorAll('.nav-item').forEach(item=>item.addEventListener('click',()=>{
+    const p=item.dataset.page;
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    item.classList.add('active');
+    document.querySelectorAll('.ps').forEach(s=>s.classList.remove('active'));
+    $('page-'+p).classList.add('active');
+    const lbl=p.charAt(0).toUpperCase()+p.slice(1);
+    $('pageTitle').textContent=lbl;
+    $('breadcrumb').textContent='KINETIC WEALTH / '+p.toUpperCase();
+    navTo(p);
+    $('sidebar').classList.remove('open');$('sov').classList.remove('show');
+  }));
+}
+const pageMap={dashboard:loadDashboard,users:loadUsers,deposits:loadDeposits,withdrawals:loadWithdrawals,investments:loadInvestments,transactions:loadTransactions,referrals:loadReferrals,admins:loadAdmins,audit:loadAudit};
+function navTo(p){(pageMap[p]||(()=>{}))()}
+function refreshPage(){
+  const p=document.querySelector('.ps.active')?.id.replace('page-','');
+  if(p)navTo(p);
+  const ri=$('ri');ri.style.transform='rotate(180deg)';setTimeout(()=>ri.style.transform='',600);
+}
+
+/* ══════════════════════════════════════
+   DASHBOARD
+══════════════════════════════════════ */
+async function loadDashboard(){
+  try{
+    const[us,ai,pd,pw,ad,aw]=await Promise.all([
+      db.collection('users').get(),
+      db.collection('investments').where('status','==','active').get(),
+      db.collection('deposits').where('status','==','pending').get(),
+      db.collection('withdrawals').where('status','==','pending').get(),
+      db.collection('deposits').where('status','==','approved').get(),
+      db.collection('withdrawals').where('status','==','approved').get()
+    ]);
+    const totalDep=ad.docs.reduce((s,d)=>s+(d.data().amount||0),0);
+    const totalWit=aw.docs.reduce((s,d)=>s+(d.data().amount||0),0);
+    const totalEarn=us.docs.reduce((s,d)=>s+(d.data().totalEarnings||0),0);
+    $('userBadge').textContent=us.size;
+    $('dashStats').innerHTML=`
+      <div class="stat-card"><div class="si gold"><i class="fas fa-users"></i></div><div class="stat-val">${us.size}</div><div class="stat-lbl">Total Users</div></div>
+      <div class="stat-card"><div class="si blue"><i class="fas fa-chart-line"></i></div><div class="stat-val">${ai.size}</div><div class="stat-lbl">Active Investments</div></div>
+      <div class="stat-card"><div class="si orange"><i class="fas fa-clock"></i></div><div class="stat-val">${pd.size}</div><div class="stat-lbl">Pending Deposits</div></div>
+      <div class="stat-card"><div class="si red"><i class="fas fa-paper-plane"></i></div><div class="stat-val">${pw.size}</div><div class="stat-lbl">Pending Withdrawals</div></div>
+      <div class="stat-card"><div class="si green"><i class="fas fa-arrow-down"></i></div><div class="stat-val" style="font-size:19px">${fs(totalDep)}</div><div class="stat-lbl">Approved Deposits</div></div>
+      <div class="stat-card"><div class="si cyan"><i class="fas fa-arrow-up"></i></div><div class="stat-val" style="font-size:19px">${fs(totalWit)}</div><div class="stat-lbl">Approved Withdrawals</div></div>
+      <div class="stat-card"><div class="si purple"><i class="fas fa-coins"></i></div><div class="stat-val" style="font-size:19px">${fs(totalEarn)}</div><div class="stat-lbl">Platform Earnings Paid</div></div>`;
+  }catch(e){console.error(e)}
+}
+
+/* ══════════════════════════════════════
+   USERS
+══════════════════════════════════════ */
+async function loadUsers(){
+  try{
+    const s=await db.collection('users').get();
+    let u=s.docs.map(d=>({id:d.id,...d.data()}));
+    const q=($('userSearch')?.value||'').toLowerCase();
+    if(q)u=u.filter(x=>(x.fullName||'').toLowerCase().includes(q)||(x.email||'').toLowerCase().includes(q)||(x.username||'').toLowerCase().includes(q));
+    $('usersTable').innerHTML=u.length?u.map(x=>{
+      const st=x.accountStatus?.status||'active';
+      return`<tr>
+        <td><strong>${x.fullName||x.username||'N/A'}</strong></td>
+        <td><span class="mono">${x.email||'—'}</span></td>
+        <td><span class="amt pos">${fs(x.depositBalance||0)}</span></td>
+        <td><span class="amt neu">${fs(x.withdrawalBalance||0)}</span></td>
+        <td><span class="amt" style="color:var(--text-dim)">${fs(x.totalInvested||0)}</span></td>
+        <td>${badge(st)}</td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-sm btn-ghost btn-icon" title="View" onclick="viewUser('${x.id}')"><i class="fas fa-eye"></i></button>
+          <button class="btn btn-sm btn-ghost btn-icon" title="Adjust Balance" onclick="showAdj('${x.id}')" style="color:var(--gold)"><i class="fas fa-wallet"></i></button>
+          <button class="btn btn-sm btn-ghost btn-icon" title="Reset Password" onclick="resetPW('${x.id}','${(x.email||'').replace(/'/g,"\\'")}')"><i class="fas fa-key"></i></button>
+          <button class="btn btn-sm btn-ghost btn-icon" title="Reset PIN" onclick="resetPIN('${x.id}')"><i class="fas fa-lock"></i></button>
+          <button class="btn btn-sm btn-ghost btn-icon" title="Suspend" onclick="showSus('${x.id}')" style="color:var(--warning)"><i class="fas fa-pause"></i></button>
+          <button class="btn btn-sm btn-ghost btn-icon" title="Ban" onclick="showBan('${x.id}')" style="color:var(--danger)"><i class="fas fa-ban"></i></button>
+        </td>
+      </tr>`;
+    }).join(''):`<tr><td colspan="7"><div class="empty"><i class="fas fa-search"></i><p>No users found</p></div></td></tr>`;
+  }catch(e){console.error(e);$('usersTable').innerHTML=spinTd(7,'exclamation-triangle')}
+}
+
+async function viewUser(uid){
+  const d=await db.collection('users').doc(uid).get();if(!d.exists)return;const u=d.data();
+  Swal.fire({title:'User Profile',html:`
+    <div style="text-align:left;font-size:12px;color:#ccc;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div style="background:#12161E;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.06)"><div style="font-size:9px;color:#404A5C;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Full Name</div><div style="color:#fff;font-weight:600">${u.fullName||'N/A'}</div></div>
+      <div style="background:#12161E;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.06)"><div style="font-size:9px;color:#404A5C;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Status</div><div style="color:${(u.accountStatus?.status||'active')==='active'?'#22C55E':'#F43F5E'};font-weight:700">${u.accountStatus?.status||'active'}</div></div>
+      <div style="background:#12161E;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.06)"><div style="font-size:9px;color:#404A5C;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Deposit Balance</div><div style="color:#22C55E;font-weight:700;font-family:JetBrains Mono,monospace">${fc2(u.depositBalance||0)}</div></div>
+      <div style="background:#12161E;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.06)"><div style="font-size:9px;color:#404A5C;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Withdraw Balance</div><div style="color:#F5C842;font-weight:700;font-family:JetBrains Mono,monospace">${fc2(u.withdrawalBalance||0)}</div></div>
+      <div style="background:#12161E;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.06)"><div style="font-size:9px;color:#404A5C;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Total Invested</div><div style="font-weight:600">${fc2(u.totalInvested||0)}</div></div>
+      <div style="background:#12161E;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.06)"><div style="font-size:9px;color:#404A5C;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Total Earned</div><div style="font-weight:600">${fc2(u.totalEarnings||0)}</div></div>
+    </div>`,
+    background:'#0D1017',color:'#E9EAED',confirmButtonColor:'#F5C842',confirmButtonText:'Close'
+  });
+}
+
+/* User actions */
+function showAdj(uid){
+  actionUid=uid;currentAction='balance';
+  $('actionTitle').innerHTML='<i class="fas fa-wallet" style="color:var(--gold);margin-right:8px"></i>Adjust Balance';
+  $('actionBody').innerHTML=`
+    <div class="fg"><label class="fl">Wallet</label><select class="fsel" id="balWallet"><option value="deposit">Deposit Balance</option><option value="withdrawal">Withdrawal Balance</option></select></div>
+    <div class="fg"><label class="fl">Amount ₦ — use negative to deduct</label><input type="number" class="fi" id="balAmt" placeholder="e.g. 50000"></div>
+    <div class="fg"><label class="fl">Reason (optional)</label><textarea class="fta" id="balReason" placeholder="Admin note…"></textarea></div>`;
+  $('actionBtn').className='btn btn-primary';$('actionBtn').innerHTML='<i class="fas fa-check"></i> Apply';
+  openM('actionModal');
+}
+function showSus(uid){
+  actionUid=uid;currentAction='suspend';
+  $('actionTitle').innerHTML='<i class="fas fa-pause-circle" style="color:var(--warning);margin-right:8px"></i>Suspend User';
+  $('actionBody').innerHTML=`
+    <div class="fg"><label class="fl">Duration (hours)</label><input type="number" class="fi" id="susHrs" value="24" min="1"></div>
+    <div class="fg"><label class="fl">Reason</label><textarea class="fta" id="susReason" placeholder="Reason for suspension…"></textarea></div>
+    <div class="ab ab-warning"><i class="fas fa-clock"></i> User will be locked out for the specified duration.</div>`;
+  $('actionBtn').className='btn btn-warning';$('actionBtn').innerHTML='<i class="fas fa-pause"></i> Suspend';
+  openM('actionModal');
+}
+function showBan(uid){
+  actionUid=uid;currentAction='ban';
+  $('actionTitle').innerHTML='<i class="fas fa-ban" style="color:var(--danger);margin-right:8px"></i>Ban User';
+  $('actionBody').innerHTML=`
+    <div class="fg"><label class="fl">Reason</label><textarea class="fta" id="banReason" placeholder="State the reason for permanent ban…"></textarea></div>
+    <div class="ab ab-danger"><i class="fas fa-triangle-exclamation"></i> This permanently bans the user. Very difficult to undo.</div>`;
+  $('actionBtn').className='btn btn-danger';$('actionBtn').innerHTML='<i class="fas fa-ban"></i> Ban User';
+  openM('actionModal');
+}
+
+async function resetPW(uid,email){
+  const r=await Swal.fire({title:'Reset Password?',text:`A reset email will be sent to ${email||'this user'}.`,icon:'question',showCancelButton:true,confirmButtonColor:'#F5C842',confirmButtonText:'Send Reset',background:'#0D1017',color:'#E9EAED'});
+  if(!r.isConfirmed)return;
+  try{
+    await auth.sendPasswordResetEmail(email);
+    Swal.fire({icon:'success',title:'Reset Email Sent!',timer:2000,background:'#0D1017',color:'#E9EAED',showConfirmButton:false});
+  }catch(e){Swal.fire({icon:'error',title:'Failed',text:e.message,background:'#0D1017',color:'#E9EAED'});}
+}
+async function resetPIN(uid){
+  const r=await Swal.fire({title:'Reset Withdrawal PIN?',text:"User's PIN will be cleared. They must set a new one.",icon:'question',showCancelButton:true,confirmButtonColor:'#FB923C',confirmButtonText:'Reset PIN',background:'#0D1017',color:'#E9EAED'});
+  if(!r.isConfirmed)return;
+  await db.collection('users').doc(uid).update({withdrawalPin:''});
+  Swal.fire({icon:'success',title:'PIN Reset!',timer:1800,background:'#0D1017',color:'#E9EAED',showConfirmButton:false});
+}
+
+async function execAction(){
+  if(currentAction==='balance'){
+    const w=$('balWallet').value,a=Number($('balAmt').value);
+    if(!a)return Swal.fire({icon:'warning',title:'Enter an amount',background:'#0D1017',color:'#E9EAED'});
+    await db.collection('users').doc(actionUid).update({[w==='deposit'?'depositBalance':'withdrawalBalance']:FV.increment(a)});
+    closeM('actionModal');
+    Swal.fire({icon:'success',title:'Balance Updated!',timer:1600,background:'#0D1017',color:'#E9EAED',showConfirmButton:false});
+    loadUsers();
+  }else if(currentAction==='suspend'){
+    const h=Number($('susHrs').value)||24,until=new Date(Date.now()+h*3600000),reason=$('susReason').value||'Admin suspension';
+    await db.collection('users').doc(actionUid).update({accountStatus:{status:'suspended',reason,suspendedUntil:until,suspendedBy:admin.uid}});
+    closeM('actionModal');
+    Swal.fire({icon:'success',title:'Suspended!',timer:1600,background:'#0D1017',color:'#E9EAED',showConfirmButton:false});
+    loadUsers();
+  }else if(currentAction==='ban'){
+    const reason=$('banReason').value||'Banned by admin';
+    await db.collection('users').doc(actionUid).update({accountStatus:{status:'banned',reason,bannedBy:admin.uid,bannedAt:FV.serverTimestamp()}});
+    closeM('actionModal');
+    Swal.fire({icon:'success',title:'Banned!',timer:1600,background:'#0D1017',color:'#E9EAED',showConfirmButton:false});
+    loadUsers();
+  }
+}
+
+/* ══════════════════════════════════════
+   DEPOSITS
+══════════════════════════════════════ */
+async function loadDeposits(){
+  try{
+    const f=$('depositFilter')?.value||'pending';
+    let q=db.collection('deposits');if(f!=='all')q=q.where('status','==',f);
+    const s=await q.get();
+    let docs=s.docs.map(d=>({id:d.id,...d.data()}));
+    docs.sort((a,b)=>{
+      const at=a.createdAt?.toMillis?.()||a.createdAt?.seconds*1000||new Date(a.createdAt).getTime()||0;
+      const bt=b.createdAt?.toMillis?.()||b.createdAt?.seconds*1000||new Date(b.createdAt).getTime()||0;
+      return bt-at;
+    });
+    $('depositsTable').innerHTML=docs.length?docs.map(d=>`
+      <tr>
+        <td><strong>${d.userName||'N/A'}</strong></td>
+        <td><span class="amt pos">${fc2(d.amount)}</span></td>
+        <td>${d.senderName||'<span style="color:var(--text-faint)">—</span>'}</td>
+        <td><span class="mono" style="font-size:10px">GW${d.gateway||1} · ${d.accountName||'—'}</span></td>
+        <td><span class="mono" style="font-size:10px;color:var(--gold)">${d.refCode||'—'}</span></td>
+        <td>${badge(d.status)}</td>
+        <td><span class="mono">${fmtDT(d.createdAt)}</span></td>
+        <td style="white-space:nowrap">${d.status==='pending'?`
+          <button class="btn btn-sm btn-success" onclick="approveDep('${d.id}','${d.userId}',${d.amount})"><i class="fas fa-check"></i></button>
+          <button class="btn btn-sm btn-danger" onclick="rejectDep('${d.id}')"><i class="fas fa-times"></i></button>`
+          :'<span style="color:var(--text-faint);font-size:11px">—</span>'}
+        </td>
+      </tr>`).join(''):`<tr><td colspan="8"><div class="empty"><i class="fas fa-credit-card"></i><p>No ${f} deposits</p></div></td></tr>`;
+  }catch(e){console.error(e)}
+}
+async function approveDep(id,uid,amt){
+  const r=await Swal.fire({title:'Approve Deposit?',text:`Credit ${fc2(amt)} to user balance`,icon:'question',showCancelButton:true,confirmButtonColor:'#22C55E',confirmButtonText:'Approve',background:'#0D1017',color:'#E9EAED'});
+  if(!r.isConfirmed)return;
+  await db.runTransaction(async tr=>{
+    tr.update(db.collection('deposits').doc(id),{status:'approved',approvedAt:FV.serverTimestamp()});
+    tr.update(db.collection('users').doc(uid),{depositBalance:FV.increment(amt)});
+  });
+  Swal.fire({icon:'success',title:'Approved!',timer:1600,background:'#0D1017',color:'#E9EAED',showConfirmButton:false});
+  loadDeposits();updateBadges();
+}
+async function rejectDep(id){
+  const{value:r}=await Swal.fire({title:'Reject Deposit',input:'textarea',inputLabel:'Reason for rejection',inputPlaceholder:'State your reason…',showCancelButton:true,confirmButtonColor:'#F43F5E',background:'#0D1017',color:'#E9EAED'});
+  if(r===undefined)return;
+  await db.collection('deposits').doc(id).update({status:'rejected',rejectReason:r||'Rejected by admin',rejectedAt:FV.serverTimestamp()});
+  Swal.fire({icon:'success',title:'Rejected',timer:1600,background:'#0D1017',color:'#E9EAED',showConfirmButton:false});
+  loadDeposits();updateBadges();
+}
+
+/* ══════════════════════════════════════
+   WITHDRAWALS
+══════════════════════════════════════ */
+async function loadWithdrawals(){
+  try{
+    const f=$('withdrawFilter')?.value||'pending';
+    let q=db.collection('withdrawals');if(f!=='all')q=q.where('status','==',f);
+    const s=await q.get();
+    let docs=s.docs.map(d=>({id:d.id,...d.data()}));
+    docs.sort((a,b)=>{
+      const at=a.requestedAt?.toMillis?.()||a.requestedAt?.seconds*1000||new Date(a.requestedAt).getTime()||0;
+      const bt=b.requestedAt?.toMillis?.()||b.requestedAt?.seconds*1000||new Date(b.requestedAt).getTime()||0;
+      return bt-at;
+    });
+    $('withdrawalsTable').innerHTML=docs.length?docs.map(d=>`
+      <tr>
+        <td><strong>${d.userName||'N/A'}</strong></td>
+        <td><span class="amt neg">${fc2(d.amount)}</span></td>
+        <td style="color:var(--danger)">-${fc2(d.feeAmount||0)}</td>
+        <td><span class="amt pos">${fc2(d.receiveAmount||0)}</span></td>
+        <td>${d.bankName||'<span style="color:var(--text-faint)">—</span>'}</td>
+        <td><span class="mono" style="font-size:10px">${d.accountNumber||'—'}<br><small style="color:var(--text-faint)">${d.accountName||''}</small></span></td>
+        <td>${badge(d.status)}</td>
+        <td><span class="mono">${fmtDT(d.requestedAt||d.createdAt)}</span></td>
+        <td style="white-space:nowrap">${d.status==='pending'?`
+          <button class="btn btn-sm btn-success" onclick="approveWit('${d.id}','${d.userId}')"><i class="fas fa-check"></i></button>
+          <button class="btn btn-sm btn-danger" onclick="rejectWit('${d.id}','${d.userId}',${d.amount})"><i class="fas fa-times"></i></button>`
+          :'<span style="color:var(--text-faint);font-size:11px">—</span>'}
+        </td>
+      </tr>`).join(''):`<tr><td colspan="9"><div class="empty"><i class="fas fa-paper-plane"></i><p>No ${f} withdrawals</p></div></td></tr>`;
+  }catch(e){console.error(e)}
+}
+async function approveWit(id,uid){
+  const r=await Swal.fire({title:'Approve Withdrawal?',text:'Confirm funds have been sent.',icon:'question',showCancelButton:true,confirmButtonColor:'#22C55E',confirmButtonText:'Approved & Sent',background:'#0D1017',color:'#E9EAED'});
+  if(!r.isConfirmed)return;
+  await db.collection('withdrawals').doc(id).update({status:'approved',approvedAt:FV.serverTimestamp()});
+  Swal.fire({icon:'success',title:'Approved!',timer:1600,background:'#0D1017',color:'#E9EAED',showConfirmButton:false});
+  loadWithdrawals();updateBadges();
+}
+async function rejectWit(id,uid,amt){
+  const{value:r}=await Swal.fire({title:'Reject & Refund?',input:'textarea',inputLabel:'Reason',inputPlaceholder:'State reason…',showCancelButton:true,confirmButtonColor:'#F43F5E',background:'#0D1017',color:'#E9EAED'});
+  if(r===undefined)return;
+  await db.runTransaction(async tr=>{
+    tr.update(db.collection('withdrawals').doc(id),{status:'rejected',rejectReason:r||'Rejected by admin',rejectedAt:FV.serverTimestamp()});
+    tr.update(db.collection('users').doc(uid),{withdrawalBalance:FV.increment(amt)});
+  });
+  Swal.fire({icon:'success',title:'Rejected & Refunded!',timer:1600,background:'#0D1017',color:'#E9EAED',showConfirmButton:false});
+  loadWithdrawals();updateBadges();
+}
+
+/* ══════════════════════════════════════
+   INVESTMENTS
+══════════════════════════════════════ */
+async function loadInvestments(){
+  try{
+    const s=await db.collection('investments').get();
+    let docs=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));
+    $('investmentsTable').innerHTML=docs.length?docs.map(d=>{
+      const pct=d.duration?Math.min(100,Math.round(((d.claimedDays||0)/d.duration)*100)):0;
+      return`<tr>
+        <td><strong>${d.userName||d.userId?.slice(0,10)||'N/A'}</strong></td>
+        <td>${d.planName||'—'}</td>
+        <td><span class="amt neu">${fc2(d.capital)}</span></td>
+        <td><span class="amt pos">${fc2(d.dailyROI||0)}</span></td>
+        <td><div class="prog-wrap"><div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div><span class="prog-lbl">${d.claimedDays||0}/${d.duration||0}d</span></div></td>
+        <td>${badge(d.status)}</td>
+        <td><span class="mono">${fmtDate(d.createdAt)}</span></td>
+      </tr>`;
+    }).join(''):`<tr><td colspan="7"><div class="empty"><i class="fas fa-chart-line"></i><p>No investments</p></div></td></tr>`;
+  }catch(e){console.error(e)}
+}
+
+/* ══════════════════════════════════════
+   TRANSACTIONS
+══════════════════════════════════════ */
+async function loadTransactions(){
+  try{
+    const s=await db.collection('transactions').get();
+    let docs=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0)).slice(0,100);
+    $('transactionsTable').innerHTML=docs.length?docs.map(d=>`
+      <tr>
+        <td><span class="mono">${d.userId?.slice(0,14)||'N/A'}</span></td>
+        <td>${badge('active')}&nbsp;<span style="font-size:11px;text-transform:capitalize">${(d.type||'').replace(/_/g,' ')}</span></td>
+        <td><span class="amt neu">${fc2(d.amount)}</span></td>
+        <td><small style="color:var(--text-dim)">${d.description||'—'}</small></td>
+        <td><span class="mono">${fmtDT(d.createdAt)}</span></td>
+      </tr>`).join(''):`<tr><td colspan="5"><div class="empty"><i class="fas fa-receipt"></i><p>No transactions</p></div></td></tr>`;
+  }catch(e){console.error(e)}
+}
+
+/* ══════════════════════════════════════
+   REFERRALS
+══════════════════════════════════════ */
+async function loadReferrals(){
+  try{
+    const s=await db.collection('users').get();
+    let refs=s.docs.map(d=>({id:d.id,...d.data()})).filter(u=>(u.referralCount||0)>0).sort((a,b)=>(b.referralCount||0)-(a.referralCount||0));
+    $('referralsTable').innerHTML=refs.length?refs.map(u=>`
+      <tr>
+        <td><strong>${u.fullName||u.username||'N/A'}</strong></td>
+        <td><span class="mono" style="color:var(--gold)">${u.referralCode||'—'}</span></td>
+        <td>${u.level1Count||0}</td>
+        <td>${u.level2Count||0}</td>
+        <td>${u.level3Count||0}</td>
+        <td><span style="font-weight:700;color:var(--gold)">${u.referralCount||0}</span></td>
+        <td><span class="amt pos">${fc2(u.totalRefEarnings||0)}</span></td>
+        <td><button class="btn btn-sm btn-ghost" onclick="viewTree('${u.id}')"><i class="fas fa-sitemap"></i> Tree</button></td>
+      </tr>`).join(''):`<tr><td colspan="8"><div class="empty"><i class="fas fa-user-plus"></i><p>No referrals</p></div></td></tr>`;
+  }catch(e){console.error(e)}
+}
+
+/* ══════════════════════════════════════
+   REFERRAL TREE
+══════════════════════════════════════ */
+async function viewTree(uid){
+  Swal.fire({title:'Building tree…',allowOutsideClick:false,background:'#0D1017',color:'#E9EAED',didOpen:()=>Swal.showLoading()});
+  const ud=await db.collection('users').doc(uid).get();if(!ud.exists){Swal.close();return}
+  const un=ud.data().fullName||ud.data().username||'User';
+
+  // L1
+  const l1s=await db.collection('users').where('referrerUid','==',uid).get();
+  const l1=l1s.docs.map(d=>({id:d.id,...d.data()}));
+  let l1Inv=0;l1.forEach(u=>l1Inv+=(u.totalInvested||0));
+
+  // L2
+  const l1ids=l1.map(u=>u.id);let l2=[];
+  for(let i=0;i<l1ids.length;i+=10){
+    const chunk=l1ids.slice(i,i+10);if(!chunk.length)break;
+    const s=await db.collection('users').where('referrerUid','in',chunk).get();
+    s.docs.forEach(d=>{if(!l1ids.includes(d.id))l2.push({id:d.id,...d.data()});});
+  }
+  let l2Inv=0;l2.forEach(u=>l2Inv+=(u.totalInvested||0));
+
+  // L3
+  const l2ids=l2.map(u=>u.id);let l3=[];
+  for(let i=0;i<l2ids.length;i+=10){
+    const chunk=l2ids.slice(i,i+10);if(!chunk.length)break;
+    const s=await db.collection('users').where('referrerUid','in',chunk).get();
+    s.docs.forEach(d=>{if(!l1ids.includes(d.id)&&!l2ids.includes(d.id))l3.push({id:d.id,...d.data()});});
+  }
+  let l3Inv=0;l3.forEach(u=>l3Inv+=(u.totalInvested||0));
+
+  Swal.close();
+  $('treeBody').innerHTML=`
+    <div style="background:var(--surface2);padding:16px;border-radius:12px;margin-bottom:16px;text-align:center;border:1px solid rgba(245,200,66,0.15)">
+      <div style="font-size:17px;font-weight:700;color:#fff">${un}</div>
+      <div style="font-size:10px;color:var(--text-faint);margin-top:5px">Team: ${l1.length+l2.length+l3.length} members total</div>
+    </div>
+    <div style="background:rgba(59,139,235,0.07);border:1px solid rgba(59,139,235,0.18);padding:14px;border-radius:10px;margin-bottom:10px">
+      <div style="font-weight:700;color:#3B8BEB;margin-bottom:8px;font-size:12px">🔵 Level 1 (10%) — ${l1.length} members · Invested: ${fc2(l1Inv)}</div>
+      ${l1.length?l1.map(u=>`<div style="font-size:11px;padding:4px 0 4px 8px;color:var(--text-dim);border-left:2px solid rgba(59,139,235,0.3);margin-left:4px;margin-bottom:2px">• ${u.fullName||u.username||'User'} <span style="color:#3B8BEB;font-family:JetBrains Mono,monospace">${fc2(u.totalInvested||0)}</span></div>`).join(''):'<div style="font-size:11px;color:var(--text-faint);margin-left:8px">No members</div>'}
+    </div>
+    <div style="background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.16);padding:14px;border-radius:10px;margin-bottom:10px">
+      <div style="font-weight:700;color:#22C55E;margin-bottom:8px;font-size:12px">🟢 Level 2 (3%) — ${l2.length} members · Invested: ${fc2(l2Inv)}</div>
+      ${l2.length?l2.map(u=>`<div style="font-size:11px;padding:4px 0 4px 8px;color:var(--text-dim);border-left:2px solid rgba(34,197,94,0.3);margin-left:4px;margin-bottom:2px">• ${u.fullName||u.username||'User'} <span style="color:#22C55E;font-family:JetBrains Mono,monospace">${fc2(u.totalInvested||0)}</span></div>`).join(''):'<div style="font-size:11px;color:var(--text-faint);margin-left:8px">No members</div>'}
+    </div>
+    <div style="background:rgba(167,139,250,0.07);border:1px solid rgba(167,139,250,0.18);padding:14px;border-radius:10px">
+      <div style="font-weight:700;color:#A78BFA;margin-bottom:8px;font-size:12px">🟣 Level 3 (1%) — ${l3.length} members · Invested: ${fc2(l3Inv)}</div>
+      ${l3.length?l3.map(u=>`<div style="font-size:11px;padding:4px 0 4px 8px;color:var(--text-dim);border-left:2px solid rgba(167,139,250,0.3);margin-left:4px;margin-bottom:2px">• ${u.fullName||u.username||'User'} <span style="color:#A78BFA;font-family:JetBrains Mono,monospace">${fc2(u.totalInvested||0)}</span></div>`).join(''):'<div style="font-size:11px;color:var(--text-faint);margin-left:8px">No members</div>'}
+    </div>`;
+  openM('treeModal');
+}
+
+/* ══════════════════════════════════════
+   ADMINS
+══════════════════════════════════════ */
+async function loadAdmins(){
+  try{
+    const s=await db.collection('users').where('isAdmin','==',true).get();
+    $('adminsTable').innerHTML=s.docs.map(d=>{
+      const u=d.data();
+      return`<tr>
+        <td><strong>${u.fullName||u.username||'N/A'}</strong></td>
+        <td><span class="mono">${u.email||'—'}</span></td>
+        <td>${badge('active')}</td>
+        <td>${d.id!==admin?.uid
+          ?`<button class="btn btn-sm btn-danger" onclick="removeAdmin('${d.id}')"><i class="fas fa-user-minus"></i> Remove</button>`
+          :`<span style="color:var(--gold);font-weight:700;font-size:12px"><i class="fas fa-crown"></i> You</span>`}
+        </td>
+      </tr>`;
+    }).join('')||`<tr><td colspan="4"><div class="empty"><i class="fas fa-shield-halved"></i><p>No admins</p></div></td></tr>`;
+  }catch(e){console.error(e)}
+}
+async function addAdmin(){
+  const e=$('adminEmail').value.trim();
+  if(!e)return Swal.fire({icon:'warning',title:'Enter an email',background:'#0D1017',color:'#E9EAED'});
+  const s=await db.collection('users').where('email','==',e).limit(1).get();
+  if(s.empty)return Swal.fire({icon:'error',title:'User not found',text:'No account with that email.',background:'#0D1017',color:'#E9EAED'});
+  await db.collection('users').doc(s.docs[0].id).update({isAdmin:true,adminRole:'admin'});
+  Swal.fire({icon:'success',title:'Admin Added!',timer:1600,background:'#0D1017',color:'#E9EAED',showConfirmButton:false});
+  closeM('addAdminModal');loadAdmins();
+}
+async function removeAdmin(uid){
+  if(uid===admin?.uid)return Swal.fire({icon:'error',title:'Cannot remove yourself',background:'#0D1017',color:'#E9EAED'});
+  const r=await Swal.fire({title:'Remove Admin?',icon:'warning',showCancelButton:true,confirmButtonColor:'#F43F5E',confirmButtonText:'Remove',background:'#0D1017',color:'#E9EAED'});
+  if(!r.isConfirmed)return;
+  await db.collection('users').doc(uid).update({isAdmin:false,adminRole:FV.delete()});
+  Swal.fire({icon:'success',title:'Removed',timer:1600,background:'#0D1017',color:'#E9EAED',showConfirmButton:false});
+  loadAdmins();
+}
+
+/* ══════════════════════════════════════
+   AUDIT LOGS
+══════════════════════════════════════ */
+async function loadAudit(){
+  try{
+    const s=await db.collection('admin_actions').get();
+    let logs=s.docs.map(d=>d.data()).sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0)).slice(0,100);
+    $('auditTable').innerHTML=logs.length?logs.map(l=>`
+      <tr>
+        <td><strong>${l.adminName||'N/A'}</strong></td>
+        <td>${badge('active')}&nbsp;<span style="font-size:11px;text-transform:capitalize">${(l.action||'').replace(/_/g,' ')}</span></td>
+        <td><span class="mono">${l.targetUserId?.slice(0,14)||'—'}</span></td>
+        <td><small style="color:var(--text-dim)">${JSON.stringify(l.details||{}).slice(0,60)}</small></td>
+        <td><span class="mono">${fmtDT(l.createdAt)}</span></td>
+      </tr>`).join(''):`<tr><td colspan="5"><div class="empty"><i class="fas fa-history"></i><p>No audit logs</p></div></td></tr>`;
+  }catch(e){
+    $('auditTable').innerHTML=`<tr><td colspan="5"><div class="empty"><i class="fas fa-database"></i><p>Firestore index required for admin_actions</p></div></td></tr>`;
+  }
+}
+
+/* ══════════════════════════════════════
+   BADGES + MISC
+══════════════════════════════════════ */
+async function updateBadges(){
+  try{
+    const[dp,wp]=await Promise.all([
+      db.collection('deposits').where('status','==','pending').get(),
+      db.collection('withdrawals').where('status','==','pending').get()
+    ]);
+    $('pendingDepBadge').textContent=dp.size;
+    $('pendingWitBadge').textContent=wp.size;
+  }catch(e){}
+}
+setInterval(updateBadges,60000);
+
+function openM(id){$(id).classList.add('active')}
+function closeM(id){$(id).classList.remove('active')}
+function showAddAdmin(){$('adminEmail').value='';openM('addAdminModal')}
+async function adminLogout(){
+  const r=await Swal.fire({title:'Sign Out?',text:'You will be redirected to login.',icon:'question',showCancelButton:true,confirmButtonColor:'#F43F5E',confirmButtonText:'Sign Out',background:'#0D1017',color:'#E9EAED'});
+  if(r.isConfirmed){auth.signOut();window.location.href='login.html';}
+}
+
+document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('active')}));
+
+/* Global exports */
+Object.assign(window,{toggleSidebar,refreshPage,loadUsers,loadDeposits,loadWithdrawals,loadInvestments,loadTransactions,loadReferrals,loadAdmins,loadAudit,viewUser,showAdj,showSus,showBan,resetPW,resetPIN,execAction,approveDep,rejectDep,approveWit,rejectWit,viewTree,addAdmin,removeAdmin,showAddAdmin,closeM,adminLogout});
+
+console.log('%c⚡ Kinetic Wealth Admin v2.0 — Ready','color:#F5C842;font-weight:bold;font-size:13px');
+</script>
+</body>
+</html>
