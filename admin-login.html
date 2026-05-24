@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover"/>
+<title>Kinetic Wealth · Admin Portal</title>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   ADMIN THEME — DARK PROFESSIONAL WITH BLUE ACCENT
+═══════════════════════════════════════════════════════════════════ */
+:root {
+  --bg-primary:   #0F172A;
+  --bg-card:      #1E293B;
+  --bg-input:     #151D2A;
+  --border:       #334155;
+  --text-primary: #F1F5F9;
+  --text-muted:   #94A3B8;
+  --accent:       #0052CC;
+  --accent-light: #3B82F6;
+  --accent-glow:  rgba(0, 82, 204, 0.3);
+  --danger:       #EF4444;
+  --danger-light: rgba(239, 68, 68, 0.1);
+  --success:      #10B981;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+body {
+  background: var(--bg-primary);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Background Glow */
+.bg-glow {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.glow-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.15;
+}
+
+.glow-orb.orb1 {
+  width: 400px; height: 400px;
+  background: var(--accent);
+  top: -100px; right: -100px;
+}
+
+.glow-orb.orb2 {
+  width: 300px; height: 300px;
+  background: #7C3AED;
+  bottom: -80px; left: -80px;
+}
+
+/* Login Container */
+.login-container {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 420px;
+  animation: fadeSlideIn 0.5s ease;
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Logo */
+.logo-section {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.logo-icon {
+  width: 64px; height: 64px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-light));
+  border-radius: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+  box-shadow: 0 8px 25px var(--accent-glow);
+}
+
+.logo-icon i {
+  font-size: 28px;
+  color: #fff;
+}
+
+.logo-name {
+  font-size: 26px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.5px;
+  margin-bottom: 4px;
+}
+
+.logo-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Admin Badge */
+.admin-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 82, 204, 0.12);
+  border: 1px solid rgba(0, 82, 204, 0.25);
+  border-radius: 30px;
+  padding: 5px 14px;
+  margin-top: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent-light);
+}
+
+/* Login Card */
+.login-card {
+  background: var(--bg-card);
+  border-radius: 24px;
+  padding: 32px 26px;
+  border: 1px solid var(--border);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* Error Alert */
+.error-alert {
+  background: var(--danger-light);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 18px;
+  display: none;
+  align-items: center;
+  gap: 10px;
+}
+
+.error-alert.show {
+  display: flex;
+  animation: shakeX 0.4s ease;
+}
+
+@keyframes shakeX {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-5px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+
+.error-alert i {
+  color: var(--danger);
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.error-alert span {
+  font-size: 12px;
+  color: var(--danger);
+  font-weight: 500;
+}
+
+/* Input Group */
+.input-group {
+  margin-bottom: 18px;
+}
+
+.input-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.input-label i {
+  font-size: 11px;
+  color: var(--accent-light);
+}
+
+.input-field {
+  width: 100%;
+  padding: 14px 16px;
+  background: var(--bg-input);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  font-size: 14px;
+  color: var(--text-primary);
+  outline: none;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.input-field:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0, 82, 204, 0.12);
+}
+
+.input-field::placeholder {
+  color: #4B5563;
+}
+
+/* Password Wrapper */
+.pw-wrap {
+  position: relative;
+}
+
+.pw-wrap .input-field {
+  padding-right: 46px;
+}
+
+.toggle-btn {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #6B7280;
+  cursor: pointer;
+  font-size: 15px;
+  padding: 4px;
+  transition: color 0.2s;
+}
+
+.toggle-btn:hover { color: var(--accent-light); }
+
+/* Login Button */
+.login-btn {
+  width: 100%;
+  padding: 15px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-light));
+  border: none;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 22px;
+  font-family: inherit;
+  transition: all 0.2s;
+  box-shadow: 0 4px 15px var(--accent-glow);
+}
+
+.login-btn:active { transform: scale(0.97); }
+
+.login-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Security Note */
+.security-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 18px;
+  font-size: 11px;
+  color: #4B5563;
+  font-weight: 500;
+}
+
+.security-note i {
+  font-size: 10px;
+  color: var(--accent-light);
+}
+
+/* Back Link */
+.back-link {
+  text-align: center;
+  margin-top: 24px;
+}
+
+.back-link a {
+  color: #6B7280;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.2s;
+}
+
+.back-link a:hover { color: var(--accent-light); }
+</style>
+</head>
+<body>
+
+<!-- Background -->
+<div class="bg-glow">
+  <div class="glow-orb orb1"></div>
+  <div class="glow-orb orb2"></div>
+</div>
+
+<!-- Login Container -->
+<div class="login-container">
+  
+  <!-- Logo -->
+  <div class="logo-section">
+    <div class="logo-icon"><i class="fas fa-crown"></i></div>
+    <div class="logo-name">Kinetic Wealth</div>
+    <div class="logo-sub">Administrator Portal</div>
+    <div class="admin-badge">
+      <i class="fas fa-shield-halved"></i> Restricted Access
+    </div>
+  </div>
+
+  <!-- Login Card -->
+  <div class="login-card">
+    
+    <!-- Error Alert -->
+    <div class="error-alert" id="errorAlert">
+      <i class="fas fa-exclamation-circle"></i>
+      <span id="errorText">Invalid credentials</span>
+    </div>
+
+    <!-- Email -->
+    <div class="input-group">
+      <label class="input-label"><i class="fas fa-envelope"></i> Admin Email</label>
+      <input type="email" class="input-field" id="emailInput" 
+             placeholder="admin@kineticwealth.com" 
+             autocomplete="email"
+             oninput="hideError()">
+    </div>
+
+    <!-- Password -->
+    <div class="input-group">
+      <label class="input-label"><i class="fas fa-lock"></i> Password</label>
+      <div class="pw-wrap">
+        <input type="password" class="input-field" id="passwordInput" 
+               placeholder="Enter your password" 
+               autocomplete="current-password"
+               oninput="hideError()">
+        <button type="button" class="toggle-btn" onclick="togglePassword()">
+          <i class="fas fa-eye" id="toggleIcon"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Login Button -->
+    <button class="login-btn" id="loginBtn" onclick="handleAdminLogin()">
+      <i class="fas fa-arrow-right-to-bracket"></i>
+      <span>Access Admin Panel</span>
+    </button>
+
+    <!-- Security -->
+    <div class="security-note">
+      <i class="fas fa-lock"></i>
+      <span>Encrypted connection · 256-bit SSL</span>
+    </div>
+  </div>
+
+  <!-- Back -->
+  <div class="back-link">
+    <a href="login.html"><i class="fas fa-arrow-left"></i> Back to User Login</a>
+  </div>
+
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   FIREBASE CONFIG
+═══════════════════════════════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "AIzaSyBl6HEVa9mUuROvnohMKzeEzzc0aTREU54",
+  authDomain: "kinetic-dc8e6.firebaseapp.com",
+  projectId: "kinetic-dc8e6",
+  storageBucket: "kinetic-dc8e6.firebasestorage.app",
+  messagingSenderId: "980527555815",
+  appId: "1:980527555815:web:131ccee594e0c8f122ee42"
+};
+
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+/* ═══════════════════════════════════════════════════════════════════
+   GLOBALS
+═══════════════════════════════════════════════════════════════════ */
+let authReady = false;
+let isLoggingIn = false;
+const REDIRECT_URL = 'admin.html';
+const BTN_ORIGINAL = '<i class="fas fa-arrow-right-to-bracket"></i><span>Access Admin Panel</span>';
+
+/* ═══════════════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════════════ */
+function togglePassword() {
+  const input = document.getElementById('passwordInput');
+  const icon = document.getElementById('toggleIcon');
+  if (!input || !icon) return;
+  
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.className = 'fas fa-eye-slash';
+  } else {
+    input.type = 'password';
+    icon.className = 'fas fa-eye';
+  }
+}
+
+function showError(message) {
+  const alert = document.getElementById('errorAlert');
+  const text = document.getElementById('errorText');
+  if (alert && text) {
+    text.textContent = message;
+    alert.classList.add('show');
+    // Re-trigger animation
+    alert.style.animation = 'none';
+    alert.offsetHeight;
+    alert.style.animation = 'shakeX 0.4s ease';
+  }
+}
+
+function hideError() {
+  const alert = document.getElementById('errorAlert');
+  if (alert) alert.classList.remove('show');
+}
+
+function disableButton(btn, text) {
+  btn.disabled = true;
+  btn.innerHTML = text;
+}
+
+function resetButton(btn) {
+  btn.disabled = false;
+  btn.innerHTML = BTN_ORIGINAL;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   AUTH STATE LISTENER — PREVENT REDIRECT LOOPS
+═══════════════════════════════════════════════════════════════════ */
+auth.onAuthStateChanged(async (user) => {
+  if (!authReady) {
+    authReady = true;
+    
+    // If already logged in, check if admin
+    if (user) {
+      try {
+        const userDoc = await db.collection('users').doc(user.uid).get();
+        if (userDoc.exists && userDoc.data().isAdmin) {
+          window.location.replace(REDIRECT_URL);
+          return;
+        }
+      } catch (e) {
+        // Stay on login page
+        console.warn('Admin check failed, staying on login');
+      }
+    }
+    return;
+  }
+  
+  // Subsequent auth changes — only redirect if new admin login detected
+  if (user && isLoggingIn) {
+    // Let the login function handle this
+    return;
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════════════
+   ADMIN LOGIN
+═══════════════════════════════════════════════════════════════════ */
+async function handleAdminLogin() {
+  if (isLoggingIn) return; // Prevent double submission
+  
+  const email = document.getElementById('emailInput')?.value.trim().toLowerCase() || '';
+  const password = document.getElementById('passwordInput')?.value || '';
+  const btn = document.getElementById('loginBtn');
+  
+  // Validate
+  if (!email) {
+    showError('Please enter your admin email address');
+    return;
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    showError('Please enter a valid email address');
+    return;
+  }
+  if (!password) {
+    showError('Please enter your password');
+    return;
+  }
+  if (password.length < 6) {
+    showError('Password must be at least 6 characters');
+    return;
+  }
+  
+  isLoggingIn = true;
+  disableButton(btn, '<i class="fas fa-spinner fa-spin"></i><span>Authenticating...</span>');
+  hideError();
+  
+  try {
+    // Sign in
+    const userCred = await auth.signInWithEmailAndPassword(email, password);
+    const user = userCred.user;
+    
+    // Check admin status in Firestore
+    const userDoc = await db.collection('users').doc(user.uid).get();
+    
+    if (!userDoc.exists) {
+      await auth.signOut();
+      showError('This account does not exist in the system');
+      isLoggingIn = false;
+      resetButton(btn);
+      return;
+    }
+    
+    const userData = userDoc.data();
+    
+    if (!userData.isAdmin) {
+      await auth.signOut();
+      
+      Swal.fire({
+        icon: 'error',
+        title: 'Access Denied',
+        html: `
+          <p>You do not have administrator privileges.</p>
+          <p style="font-size:12px;color:#94A3B8;margin-top:6px;">
+            This area is restricted to authorized personnel only.
+          </p>
+        `,
+        confirmButtonColor: '#0052CC'
+      });
+      
+      isLoggingIn = false;
+      resetButton(btn);
+      return;
+    }
+    
+    // Success — show welcome
+    const adminName = userData.fullName || userData.username || 'Administrator';
+    
+    await Swal.fire({
+      icon: 'success',
+      title: 'Welcome, Admin!',
+      text: `Signed in as ${adminName}`,
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 1500
+    });
+    
+    // Update last login
+    db.collection('users').doc(user.uid).update({
+      lastLogin: new Date().toISOString()
+    }).catch(() => {});
+    
+    // Redirect
+    window.location.replace(REDIRECT_URL);
+    
+  } catch (err) {
+    console.error('Admin login error:', err.code);
+    
+    let msg = 'Login failed. Please try again.';
+    
+    switch (err.code) {
+      case 'auth/user-not-found':
+        msg = 'No account found with this email address';
+        break;
+      case 'auth/wrong-password':
+        msg = 'Incorrect password. Please try again.';
+        break;
+      case 'auth/invalid-email':
+        msg = 'The email address is not valid';
+        break;
+      case 'auth/invalid-credential':
+        msg = 'Invalid email or password. Please check and try again.';
+        break;
+      case 'auth/too-many-requests':
+        msg = 'Too many failed attempts. Please wait and try again later.';
+        break;
+      case 'auth/network-request-failed':
+        msg = 'Network error. Please check your internet connection.';
+        break;
+      case 'auth/user-disabled':
+        msg = 'This account has been disabled. Contact the system administrator.';
+        break;
+    }
+    
+    showError(msg);
+    isLoggingIn = false;
+    resetButton(btn);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ENTER KEY
+═══════════════════════════════════════════════════════════════════ */
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !isLoggingIn && authReady) {
+    e.preventDefault();
+    handleAdminLogin();
+  }
+});
+
+// Expose
+window.togglePassword = togglePassword;
+window.handleAdminLogin = handleAdminLogin;
+window.hideError = hideError;
+</script>
+
+</body>
+</html>
