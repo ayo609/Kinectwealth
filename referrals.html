@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover"/>
+<title>Kinetic Wealth · Referrals</title>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   BLUE & WHITE THEME — MATCHES SIGNUP PAGE
+═══════════════════════════════════════════════════════════════════ */
+:root {
+  --primary:       #0052CC;
+  --primary-dark:  #003D99;
+  --primary-light: #E5EFFF;
+  --bg-main:       #F4F7FB;
+  --card-bg:       #FFFFFF;
+  --card-bg-inner: #F8FAFC;
+  --text-primary:  #0F172A;
+  --text-muted:    #64748B;
+  --border-light:  #E2E8F0;
+  --success:       #059669;
+  --success-light: #D1FAE5;
+  --danger:        #DC2626;
+  --danger-light:  #FEE2E2;
+  --warning:       #D97706;
+  --warning-light: #FEF3C7;
+  --accent:        #3B82F6;
+  --level-1-color: #0052CC;
+  --level-2-color: #06B6D4;
+  --level-3-color: #7C3AED;
+}
+
+[data-theme="dark"] {
+  --primary:       #3B82F6;
+  --primary-dark:  #60A5FA;
+  --primary-light: #1E3A8A;
+  --bg-main:       #0F172A;
+  --card-bg:       #1E293B;
+  --card-bg-inner: #151D2A;
+  --text-primary:  #F8FAFC;
+  --text-muted:    #94A3B8;
+  --border-light:  #334155;
+  --success:       #10B981;
+  --success-light: #064E3B;
+  --danger:        #EF4444;
+  --danger-light:  #7F1D1D;
+  --warning:       #F59E0B;
+  --warning-light: #78350F;
+  --level-1-color: #3B82F6;
+  --level-2-color: #06B6D4;
+  --level-3-color: #A78BFA;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+body {
+  background: var(--bg-main);
+  color: var(--text-primary);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: 100px;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* ========== HEADER ========== */
+.app-header {
+  background: var(--primary);
+  padding: 16px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 82, 204, 0.15);
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 500px;
+  margin: 0 auto 14px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.back-btn {
+  width: 38px; height: 38px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #fff;
+  font-size: 15px;
+  text-decoration: none;
+  border: none;
+  transition: background 0.2s;
+}
+
+.back-btn:active { background: rgba(255,255,255,0.35); }
+
+.header-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.icon-btn {
+  width: 38px; height: 38px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #fff;
+  font-size: 15px;
+  border: none;
+  transition: background 0.2s;
+}
+
+.icon-btn:active { background: rgba(255,255,255,0.35); }
+
+/* Stats Pills */
+.stats-pills {
+  display: flex;
+  gap: 10px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.stat-pill {
+  background: rgba(255,255,255,0.15);
+  border-radius: 20px;
+  padding: 6px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #fff;
+  font-weight: 500;
+}
+
+.stat-pill i { opacity: 0.8; }
+
+/* ========== MAIN ========== */
+.main-container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 16px 16px 100px;
+}
+
+/* Referral Link Card */
+.ref-card {
+  background: var(--card-bg);
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 18px;
+  border: 1px solid var(--border-light);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+}
+
+.ref-card-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.ref-link-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.ref-link-input {
+  flex: 1;
+  background: var(--card-bg-inner);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 13px 14px;
+  font-size: 12px;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: 'Inter', monospace;
+}
+
+.copy-btn {
+  background: var(--primary);
+  border: none;
+  border-radius: 12px;
+  padding: 0 18px;
+  color: #fff;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.copy-btn:active { background: var(--primary-dark); }
+
+.share-btns {
+  display: flex;
+  gap: 10px;
+}
+
+.share-btn {
+  flex: 1;
+  background: var(--card-bg-inner);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.share-btn:active { background: var(--primary-light); color: var(--primary); }
+
+/* Earnings Banner */
+.earnings-banner {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  border-radius: 18px;
+  padding: 18px 20px;
+  margin-bottom: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(0, 82, 204, 0.20);
+}
+
+.earnings-text {
+  font-size: 12px;
+  opacity: 0.85;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.earnings-amount {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.earnings-icon {
+  font-size: 36px;
+  opacity: 0.3;
+}
+
+/* Level Tabs */
+.level-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.level-tab {
+  flex: 1;
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 14px 10px;
+  text-align: center;
+  border: 2px solid var(--border-light);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.level-tab.active {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+
+.level-tab.l1.active { border-color: var(--level-1-color); }
+.level-tab.l2.active { border-color: var(--level-2-color); }
+.level-tab.l3.active { border-color: var(--level-3-color); }
+
+.level-tag {
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.level-tab.l1 .level-tag { color: var(--level-1-color); }
+.level-tab.l2 .level-tag { color: var(--level-2-color); }
+.level-tab.l3 .level-tag { color: var(--level-3-color); }
+
+.level-pct {
+  font-size: 13px;
+  font-weight: 700;
+  margin: 4px 0;
+}
+
+.level-num {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.level-lbl {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.stat-block {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 14px;
+  text-align: center;
+  border: 1px solid var(--border-light);
+}
+
+.stat-block.wide {
+  grid-column: span 2;
+}
+
+.stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 3px;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Team List */
+.team-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.team-title {
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.team-count {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+  background: var(--card-bg-inner);
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+/* Search */
+.search-box {
+  background: var(--card-bg);
+  border: 1px solid var(--border-light);
+  border-radius: 14px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.search-box i {
+  color: var(--text-muted);
+}
+
+.search-box input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.search-box input::placeholder {
+  color: #94A3B8;
+}
+
+/* Member List */
+.member-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.member-card {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--border-light);
+  transition: all 0.2s;
+}
+
+.member-avatar {
+  width: 46px; height: 46px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 17px;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.avatar-l1 { background: var(--level-1-color); }
+.avatar-l2 { background: var(--level-2-color); }
+.avatar-l3 { background: var(--level-3-color); }
+
+.member-info { flex: 1; min-width: 0; }
+
+.member-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.plan-tag {
+  font-size: 9px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: var(--success-light);
+  color: var(--success);
+  font-weight: 600;
+}
+
+.plan-tag.inactive {
+  background: var(--border-light);
+  color: var(--text-muted);
+}
+
+.member-email {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.member-meta {
+  font-size: 10px;
+  color: var(--text-muted);
+  display: flex;
+  gap: 10px;
+}
+
+.member-stats {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.member-invest {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.member-bonus {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--success);
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  background: var(--card-bg);
+  border-radius: 18px;
+  border: 2px dashed var(--border-light);
+}
+
+.empty-icon {
+  font-size: 44px;
+  margin-bottom: 10px;
+  opacity: 0.4;
+}
+
+.empty-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.empty-text {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Bottom Tab Bar */
+.tab-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--card-bg); border-top: 1px solid var(--border-light);
+  display: flex; justify-content: space-around; padding: 10px 16px 22px;
+  max-width: 500px; margin: 0 auto; z-index: 100;
+}
+
+.tab-item {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  text-decoration: none; font-size: 10px; font-weight: 600; color: var(--text-muted);
+  transition: color 0.2s;
+}
+
+.tab-item i { font-size: 20px; }
+.tab-item.active { color: var(--primary); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="app-header">
+  <div class="header-row">
+    <div class="header-left">
+      <a href="home.html" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+      <div class="header-title">Referrals</div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" onclick="refreshData()" title="Refresh"><i class="fas fa-sync-alt"></i></button>
+      <button class="icon-btn" onclick="toggleTheme()" id="themeToggleBtn"><i class="fas fa-moon"></i></button>
+    </div>
+  </div>
+  <div class="stats-pills">
+    <div class="stat-pill"><i class="fas fa-users"></i> <span id="headerTeamCount">—</span></div>
+    <div class="stat-pill"><i class="fas fa-coins"></i> <span id="headerEarnings">—</span></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main-container">
+
+  <!-- Referral Link Card -->
+  <div class="ref-card">
+    <div class="ref-card-title"><i class="fas fa-link"></i> Your Referral Link</div>
+    <div class="ref-link-row">
+      <div class="ref-link-input" id="refLinkDisplay">Loading...</div>
+      <button class="copy-btn" onclick="copyLink()"><i class="fas fa-copy"></i> Copy</button>
+    </div>
+    <div class="share-btns">
+      <button class="share-btn" onclick="shareTo('whatsapp')"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+      <button class="share-btn" onclick="shareTo('telegram')"><i class="fab fa-telegram"></i> Telegram</button>
+      <button class="share-btn" onclick="shareTo('more')"><i class="fas fa-share-alt"></i> Share</button>
+    </div>
+  </div>
+
+  <!-- Earnings Banner -->
+  <div class="earnings-banner">
+    <div>
+      <div class="earnings-text">Total Referral Earnings</div>
+      <div class="earnings-amount" id="totalEarningsDisplay">₦0</div>
+    </div>
+    <div class="earnings-icon"><i class="fas fa-gift"></i></div>
+  </div>
+
+  <!-- Level Tabs -->
+  <div class="level-tabs">
+    <div class="level-tab l1 active" onclick="selectLevel('A')" id="levelATab">
+      <div class="level-tag">L1</div>
+      <div class="level-pct">10%</div>
+      <div class="level-num" id="levelACount">0</div>
+      <div class="level-lbl">Level 1</div>
+    </div>
+    <div class="level-tab l2" onclick="selectLevel('B')" id="levelBTab">
+      <div class="level-tag">L2</div>
+      <div class="level-pct">3%</div>
+      <div class="level-num" id="levelBCount">0</div>
+      <div class="level-lbl">Level 2</div>
+    </div>
+    <div class="level-tab l3" onclick="selectLevel('C')" id="levelCTab">
+      <div class="level-tag">L3</div>
+      <div class="level-pct">1%</div>
+      <div class="level-num" id="levelCCount">0</div>
+      <div class="level-lbl">Level 3</div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-block">
+      <div class="stat-value" id="teamMembersCount">—</div>
+      <div class="stat-label">Total Members</div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-value" id="activeInvestorsCount">—</div>
+      <div class="stat-label">Active Investors</div>
+    </div>
+    <div class="stat-block wide">
+      <div class="stat-value" id="teamInvestedAmount">—</div>
+      <div class="stat-label">Team Total Investment</div>
+    </div>
+  </div>
+
+  <!-- Team List -->
+  <div class="team-header">
+    <div class="team-title"><i class="fas fa-list-ul" style="color:var(--primary);"></i> Team Members</div>
+    <div class="team-count" id="teamListCount">0</div>
+  </div>
+
+  <!-- Search -->
+  <div class="search-box">
+    <i class="fas fa-search"></i>
+    <input type="text" id="searchInput" placeholder="Search by name or email..." oninput="renderTeamList()">
+  </div>
+
+  <!-- Member List -->
+  <div class="member-list" id="memberList">
+    <div class="empty-state">
+      <div class="empty-icon"><i class="fas fa-spinner fa-spin" style="color:var(--primary);"></i></div>
+      <div class="empty-title">Loading team data...</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Bottom Tab Bar -->
+<div class="tab-bar">
+  <a href="home.html" class="tab-item"><i class="fas fa-home"></i><span>Home</span></a>
+  <a href="plans.html" class="tab-item"><i class="fas fa-bolt"></i><span>Invest</span></a>
+  <a href="withdraw.html" class="tab-item"><i class="fas fa-money-bill-transfer"></i><span>Withdraw</span></a>
+  <a href="referrals.html" class="tab-item active"><i class="fas fa-users"></i><span>Team</span></a>
+  <a href="dashboard.html" class="tab-item"><i class="fas fa-user"></i><span>Profile</span></a>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   FIREBASE CONFIG
+═══════════════════════════════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "AIzaSyBl6HEVa9mUuROvnohMKzeEzzc0aTREU54",
+  authDomain: "kinetic-dc8e6.firebaseapp.com",
+  projectId: "kinetic-dc8e6",
+  storageBucket: "kinetic-dc8e6.firebasestorage.app",
+  messagingSenderId: "980527555815",
+  appId: "1:980527555815:web:131ccee594e0c8f122ee42"
+};
+
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+/* ═══════════════════════════════════════════════════════════════════
+   GLOBALS
+═══════════════════════════════════════════════════════════════════ */
+const LEVEL_RATES = { A: 10, B: 3, C: 1 };
+let currentUser = null;
+let authReady = false;
+let myReferralCode = '';
+let myReferralLink = '';
+let allMembers = [];
+let currentLevel = 'A';
+
+/* ═══════════════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════════════ */
+const fmtNum = (n) => (Number(n) || 0).toLocaleString('en-NG');
+const fmtCur = (n) => '₦' + fmtNum;
+
+function setText(id, text) { const el = document.getElementById(id); if (el) el.textContent = text; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   THEME
+═══════════════════════════════════════════════════════════════════ */
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  const newTheme = isDark ? 'light' : 'dark';
+  html.setAttribute('data-theme', newTheme);
+  localStorage.setItem('kw-theme', newTheme);
+  const icon = document.querySelector('#themeToggleBtn i');
+  if (icon) icon.className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+}
+
+(function() {
+  const saved = localStorage.getItem('kw-theme') || 'light';
+  document.documentElement.setAttribute('data-theme', saved);
+  document.addEventListener('DOMContentLoaded', () => {
+    const icon = document.querySelector('#themeToggleBtn i');
+    if (icon) icon.className = saved === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════════════════
+   AUTH
+═══════════════════════════════════════════════════════════════════ */
+auth.onAuthStateChanged(async (user) => {
+  if (!user) {
+    window.location.replace('login.html');
+    return;
+  }
+  currentUser = user;
+  authReady = true;
+  
+  try {
+    const userDoc = await db.collection('users').doc(currentUser.uid).get();
+    if (!userDoc.exists) {
+      window.location.replace('login.html');
+      return;
+    }
+    
+    const userData = userDoc.data();
+    myReferralCode = userData.referralCode || ('KW' + currentUser.uid.slice(0, 8).toUpperCase());
+    myReferralLink = `${window.location.origin}/signup.html?ref=${myReferralCode}`;
+    setText('refLinkDisplay', myReferralLink);
+    
+    // Ensure referral code exists in Firestore
+    if (!userData.referralCode) {
+      await db.collection('users').doc(currentUser.uid).update({ 
+        referralCode: myReferralCode 
+      }).catch(() => {});
+    }
+    
+    await loadTeamData();
+  } catch (e) {
+    console.error('Init error:', e);
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════════════
+   LOAD TEAM DATA — OPTIMIZED
+═══════════════════════════════════════════════════════════════════ */
+async function loadTeamData() {
+  try {
+    // 🔥 Query only users who have currentUser as referrer (Level 1)
+    const l1Snap = await db.collection('users')
+      .where('referrerUid', '==', currentUser.uid)
+      .get();
+    
+    const l1Users = l1Snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+    const l1Uids = new Set(l1Users.map(u => u.uid));
+    
+    // 🔥 Query Level 2 — users whose referrer is in L1
+    let l2Users = [];
+    if (l1Uids.size > 0) {
+      // Batch query for each L1 uid (Firestore supports up to 10 'in' clauses)
+      const l1Array = Array.from(l1Uids);
+      for (let i = 0; i < l1Array.length; i += 10) {
+        const batch = l1Array.slice(i, i + 10);
+        const l2Snap = await db.collection('users')
+          .where('referrerUid', 'in', batch)
+          .get();
+        l2Snap.docs.forEach(d => {
+          if (!l1Uids.has(d.id)) l2Users.push({ uid: d.id, ...d.data() });
+        });
+      }
+    }
+    const l2Uids = new Set(l2Users.map(u => u.uid));
+    
+    // 🔥 Query Level 3 — users whose referrer is in L2
+    let l3Users = [];
+    if (l2Uids.size > 0) {
+      const l2Array = Array.from(l2Uids);
+      for (let i = 0; i < l2Array.length; i += 10) {
+        const batch = l2Array.slice(i, i + 10);
+        const l3Snap = await db.collection('users')
+          .where('referrerUid', 'in', batch)
+          .get();
+        l3Snap.docs.forEach(d => {
+          if (!l1Uids.has(d.id) && !l2Uids.has(d.id)) l3Users.push({ uid: d.id, ...d.data() });
+        });
+      }
+    }
+    
+    // Enrich all members
+    allMembers = [];
+    
+    for (const u of l1Users) {
+      allMembers.push(await enrichMember(u, 'A'));
+    }
+    for (const u of l2Users) {
+      allMembers.push(await enrichMember(u, 'B'));
+    }
+    for (const u of l3Users) {
+      allMembers.push(await enrichMember(u, 'C'));
+    }
+    
+    // Calculate totals
+    const l1Count = allMembers.filter(m => m.level === 'A').length;
+    const l2Count = allMembers.filter(m => m.level === 'B').length;
+    const l3Count = allMembers.filter(m => m.level === 'C').length;
+    const totalEarnings = allMembers.reduce((s, m) => s + m.bonus, 0);
+    const activeCount = allMembers.filter(m => m.isActive).length;
+    const totalInvested = allMembers.reduce((s, m) => s + m.invested, 0);
+    
+    // Update UI
+    setText('levelACount', l1Count);
+    setText('levelBCount', l2Count);
+    setText('levelCCount', l3Count);
+    setText('headerTeamCount', allMembers.length);
+    setText('headerEarnings', fmtCur(totalEarnings));
+    setText('totalEarningsDisplay', fmtCur(totalEarnings));
+    setText('teamMembersCount', allMembers.length);
+    setText('activeInvestorsCount', activeCount);
+    setText('teamInvestedAmount', fmtCur(totalInvested));
+    
+    selectLevel('A');
+    renderTeamList();
+    
+  } catch (err) {
+    console.error('Team data error:', err);
+    document.getElementById('memberList').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">⚠️</div>
+        <div class="empty-title">Failed to load</div>
+        <div class="empty-text">Please check your connection and refresh</div>
+      </div>`;
+  }
+}
+
+async function enrichMember(user, level) {
+  const rate = LEVEL_RATES[level];
+  const invested = Number(user.totalInvested) || 0;
+  let planName = 'No Plan';
+  
+  // Only check investments if they have invested
+  if (invested >= 10000) {
+    try {
+      const invSnap = await db.collection('investments')
+        .where('userId', '==', user.uid)
+        .where('status', '==', 'active')
+        .limit(1)
+        .get();
+      if (!invSnap.empty) {
+        planName = invSnap.docs[0].data().planName || 'Active Plan';
+      }
+    } catch (e) { /* skip */ }
+  }
+  
+  return {
+    level,
+    uid: user.uid,
+    name: user.fullName || user.username || 'User',
+    email: user.email || '—',
+    plan: planName,
+    invested,
+    bonus: Math.floor(invested * rate / 100),
+    isActive: invested >= 10000,
+    joinedAt: user.createdAt ? new Date(user.createdAt.toDate?.() || user.createdAt) : new Date()
+  };
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   LEVEL SELECTION
+═══════════════════════════════════════════════════════════════════ */
+function selectLevel(level) {
+  currentLevel = level;
+  
+  ['A','B','C'].forEach(l => {
+    document.getElementById(`level${l}Tab`).classList.remove('active');
+  });
+  document.getElementById(`level${level}Tab`).classList.add('active');
+  
+  renderTeamList();
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   RENDER TEAM LIST
+═══════════════════════════════════════════════════════════════════ */
+function renderTeamList() {
+  const query = (document.getElementById('searchInput')?.value || '').toLowerCase();
+  
+  const filtered = allMembers
+    .filter(m => m.level === currentLevel)
+    .filter(m => !query || m.name.toLowerCase().includes(query) || m.email.toLowerCase().includes(query));
+  
+  setText('teamListCount', `${filtered.length}`);
+  
+  const container = document.getElementById('memberList');
+  
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon"><i class="fas fa-user-friends"></i></div>
+        <div class="empty-title">${query ? 'No matches found' : `No Level ${currentLevel} referrals yet`}</div>
+        <div class="empty-text">${query ? 'Try a different search term' : 'Share your link to start building your team!'}</div>
+      </div>`;
+    return;
+  }
+  
+  container.innerHTML = filtered.map((m, i) => {
+    const avatarClass = m.level === 'A' ? 'avatar-l1' : (m.level === 'B' ? 'avatar-l2' : 'avatar-l3');
+    const joined = m.joinedAt.toLocaleDateString('en-NG', { day: '2-digit', month: 'short', year: '2-digit' });
+    
+    return `
+      <div class="member-card" style="animation: fadeSlideIn 0.25s ease ${i * 0.03}s both;">
+        <div class="member-avatar ${avatarClass}">${m.name.charAt(0).toUpperCase()}</div>
+        <div class="member-info">
+          <div class="member-name">
+            ${m.name}
+            <span class="plan-tag ${!m.isActive ? 'inactive' : ''}">${m.plan}</span>
+          </div>
+          <div class="member-email">${m.email}</div>
+          <div class="member-meta">
+            <span><i class="far fa-calendar"></i> ${joined}</span>
+            <span style="color:${m.isActive ? 'var(--success)' : 'var(--text-muted)'};">
+              ${m.isActive ? '● Active' : '○ Inactive'}
+            </span>
+          </div>
+        </div>
+        <div class="member-stats">
+          <div class="member-invest">${fmtCur(m.invested)}</div>
+          <div class="member-bonus">+${fmtCur(m.bonus)}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SHARE / COPY
+═══════════════════════════════════════════════════════════════════ */
+function copyLink() {
+  if (!myReferralLink) return;
+  navigator.clipboard.writeText(myReferralLink).then(() => {
+    Swal.fire({ 
+      icon: 'success', 
+      title: 'Copied!', 
+      text: 'Referral link copied to clipboard', 
+      toast: true, 
+      position: 'top-end', 
+      showConfirmButton: false, 
+      timer: 2000 
+    });
+  });
+}
+
+function shareTo(platform) {
+  if (!myReferralLink) return;
+  const text = '🚀 Join me on Kinetic Wealth! Earn daily returns on your investments!';
+  const encodedText = encodeURIComponent(text);
+  const encodedLink = encodeURIComponent(myReferralLink);
+  
+  if (platform === 'whatsapp') {
+    window.open(`https://wa.me/?text=${encodedText}%20${encodedLink}`, '_blank');
+  } else if (platform === 'telegram') {
+    window.open(`https://t.me/share/url?url=${encodedLink}&text=${encodedText}`, '_blank');
+  } else if (platform === 'more') {
+    if (navigator.share) {
+      navigator.share({ title: 'Kinetic Wealth', text: text, url: myReferralLink }).catch(() => {});
+    } else {
+      copyLink();
+    }
+  }
+}
+
+async function refreshData() {
+  const icon = document.querySelector('.fa-sync-alt');
+  if (icon) icon.classList.add('fa-spin');
+  
+  await loadTeamData();
+  
+  setTimeout(() => { if (icon) icon.classList.remove('fa-spin'); }, 500);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ANIMATION
+═══════════════════════════════════════════════════════════════════ */
+const animStyle = document.createElement('style');
+animStyle.textContent = `
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+`;
+document.head.appendChild(animStyle);
+
+// Expose
+window.toggleTheme = toggleTheme;
+window.selectLevel = selectLevel;
+window.renderTeamList = renderTeamList;
+window.copyLink = copyLink;
+window.shareTo = shareTo;
+window.refreshData = refreshData;
+</script>
+
+</body>
+</html>
