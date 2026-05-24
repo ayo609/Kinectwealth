@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover"/>
+<title>Kinetic Wealth · Admin Panel</title>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --primary: #0052CC;
+  --primary-dark: #003D99;
+  --success: #10B981;
+  --danger: #EF4444;
+  --warning: #F59E0B;
+  --info: #7C3AED;
+  --dark: #1E293B;
+  --light: #F8FAFC;
+  --border: #E2E8F0;
+  --bg: #F1F5F9;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  overflow-x: hidden;
+}
+
+.admin-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 280px;
+  background: #0F172A;
+  color: #E2E8F0;
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  transition: transform 0.3s;
+  z-index: 1000;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-header {
+  padding: 24px 20px;
+  border-bottom: 1px solid #1E293B;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-icon {
+  width: 45px; height: 45px;
+  background: linear-gradient(135deg, var(--primary), #3B82F6);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  color: #fff;
+}
+
+.logo-text {
+  font-size: 20px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.logo-sub {
+  font-size: 10px;
+  color: #64748B;
+  font-weight: 500;
+}
+
+.sidebar-nav {
+  padding: 16px 12px;
+  flex: 1;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 4px;
+  color: #94A3B8;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.nav-item:hover { background: #1E293B; color: #fff; }
+.nav-item.active { background: var(--primary); color: #fff; }
+.nav-item i { width: 22px; font-size: 15px; text-align: center; }
+
+.nav-badge {
+  margin-left: auto;
+  background: var(--danger);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.sidebar-footer {
+  padding: 20px;
+  border-top: 1px solid #1E293B;
+}
+
+.admin-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.admin-avatar {
+  width: 45px; height: 45px;
+  background: linear-gradient(135deg, var(--primary), #3B82F6);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+  color: #fff;
+}
+
+.admin-name { font-weight: 600; font-size: 14px; color: #fff; }
+.admin-role { font-size: 11px; color: #64748B; }
+
+.logout-btn {
+  width: 100%;
+  padding: 10px;
+  background: rgba(239,68,68,0.15);
+  border: 1px solid rgba(239,68,68,0.3);
+  border-radius: 10px;
+  color: #EF4444;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.logout-btn:hover { background: rgba(239,68,68,0.25); }
+
+/* Main */
+.main-content {
+  flex: 1;
+  margin-left: 280px;
+  padding: 24px;
+}
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.page-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: #0F172A;
+}
+
+.page-subtitle {
+  font-size: 12px;
+  color: #64748B;
+  margin-top: 2px;
+}
+
+.refresh-btn {
+  padding: 10px 20px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.refresh-btn:hover { background: #F8FAFC; }
+.refresh-btn i.fa-spin { animation: spin 0.8s linear infinite; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: #fff;
+  border-radius: 18px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+}
+
+.stat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.stat-icon {
+  width: 46px; height: 46px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.stat-icon.blue { background: rgba(0,82,204,0.1); color: var(--primary); }
+.stat-icon.green { background: rgba(16,185,129,0.1); color: var(--success); }
+.stat-icon.orange { background: rgba(245,158,11,0.1); color: var(--warning); }
+.stat-icon.red { background: rgba(239,68,68,0.1); color: var(--danger); }
+.stat-icon.purple { background: rgba(124,58,237,0.1); color: var(--info); }
+.stat-icon.cyan { background: rgba(6,182,212,0.1); color: #06B6D4; }
+
+.stat-value {
+  font-size: 30px;
+  font-weight: 800;
+  color: #0F172A;
+  margin-bottom: 2px;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: #64748B;
+  font-weight: 500;
+}
+
+/* Table Card */
+.table-card {
+  background: #fff;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.table-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.table-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.table-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-input, .filter-select {
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 13px;
+  outline: none;
+  font-family: inherit;
+}
+
+.search-input:focus, .filter-select:focus { border-color: var(--primary); }
+
+.btn {
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-dark); }
+.btn-success { background: var(--success); color: #fff; }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-warning { background: var(--warning); color: #fff; }
+.btn-outline { background: #fff; border: 1px solid var(--border); color: #1E293B; }
+.btn-sm { padding: 5px 10px; font-size: 11px; }
+
+.table-wrap { overflow-x: auto; }
+
+table { width: 100%; border-collapse: collapse; }
+
+th {
+  text-align: left;
+  padding: 12px 16px;
+  background: #F8FAFC;
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+td {
+  padding: 12px 16px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+}
+
+tr:hover { background: #F8FAFC; }
+
+.status-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-badge.active, .status-badge.approved, .status-badge.completed { background: rgba(16,185,129,0.1); color: var(--success); }
+.status-badge.pending { background: rgba(245,158,11,0.1); color: var(--warning); }
+.status-badge.rejected, .status-badge.banned { background: rgba(239,68,68,0.1); color: var(--danger); }
+.status-badge.suspended { background: rgba(245,158,11,0.1); color: var(--warning); }
+
+/* Page Sections */
+.page-section { display: none; }
+.page-section.active { display: block; }
+
+/* Chart */
+.chart-container {
+  background: #fff;
+  border-radius: 18px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+
+.chart-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+canvas { max-height: 300px; width: 100%; }
+
+/* Modal */
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 2000;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal.active { display: flex; }
+
+.modal-content {
+  background: #fff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-title { font-size: 17px; font-weight: 700; }
+
+.modal-close {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: #F1F5F9;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.modal-body { padding: 20px; }
+.modal-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Form */
+.form-group { margin-bottom: 16px; }
+.form-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748B;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  outline: none;
+}
+
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0,82,204,0.08);
+}
+
+.form-textarea { resize: vertical; min-height: 80px; }
+
+/* Duration */
+.duration-options { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.duration-option {
+  padding: 8px 14px;
+  background: #F1F5F9;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+.duration-option:hover { background: #E2E8F0; }
+.duration-option.selected { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+/* Mobile */
+.menu-toggle {
+  display: none;
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 1100;
+  background: #fff;
+  border: none;
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .main-content { margin-left: 0; padding: 70px 16px 24px; }
+  .menu-toggle { display: flex; align-items: center; justify-content: center; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+}
+
+@media (max-width: 480px) {
+  .stats-grid { grid-template-columns: 1fr; }
+  .table-header { flex-direction: column; align-items: stretch; }
+}
+</style>
+</head>
+<body>
+
+<button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+
+<div class="admin-container">
+  
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-icon"><i class="fas fa-chart-line"></i></div>
+      <div>
+        <div class="logo-text">Kinetic Wealth</div>
+        <div class="logo-sub">ADMIN PANEL</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-item active" data-page="dashboard"><i class="fas fa-th-large"></i> Dashboard</div>
+      <div class="nav-item" data-page="users"><i class="fas fa-users"></i> Users <span class="nav-badge" id="userBadge">0</span></div>
+      <div class="nav-item" data-page="deposits"><i class="fas fa-credit-card"></i> Deposits <span class="nav-badge" id="pendingDepBadge">0</span></div>
+      <div class="nav-item" data-page="withdrawals"><i class="fas fa-paper-plane"></i> Withdrawals <span class="nav-badge" id="pendingWitBadge">0</span></div>
+      <div class="nav-item" data-page="investments"><i class="fas fa-chart-line"></i> Investments</div>
+      <div class="nav-item" data-page="plans"><i class="fas fa-cubes"></i> Plans</div>
+      <div class="nav-item" data-page="transactions"><i class="fas fa-receipt"></i> Transactions</div>
+      <div class="nav-item" data-page="referrals"><i class="fas fa-user-plus"></i> Referrals</div>
+      <div class="nav-item" data-page="subordinate"><i class="fas fa-trophy"></i> Subordinate</div>
+      <div class="nav-item" data-page="admins"><i class="fas fa-shield-halved"></i> Admins</div>
+      <div class="nav-item" data-page="actions-log"><i class="fas fa-history"></i> Admin Logs</div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="admin-info">
+        <div class="admin-avatar" id="adminAvatar">A</div>
+        <div>
+          <div class="admin-name" id="adminName">Admin</div>
+          <div class="admin-role" id="adminRole">Administrator</div>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="adminLogout()"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+    <div class="top-bar">
+      <div>
+        <h1 class="page-title" id="pageTitle">Dashboard</h1>
+        <p class="page-subtitle" id="pageSubtitle">Platform Overview</p>
+      </div>
+      <button class="refresh-btn" onclick="refreshCurrentPage()"><i class="fas fa-sync-alt"></i> Refresh</button>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="page-section active" id="page-dashboard">
+      <div class="stats-grid" id="dashboardStats"></div>
+      <div class="chart-container"><div class="chart-title">Platform Activity (Last 7 Days)</div><canvas id="activityChart"></canvas></div>
+      <div class="table-card"><div class="table-header"><div class="table-title">Recent Users</div></div><div class="table-wrap"><table><thead><tr><th>User</th><th>Email</th><th>Balance</th><th>Status</th><th>Joined</th></tr></thead><tbody id="recentUsersTable"></tbody></table></div></div>
+    </div>
+
+    <!-- Users -->
+    <div class="page-section" id="page-users">
+      <div class="table-card"><div class="table-header"><div class="table-title">User Management</div><div class="table-actions"><input type="text" class="search-input" id="userSearch" placeholder="Search..." oninput="loadUsers()"><button class="btn btn-primary" onclick="showBulkActions()"><i class="fas fa-layer-group"></i> Bulk</button></div></div><div class="table-wrap"><table><thead><tr><th style="width:30px"><input type="checkbox" id="selectAllUsers" onchange="toggleSelectAllUsers()"></th><th>Name</th><th>Email</th><th>Deposit</th><th>Withdraw</th><th>Status</th><th>Admin</th><th>Actions</th></tr></thead><tbody id="usersTable"></tbody></table></div></div>
+    </div>
+
+    <!-- Deposits -->
+    <div class="page-section" id="page-deposits">
+      <div class="table-card"><div class="table-header"><div class="table-title">Deposit Requests</div><div class="table-actions"><select class="filter-select" id="depositFilter" onchange="loadDeposits()"><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="all">All</option></select></div></div><div class="table-wrap"><table><thead><tr><th>User</th><th>Amount</th><th>Sender</th><th>Ref</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead><tbody id="depositsTable"></tbody></table></div></div>
+    </div>
+
+    <!-- Withdrawals -->
+    <div class="page-section" id="page-withdrawals">
+      <div class="table-card"><div class="table-header"><div class="table-title">Withdrawal Requests</div><div class="table-actions"><select class="filter-select" id="withdrawFilter" onchange="loadWithdrawals()"><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="all">All</option></select></div></div><div class="table-wrap"><table><thead><tr><th>User</th><th>Amount</th><th>Fee</th><th>Receive</th><th>Bank</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead><tbody id="withdrawalsTable"></tbody></table></div></div>
+    </div>
+
+    <!-- Investments -->
+    <div class="page-section" id="page-investments">
+      <div class="table-card"><div class="table-header"><div class="table-title">Investments</div><div class="table-actions"><select class="filter-select" id="investmentFilter" onchange="loadInvestments()"><option value="active">Active</option><option value="completed">Completed</option><option value="all">All</option></select></div></div><div class="table-wrap"><table><thead><tr><th>User</th><th>Plan</th><th>Capital</th><th>Daily ROI</th><th>Progress</th><th>Status</th><th>Date</th></tr></thead><tbody id="investmentsTable"></tbody></table></div></div>
+    </div>
+
+    <!-- Plans -->
+    <div class="page-section" id="page-plans">
+      <div class="table-card"><div class="table-header"><div class="table-title">Investment Plans</div><div class="table-actions"><button class="btn btn-primary" onclick="showAddPlanModal()"><i class="fas fa-plus"></i> Add Plan</button></div></div><div class="table-wrap"><table><thead><tr><th>Name</th><th>Capital</th><th>Daily ROI</th><th>Duration</th><th>Total Return</th><th>Actions</th></tr></thead><tbody id="plansTable"></tbody></table></div></div>
+    </div>
+
+    <!-- Transactions -->
+    <div class="page-section" id="page-transactions">
+      <div class="table-card"><div class="table-header"><div class="table-title">Transactions</div><div class="table-actions"><select class="filter-select" id="transactionFilter" onchange="loadTransactions()"><option value="all">All</option><option value="deposit">Deposits</option><option value="withdrawal">Withdrawals</option><option value="investment">Investments</option><option value="roi_daily">ROI Daily</option><option value="roi_final">ROI Final</option><option value="referral_bonus">Referrals</option><option value="welcome_bonus">Bonuses</option><option value="admin_adjustment">Admin Adj.</option></select></div></div><div class="table-wrap"><table><thead><tr><th>User</th><th>Type</th><th>Amount</th><th>Description</th><th>Date</th></tr></thead><tbody id="transactionsTable"></tbody></table></div></div>
+    </div>
+
+    <!-- Referrals -->
+    <div class="page-section" id="page-referrals">
+      <div class="table-card"><div class="table-header"><div class="table-title">Referral Stats</div></div><div class="table-wrap"><table><thead><tr><th>User</th><th>Total</th><th>L1</th><th>L2</th><th>L3</th><th>Earnings</th></tr></thead><tbody id="referralsTable"></tbody></table></div></div>
+    </div>
+
+    <!-- Subordinate -->
+    <div class="page-section" id="page-subordinate">
+      <div class="table-card"><div class="table-header"><div class="table-title">Subordinate Rewards</div></div><div class="table-wrap"><table><thead><tr><th>User</th><th>Active Downlines</th><th>Daily Reward</th><th>Weekly Reward</th><th>Last Daily</th><th>Last Weekly</th></tr></thead><tbody id="subordinateTable"></tbody></table></div></div>
+    </div>
+
+    <!-- Admins -->
+    <div class="page-section" id="page-admins">
+      <div class="table-card"><div class="table-header"><div class="table-title">Admin Users</div><div class="table-actions"><button class="btn btn-primary" onclick="showAddAdminModal()"><i class="fas fa-plus"></i> Add Admin</button></div></div><div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Actions</th></tr></thead><tbody id="adminsTable"></tbody></table></div></div>
+    </div>
+
+    <!-- Admin Logs -->
+    <div class="page-section" id="page-actions-log">
+      <div class="table-card"><div class="table-header"><div class="table-title">Admin Action Log</div><div class="table-actions"><input type="text" class="search-input" id="logSearch" placeholder="Search..." oninput="loadAdminLogs()"></div></div><div class="table-wrap"><table><thead><tr><th>Admin</th><th>Action</th><th>Target</th><th>Details</th><th>Date</th></tr></thead><tbody id="logsTable"></tbody></table></div></div>
+    </div>
+  </main>
+</div>
+
+<!-- Modals -->
+<div class="modal" id="addPlanModal"><div class="modal-content"><div class="modal-header"><div class="modal-title">Add Plan</div><button class="modal-close" onclick="closeModal('addPlanModal')">&times;</button></div><div class="modal-body"><div class="form-group"><label class="form-label">Name</label><input class="form-input" id="planName" placeholder="Plan name"></div><div class="form-group"><label class="form-label">Capital (₦)</label><input type="number" class="form-input" id="planCapital"></div><div class="form-group"><label class="form-label">Daily ROI (₦)</label><input type="number" class="form-input" id="planDailyROI"></div><div class="form-group"><label class="form-label">Duration (Days)</label><input type="number" class="form-input" id="planDuration"></div></div><div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('addPlanModal')">Cancel</button><button class="btn btn-primary" onclick="addPlan()">Add Plan</button></div></div></div>
+
+<div class="modal" id="addAdminModal"><div class="modal-content"><div class="modal-header"><div class="modal-title">Add Admin</div><button class="modal-close" onclick="closeModal('addAdminModal')">&times;</button></div><div class="modal-body"><div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="adminEmail" placeholder="user@email.com"></div><div class="form-group"><label class="form-label">Role</label><select class="form-select" id="adminRoleSelect"><option value="admin">Admin</option><option value="superadmin">Super Admin</option></select></div></div><div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('addAdminModal')">Cancel</button><button class="btn btn-primary" onclick="addAdmin()">Add Admin</button></div></div></div>
+
+<div class="modal" id="userActionModal"><div class="modal-content"><div class="modal-header"><div class="modal-title" id="actionTitle">Action</div><button class="modal-close" onclick="closeModal('userActionModal')">&times;</button></div><div class="modal-body" id="actionBody"></div><div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('userActionModal')">Cancel</button><button class="btn btn-primary" id="actionBtn" onclick="executeUserAction()">Confirm</button></div></div></div>
+
+<div class="modal" id="bulkModal"><div class="modal-content"><div class="modal-header"><div class="modal-title">Bulk Actions</div><button class="modal-close" onclick="closeModal('bulkModal')">&times;</button></div><div class="modal-body" id="bulkBody"></div><div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('bulkModal')">Cancel</button><button class="btn btn-primary" id="bulkBtn" onclick="executeBulkAction()">Apply</button></div></div></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   FIREBASE
+═══════════════════════════════════════════════════════════════════ */
+const fc = { apiKey:"AIzaSyBl6HEVa9mUuROvnohMKzeEzzc0aTREU54", authDomain:"kinetic-dc8e6.firebaseapp.com", projectId:"kinetic-dc8e6", storageBucket:"kinetic-dc8e6.firebasestorage.app", messagingSenderId:"980527555815", appId:"1:980527555815:web:131ccee594e0c8f122ee42" };
+if(!firebase.apps.length) firebase.initializeApp(fc);
+const auth=firebase.auth(), db=firebase.firestore(), FV=firebase.firestore.FieldValue;
+
+/* ═══════════════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════════════ */
+const fm=n=>(Number(n)||0).toLocaleString('en-NG'), fc2=n=>'₦'+fm(n), fs=n=>{const v=Number(n)||0;return v>=1e6?'₦'+(v/1e6).toFixed(1)+'M':v>=1e3?'₦'+(v/1e3).toFixed(1)+'K':'₦'+v};
+const $=id=>document.getElementById(id);
+const DAILY_TIERS=[{c:3,r:1500},{c:6,r:3000},{c:10,r:5000},{c:15,r:7500},{c:20,r:10000}];
+const WEEKLY_TIERS=[{c:10,r:6500},{c:20,r:13000},{c:30,r:20000}];
+function gdr(c){for(let i=DAILY_TIERS.length-1;i>=0;i--)if(c>=DAILY_TIERS[i].c)return DAILY_TIERS[i].r;return 0;}
+function gwr(c){for(let i=WEEKLY_TIERS.length-1;i>=0;i--)if(c>=WEEKLY_TIERS[i].c)return WEEKLY_TIERS[i].r;return 0;}
+
+let admin=null,authReady=false,selectedUsers=[],currentAction=null,actionUid=null,chart=null;
+const PAGES={dashboard:'Dashboard',users:'Users',deposits:'Deposits',withdrawals:'Withdrawals',investments:'Investments',plans:'Plans',transactions:'Transactions',referrals:'Referrals',subordinate:'Subordinate',admins:'Admins','actions-log':'Admin Logs'};
+
+/* ═══════════════════════════════════════════════════════════════════
+   AUTH
+═══════════════════════════════════════════════════════════════════ */
+auth.onAuthStateChanged(async u=>{
+  if(!u){if(authReady)window.location.replace('admin-login.html');else{authReady=true;window.location.replace('admin-login.html');}return;}
+  const d=await db.collection('users').doc(u.uid).get();
+  if(!d.exists||!d.data().isAdmin){auth.signOut();window.location.replace('login.html');return;}
+  admin={uid:u.uid,...d.data()};authReady=true;
+  $('adminAvatar').textContent=(admin.fullName||admin.username||'A').charAt(0).toUpperCase();
+  $('adminName').textContent=admin.fullName||admin.username||'Admin';
+  $('adminRole').textContent=admin.adminRole||'Administrator';
+  initNav();loadDashboard();updateBadges();
+});
+
+function initNav(){document.querySelectorAll('.nav-item').forEach(i=>i.addEventListener('click',()=>{const p=i.dataset.page;document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));i.classList.add('active');document.querySelectorAll('.page-section').forEach(s=>s.classList.remove('active'));$('page-'+p).classList.add('active');$('pageTitle').textContent=PAGES[p]||p;$('pageSubtitle').textContent='';navToPage(p);if(window.innerWidth<=768)toggleSidebar();}));}
+
+function navToPage(p){
+  switch(p){case'dashboard':loadDashboard();break;case'users':loadUsers();break;case'deposits':loadDeposits();break;case'withdrawals':loadWithdrawals();break;case'investments':loadInvestments();break;case'plans':loadPlans();break;case'transactions':loadTransactions();break;case'referrals':loadReferrals();break;case'subordinate':loadSubordinate();break;case'admins':loadAdmins();break;case'actions-log':loadAdminLogs();break;}
+}
+function refreshCurrentPage(){const p=document.querySelector('.page-section.active')?.id.replace('page-','');if(p)navToPage(p);}
+function toggleSidebar(){$('sidebar').classList.toggle('open');}
+
+/* ═══════════════════════════════════════════════════════════════════
+   DASHBOARD
+═══════════════════════════════════════════════════════════════════ */
+async function loadDashboard(){
+  try{
+    const[usersSnap,activeInv,pendDep,pendWit,txSnap]=await Promise.all([db.collection('users').get(),db.collection('investments').where('status','==','active').get(),db.collection('deposits').where('status','==','pending').get(),db.collection('withdrawals').where('status','==','pending').get(),db.collection('transactions').get()]);
+    $('userBadge').textContent=usersSnap.size;
+    let inv=0,earn=0;
+    txSnap.docs.forEach(d=>{const a=Number(d.data().amount)||0;const t=d.data().type;if(['investment','investment_purchase','deposit'].includes(t))inv+=a;if(['roi_daily','roi_final','roi_claim','referral_bonus','welcome_bonus','capital_return','subordinate_daily','subordinate_weekly'].includes(t))earn+=a;});
+    $('dashboardStats').innerHTML=`
+      <div class="stat-card"><div class="stat-header"><div class="stat-icon blue"><i class="fas fa-users"></i></div></div><div class="stat-value">${usersSnap.size}</div><div class="stat-label">Total Users</div></div>
+      <div class="stat-card"><div class="stat-header"><div class="stat-icon green"><i class="fas fa-chart-line"></i></div></div><div class="stat-value">${activeInv.size}</div><div class="stat-label">Active Investments</div></div>
+      <div class="stat-card"><div class="stat-header"><div class="stat-icon orange"><i class="fas fa-credit-card"></i></div></div><div class="stat-value">${pendDep.size}</div><div class="stat-label">Pending Deposits</div></div>
+      <div class="stat-card"><div class="stat-header"><div class="stat-icon red"><i class="fas fa-paper-plane"></i></div></div><div class="stat-value">${pendWit.size}</div><div class="stat-label">Pending Withdrawals</div></div>
+      <div class="stat-card"><div class="stat-header"><div class="stat-icon purple"><i class="fas fa-coins"></i></div></div><div class="stat-value">${fs(inv)}</div><div class="stat-label">Total Invested</div></div>
+      <div class="stat-card"><div class="stat-header"><div class="stat-icon cyan"><i class="fas fa-gift"></i></div></div><div class="stat-value">${fs(earn)}</div><div class="stat-label">Total Earnings Paid</div></div>`;
+    const recent=usersSnap.docs.slice(-5).reverse();
+    $('recentUsersTable').innerHTML=recent.map(d=>{const u=d.data(),s=u.accountStatus?.status||'active';return`<tr><td><strong>${u.fullName||u.username||'N/A'}</strong></td><td>${u.email||'—'}</td><td>${fs((u.depositBalance||0)+(u.withdrawalBalance||0))}</td><td><span class="status-badge ${s}">${s}</span></td><td>${u.createdAt?.toDate?.()?.toLocaleDateString()||'—'}</td></tr>`;}).join('');
+    buildChart(earn);
+  }catch(e){console.error(e);}
+}
+
+function buildChart(total){
+  const ctx=$('activityChart')?.getContext('2d');if(!ctx)return;if(chart)chart.destroy();
+  const labels=[],data=[];
+  for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);labels.push(d.toLocaleDateString('en-NG',{weekday:'short'}));data.push(Math.round(total*(0.05+(Math.random()*0.15))));}
+  chart=new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'Activity',data,borderColor:'#0052CC',backgroundColor:'rgba(0,82,204,0.04)',tension:0.4,fill:true,pointRadius:4,pointBackgroundColor:'#0052CC'}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>fs(v)}}}}});
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   USERS
+═══════════════════════════════════════════════════════════════════ */
+async function loadUsers(){
+  const q=($('userSearch')?.value||'').toLowerCase();
+  const snap=await db.collection('users').get();
+  let users=snap.docs.map(d=>({id:d.id,...d.data()}));
+  if(q)users=users.filter(u=>(u.fullName||'').toLowerCase().includes(q)||(u.email||'').toLowerCase().includes(q)||(u.username||'').toLowerCase().includes(q));
+  $('usersTable').innerHTML=users.map(u=>{const s=u.accountStatus?.status||'active',su=u.accountStatus?.suspendedUntil?.toDate?.()?new Date(u.accountStatus.suspendedUntil.toDate()).toLocaleString():'';return`<tr><td><input type="checkbox" class="user-checkbox" data-uid="${u.id}" onchange="updateSelected()"></td><td><strong>${u.fullName||u.username||'N/A'}</strong></td><td>${u.email||'—'}</td><td>${fs(u.depositBalance||0)}</td><td>${fs(u.withdrawalBalance||0)}</td><td><span class="status-badge ${s}">${s}</span>${s==='suspended'?`<br><small>Until: ${su}</small>`:''}</td><td>${u.isAdmin?'<span class="status-badge active">Admin</span>':'—'}</td><td style="white-space:nowrap"><button class="btn btn-sm btn-outline" onclick="viewUser('${u.id}')" title="View"><i class="fas fa-eye"></i></button> <button class="btn btn-sm btn-success" onclick="showAdjust('${u.id}','${(u.fullName||u.username||'User').replace(/'/g,"\\'")}')" title="Adjust Balance"><i class="fas fa-plus-circle"></i></button> <button class="btn btn-sm btn-warning" onclick="showSuspend('${u.id}','${(u.fullName||u.username||'User').replace(/'/g,"\\'")}')" ${s==='banned'?'disabled':''} title="Suspend"><i class="fas fa-pause-circle"></i></button> <button class="btn btn-sm btn-danger" onclick="showBan('${u.id}','${(u.fullName||u.username||'User').replace(/'/g,"\\'")}')" ${s==='banned'?'disabled':''} title="Ban"><i class="fas fa-ban"></i></button> <button class="btn btn-sm btn-danger" onclick="showDelete('${u.id}','${(u.fullName||u.username||'User').replace(/'/g,"\\'")}')" title="Delete"><i class="fas fa-trash"></i></button></td></tr>`;}).join('')||'<tr><td colspan="8" style="text-align:center;">No users found</td></tr>';
+}
+
+function updateSelected(){selectedUsers=Array.from(document.querySelectorAll('.user-checkbox:checked')).map(c=>c.dataset.uid);}
+function toggleSelectAllUsers(){document.querySelectorAll('.user-checkbox').forEach(c=>c.checked=$('selectAllUsers').checked);updateSelected();}
+
+function showBulkActions(){
+  if(!selectedUsers.length)return Swal.fire({icon:'warning',title:'Select Users',text:'Check at least one user.'});
+  $('bulkBody').innerHTML=`<div class="form-group"><label class="form-label">Action</label><select class="form-select" id="bulkType"><option value="bonus">Add Bonus</option><option value="suspend">Suspend</option><option value="activate">Activate</option></select></div><div id="bulkExtra"></div>`;
+  document.getElementById('bulkType').addEventListener('change',()=>{const e=$('bulkExtra');const t=$('bulkType').value;if(t==='bonus')e.innerHTML=`<div class="form-group"><label class="form-label">Amount (₦)</label><input type="number" class="form-input" id="bulkAmt"></div><div class="form-group"><label class="form-label">Reason</label><input class="form-input" id="bulkReason"></div>`;else if(t==='suspend')e.innerHTML=`<div class="form-group"><label class="form-label">Duration</label><div class="duration-options" id="bulkDur"></div><div class="form-group"><label class="form-label">Custom Hours</label><input type="number" class="form-input" id="bulkCustomHrs"></div><div class="form-group"><label class="form-label">Reason</label><textarea class="form-textarea" id="bulkSusReason"></textarea></div>`;renderDur('bulkDur');else e.innerHTML=`<div class="form-group"><label class="form-label">Reason</label><textarea class="form-textarea" id="bulkActReason"></textarea></div>`;});$('bulkType').dispatchEvent(new Event('change'));openModal('bulkModal');
+}
+
+async function executeBulkAction(){
+  const t=$('bulkType').value;
+  if(t==='bonus'){
+    const amt=Number($('bulkAmt')?.value);if(!amt||amt<=0)return Swal.fire({icon:'warning',title:'Enter amount'});
+    Swal.fire({title:'Processing...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+    for(const uid of selectedUsers){await db.runTransaction(async tr=>{tr.update(db.collection('users').doc(uid),{depositBalance:FV.increment(amt)});tr.set(db.collection('transactions').doc(),{userId:uid,type:'admin_adjustment',amount:amt,description:'Admin bonus: '+($('bulkReason')?.value||'N/A'),wallet:'deposit',status:'completed',createdAt:FV.serverTimestamp()});});await logAction('bulk_bonus',uid,{amount:amt});}
+    Swal.fire({icon:'success',title:'Done!',text:`${selectedUsers.length} users got ₦${fm(amt)}`,timer:2000});
+  }else if(t==='suspend'){
+    let hrs=Number($('bulkCustomHrs')?.value);const sel=document.querySelector('#bulkDur .duration-option.selected');if(sel&&!hrs)hrs=parseInt(sel.dataset.hours);if(!hrs||hrs<=0)return Swal.fire({icon:'warning',title:'Select duration'});
+    const until=new Date(Date.now()+hrs*3600000),reason=$('bulkSusReason')?.value||'Bulk suspension';
+    for(const uid of selectedUsers){await db.collection('users').doc(uid).update({accountStatus:{status:'suspended',reason,suspendedUntil:until,suspendedBy:admin.uid,suspendedAt:FV.serverTimestamp()}});await logAction('bulk_suspend',uid,{hours:hrs,reason});}
+    Swal.fire({icon:'success',title:'Suspended!',text:`${selectedUsers.length} users for ${hrs}h`,timer:2000});
+  }else{
+    const reason=$('bulkActReason')?.value||'Bulk reactivation';
+    for(const uid of selectedUsers){await db.collection('users').doc(uid).update({accountStatus:{status:'active',reason,reactivatedAt:FV.serverTimestamp(),reactivatedBy:admin.uid}});await logAction('bulk_activate',uid,{reason});}
+    Swal.fire({icon:'success',title:'Activated!',text:`${selectedUsers.length} users`,timer:2000});
+  }
+  closeModal('bulkModal');loadUsers();
+}
+
+function showAdjust(uid,name){actionUid=uid;currentAction='balance';$('actionTitle').innerHTML=`Adjust Balance — ${name}`;$('actionBody').innerHTML=`<div class="form-group"><label class="form-label">Wallet</label><select class="form-select" id="balWallet"><option value="deposit">Deposit</option><option value="withdrawal">Withdrawal</option></select></div><div class="form-group"><label class="form-label">Amount (₦)</label><input type="number" class="form-input" id="balAmt" placeholder="+ for credit, − for debit"></div><div class="form-group"><label class="form-label">Reason</label><textarea class="form-textarea" id="balReason"></textarea></div>`;openModal('userActionModal');}
+function showSuspend(uid,name){actionUid=uid;currentAction='suspend';$('actionTitle').innerHTML=`Suspend — ${name}`;$('actionBody').innerHTML=`<div class="form-group"><label class="form-label">Duration</label><div class="duration-options" id="susDur"></div><div class="form-group"><label class="form-label">Custom Hours</label><input type="number" class="form-input" id="susCustomHrs"></div></div><div class="form-group"><label class="form-label">Reason</label><textarea class="form-textarea" id="susReason"></textarea></div><div class="form-group"><label class="form-label">Message to User</label><textarea class="form-textarea" id="susMsg"></textarea></div>`;renderDur('susDur');openModal('userActionModal');}
+function showBan(uid,name){actionUid=uid;currentAction='ban';$('actionTitle').innerHTML=`Ban — ${name}`;$('actionBody').innerHTML=`<div class="form-group"><label class="form-label">Reason</label><textarea class="form-textarea" id="banReason"></textarea></div><div class="form-group"><label class="form-label">Message</label><textarea class="form-textarea" id="banMsg"></textarea></div><div style="background:#FEF2F2;padding:12px;border-radius:10px;color:#EF4444;font-size:12px;"><i class="fas fa-exclamation-triangle"></i> <strong>Permanent!</strong> Cannot be undone.</div>`;openModal('userActionModal');}
+function showDelete(uid,name){actionUid=uid;currentAction='delete';$('actionTitle').innerHTML=`Delete — ${name}`;$('actionBody').innerHTML=`<div class="form-group"><label class="form-label">Reason</label><textarea class="form-textarea" id="delReason"></textarea></div><div class="form-group"><label class="form-label">Type <strong>${name}</strong> to confirm</label><input class="form-input" id="delConfirm"></div><div style="background:#FEF2F2;padding:12px;border-radius:10px;color:#EF4444;font-size:12px;"><i class="fas fa-exclamation-triangle"></i> <strong>Destructive!</strong> Deletes ALL user data permanently.</div>`;openModal('userActionModal');}
+
+function renderDur(id){const c=$(id);if(!c)return;c.innerHTML=[{l:'6 hours',h:6},{l:'12 hours',h:12},{l:'24 hours',h:24},{l:'3 days',h:72},{l:'7 days',h:168},{l:'14 days',h:336},{l:'30 days',h:720}].map(o=>`<div class="duration-option" data-hours="${o.h}" onclick="selectDur(this)">${o.l}</div>`).join('');}
+function selectDur(el){el.parentElement.querySelectorAll('.duration-option').forEach(e=>e.classList.remove('selected'));el.classList.add('selected');}
+
+async function executeUserAction(){
+  if(currentAction==='balance'){
+    const w=$('balWallet').value,a=Number($('balAmt').value),r=$('balReason').value;if(!a)return Swal.fire({icon:'warning',title:'Enter amount'});
+    const f=w==='deposit'?'depositBalance':'withdrawalBalance';
+    await db.runTransaction(async tr=>{tr.update(db.collection('users').doc(actionUid),{[f]:FV.increment(a)});tr.set(db.collection('transactions').doc(),{userId:actionUid,type:'admin_adjustment',amount:a,description:`Admin: ${r}`,wallet:w,status:'completed',createdAt:FV.serverTimestamp()});});
+    await logAction('adjust_balance',actionUid,{wallet:w,amount:a,reason:r});Swal.fire({icon:'success',title:'Updated!',timer:1500});
+  }else if(currentAction==='suspend'){
+    let h=Number($('susCustomHrs')?.value);const sel=document.querySelector('#susDur .duration-option.selected');if(sel&&!h)h=parseInt(sel.dataset.hours);if(!h||h<=0)return Swal.fire({icon:'warning',title:'Select duration'});
+    const until=new Date(Date.now()+h*3600000),reason=$('susReason')?.value||'',msg=$('susMsg')?.value||'';
+    await db.collection('users').doc(actionUid).update({accountStatus:{status:'suspended',reason,message:msg,suspendedUntil:until,suspendedBy:admin.uid,suspendedAt:FV.serverTimestamp()}});
+    await logAction('suspend',actionUid,{hours:h,reason,message:msg});Swal.fire({icon:'success',title:'Suspended!',timer:1500});
+  }else if(currentAction==='ban'){
+    const reason=$('banReason')?.value||'',msg=$('banMsg')?.value||'';
+    await db.collection('users').doc(actionUid).update({accountStatus:{status:'banned',reason,message:msg,bannedBy:admin.uid,bannedAt:FV.serverTimestamp()}});
+    await logAction('ban',actionUid,{reason,message:msg});Swal.fire({icon:'success',title:'Banned!',timer:1500});
+  }else if(currentAction==='delete'){
+    const confirm=$('delConfirm')?.value;const d=await db.collection('users').doc(actionUid).get();const nm=d.data()?.fullName||d.data()?.username;if(confirm!==nm)return Swal.fire({icon:'error',title:'Mismatch',text:'Name does not match'});
+    const res=await Swal.fire({title:'DELETE FOREVER?',text:'All data will be permanently destroyed.',icon:'warning',showCancelButton:true,confirmButtonColor:'#EF4444',confirmButtonText:'Yes, Delete'});
+    if(!res.isConfirmed)return;
+    Swal.fire({title:'Deleting...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+    const cols=['investments','transactions','deposits','withdrawals'];
+    for(const c of cols){const s=await db.collection(c).where('userId','==',actionUid).get();for(const d of s.docs)await d.ref.delete();}
+    await db.collection('users').doc(actionUid).delete();
+    await logAction('delete_user',actionUid,{reason:$('delReason')?.value||''});
+    Swal.fire({icon:'success',title:'Deleted!',timer:2000});
+  }
+  closeModal('userActionModal');loadUsers();
+}
+
+async function viewUser(uid){const d=await db.collection('users').doc(uid).get();if(!d.exists)return;const u=d.data(),s=u.accountStatus?.status||'active';Swal.fire({title:'User Details',html:`<div style="text-align:left;font-size:13px;"><p><strong>Name:</strong> ${u.fullName||u.username||'N/A'}</p><p><strong>Email:</strong> ${u.email||'—'}</p><p><strong>Phone:</strong> ${u.phone||'—'}</p><p><strong>Deposit:</strong> ${fc2(u.depositBalance||0)}</p><p><strong>Withdraw:</strong> ${fc2(u.withdrawalBalance||0)}</p><p><strong>Invested:</strong> ${fc2(u.totalInvested||0)}</p><p><strong>Earned:</strong> ${fc2(u.totalEarnings||0)}</p><p><strong>Status:</strong> <span class="status-badge ${s}">${s}</span></p></div>`,confirmButtonColor:'#0052CC'});}
+
+/* ═══════════════════════════════════════════════════════════════════
+   DEPOSITS / WITHDRAWALS
+═══════════════════════════════════════════════════════════════════ */
+async function loadDeposits(){const f=$('depositFilter')?.value||'pending';let q=db.collection('deposits');if(f!=='all')q=q.where('status','==',f);const s=await q.get(),docs=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));$('depositsTable').innerHTML=docs.map(d=>`<tr><td><strong>${d.userName||'N/A'}</strong></td><td>${fc2(d.amount)}</td><td>${d.senderName||'—'}</td><td><small>${d.refCode||'—'}</small></td><td><span class="status-badge ${d.status}">${d.status}</span></td><td>${d.createdAt?.toDate?.()?.toLocaleString()||'—'}</td><td>${d.status==='pending'?`<button class="btn btn-sm btn-success" onclick="approveDep('${d.id}','${d.userId}',${d.amount})">Approve</button> <button class="btn btn-sm btn-danger" onclick="rejectDep('${d.id}')">Reject</button>`:'—'}</td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;">No deposits</td></tr>';}
+
+async function approveDep(id,uid,amt){const r=await Swal.fire({title:'Approve?',text:`Credit ${fc2(amt)}?`,icon:'question',showCancelButton:true,confirmButtonColor:'#10B981'});if(!r.isConfirmed)return;await db.runTransaction(async tr=>{tr.update(db.collection('deposits').doc(id),{status:'approved',approvedAt:FV.serverTimestamp(),approvedBy:admin.uid});tr.update(db.collection('users').doc(uid),{depositBalance:FV.increment(amt)});tr.set(db.collection('transactions').doc(),{userId:uid,type:'deposit',amount:amt,status:'completed',description:'Deposit approved by admin',wallet:'deposit',createdAt:FV.serverTimestamp()});});await logAction('approve_deposit',uid,{amount:amt});Swal.fire({icon:'success',title:'Approved!',timer:1500});loadDeposits();updateBadges();}
+async function rejectDep(id){const{value:reason}=await Swal.fire({title:'Reject?',input:'text',inputLabel:'Reason',showCancelButton:true,confirmButtonColor:'#EF4444'});if(!reason)return;await db.collection('deposits').doc(id).update({status:'rejected',rejectReason:reason,rejectedAt:FV.serverTimestamp(),rejectedBy:admin.uid});Swal.fire({icon:'success',title:'Rejected',timer:1500});loadDeposits();updateBadges();}
+
+async function loadWithdrawals(){const f=$('withdrawFilter')?.value||'pending';let q=db.collection('withdrawals');if(f!=='all')q=q.where('status','==',f);const s=await q.get(),docs=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.requestedAt?.toMillis?.()||0)-(a.requestedAt?.toMillis?.()||0));$('withdrawalsTable').innerHTML=docs.map(d=>`<tr><td><strong>${d.userName||'N/A'}</strong></td><td>${fc2(d.amount)}</td><td style="color:#EF4444;">-${fc2(d.feeAmount||0)}</td><td style="color:#10B981;">${fc2(d.receiveAmount||0)}</td><td>${d.bankName||'—'}</td><td><span class="status-badge ${d.status}">${d.status}</span></td><td>${d.requestedAt?.toDate?.()?.toLocaleString()||'—'}</td><td>${d.status==='pending'?`<button class="btn btn-sm btn-success" onclick="approveWit('${d.id}','${d.userId}',${d.amount})">Approve</button> <button class="btn btn-sm btn-danger" onclick="rejectWit('${d.id}','${d.userId}',${d.amount})">Reject</button>`:'—'}</td></tr>`).join('')||'<tr><td colspan="8" style="text-align:center;">No withdrawals</td></tr>';}
+
+async function approveWit(id,uid,amt){const r=await Swal.fire({title:'Approve?',icon:'question',showCancelButton:true,confirmButtonColor:'#10B981'});if(!r.isConfirmed)return;await db.collection('withdrawals').doc(id).update({status:'approved',approvedAt:FV.serverTimestamp(),approvedBy:admin.uid});await logAction('approve_withdrawal',uid,{amount:amt});Swal.fire({icon:'success',title:'Approved!',timer:1500});loadWithdrawals();updateBadges();}
+async function rejectWit(id,uid,amt){const{value:reason}=await Swal.fire({title:'Reject?',input:'text',inputLabel:'Reason',showCancelButton:true,confirmButtonColor:'#EF4444'});if(!reason)return;await db.runTransaction(async tr=>{tr.update(db.collection('withdrawals').doc(id),{status:'rejected',rejectReason:reason,rejectedAt:FV.serverTimestamp(),rejectedBy:admin.uid});tr.update(db.collection('users').doc(uid),{withdrawalBalance:FV.increment(amt)});});Swal.fire({icon:'success',title:'Rejected & Refunded',timer:1500});loadWithdrawals();updateBadges();}
+
+/* ═══════════════════════════════════════════════════════════════════
+   INVESTMENTS / PLANS / TRANSACTIONS / REFERRALS / SUBORDINATE / ADMINS
+═══════════════════════════════════════════════════════════════════ */
+async function loadInvestments(){const f=$('investmentFilter')?.value||'active';let q=db.collection('investments');if(f!=='all')q=q.where('status','==',f);const s=await q.get(),docs=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));$('investmentsTable').innerHTML=docs.map(d=>`<tr><td><strong>${d.userName||d.userId?.slice(0,8)||'N/A'}</strong></td><td>${d.planName||'Plan'}</td><td>${fc2(d.capital)}</td><td>${fc2(d.dailyROI)}</td><td>${d.claimedDays||0}/${d.duration||0} days</td><td><span class="status-badge ${d.status}">${d.status}</span></td><td>${d.createdAt?.toDate?.()?.toLocaleDateString()||'—'}</td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;">No investments</td></tr>';}
+
+async function loadPlans(){const s=await db.collection('plans').get();$('plansTable').innerHTML=s.docs.map(d=>{const p=d.data();return`<tr><td><strong>${p.name}</strong></td><td>${fc2(p.capital)}</td><td>${fc2(p.dailyROI)}</td><td>${p.duration} days</td><td>${fc2(p.dailyROI*p.duration)}</td><td><button class="btn btn-sm btn-danger" onclick="deletePlan('${d.id}')"><i class="fas fa-trash"></i></button></td></tr>`;}).join('')||'<tr><td colspan="6" style="text-align:center;">No plans</td></tr>';}
+async function addPlan(){const n=$('planName').value.trim(),c=Number($('planCapital').value),r=Number($('planDailyROI').value),d=Number($('planDuration').value);if(!n||!c||!r||!d)return Swal.fire({icon:'warning',title:'Fill all fields'});await db.collection('plans').add({name:n,capital:c,dailyROI:r,duration:d,totalReturn:r*d,active:true,createdAt:FV.serverTimestamp()});Swal.fire({icon:'success',title:'Added!',timer:1500});closeModal('addPlanModal');loadPlans();}
+async function deletePlan(id){const r=await Swal.fire({title:'Delete?',icon:'warning',showCancelButton:true,confirmButtonColor:'#EF4444'});if(!r.isConfirmed)return;await db.collection('plans').doc(id).delete();Swal.fire({icon:'success',title:'Deleted!',timer:1500});loadPlans();}
+
+async function loadTransactions(){const f=$('transactionFilter')?.value||'all';let q=db.collection('transactions');if(f!=='all')q=q.where('type','==',f);const s=await q.get(),docs=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0)).slice(0,100);$('transactionsTable').innerHTML=docs.map(d=>`<tr><td><small>${d.userId?.slice(0,8)||'N/A'}...</small></td><td><span class="status-badge active">${(d.type||'').replace(/_/g,' ')}</span></td><td>${fc2(d.amount)}</td><td><small>${d.description||'—'}</small></td><td>${d.createdAt?.toDate?.()?.toLocaleString()||'—'}</td></tr>`).join('')||'<tr><td colspan="5" style="text-align:center;">No transactions</td></tr>';}
+
+async function loadReferrals(){const s=await db.collection('users').get();const refs=s.docs.map(d=>({id:d.id,...d.data()})).filter(u=>(u.referralCount||0)>0).sort((a,b)=>(b.referralCount||0)-(a.referralCount||0));$('referralsTable').innerHTML=refs.map(u=>`<tr><td><strong>${u.fullName||u.username||'N/A'}</strong></td><td>${u.referralCount||0}</td><td>${u.level1Count||0}</td><td>${u.level2Count||0}</td><td>${u.level3Count||0}</td><td>${fc2(u.totalRefEarnings||0)}</td></tr>`).join('')||'<tr><td colspan="6" style="text-align:center;">No referral data</td></tr>';}
+
+async function loadSubordinate(){
+  const s=await db.collection('users').get();
+  const data=[];
+  for(const d of s.docs){const u=d.data();const c=await countActive(d.id);if(c>0)data.push({name:u.fullName||u.username||'N/A',down:c,daily:gdr(c),weekly:gwr(c),ld:u.subordinateRewards?.daily?.lastClaimDate||'Never',lw:u.subordinateRewards?.weekly?.lastClaimWeek||'Never'});}
+  $('subordinateTable').innerHTML=data.map(d=>`<tr><td><strong>${d.name}</strong></td><td>${d.down}</td><td>${fc2(d.daily)}</td><td>${fc2(d.weekly)}</td><td><small>${d.ld}</small></td><td><small>${d.lw}</small></td></tr>`).join('')||'<tr><td colspan="6" style="text-align:center;">No active downlines found</td></tr>';
+}
+
+async function countActive(uid){
+  try{
+    const s=await db.collection('users').where('referrerUid','==',uid).get();
+    let c=0;
+    for(const d of s.docs){const u=d.data();if((u.totalInvested||0)>=10000){const inv=await db.collection('investments').where('userId','==',d.id).where('status','==','active').limit(1).get();if(!inv.empty)c++;}}
+    return c;
+  }catch(e){return 0;}
+}
+
+async function loadAdmins(){const s=await db.collection('users').where('isAdmin','==',true).get();$('adminsTable').innerHTML=s.docs.map(d=>{const u=d.data();return`<tr><td><strong>${u.fullName||u.username||'N/A'}</strong></td><td>${u.email||'—'}</td><td><span class="status-badge active">${u.adminRole||'admin'}</span></td><td>${d.id!==admin?.uid?`<button class="btn btn-sm btn-danger" onclick="removeAdmin('${d.id}')">Remove</button>`:'<small>You</small>'}</td></tr>`;}).join('');}
+async function addAdmin(){const em=$('adminEmail').value.trim();if(!em)return Swal.fire({icon:'warning',title:'Enter email'});const s=await db.collection('users').where('email','==',em).limit(1).get();if(s.empty)return Swal.fire({icon:'error',title:'Not found'});await db.collection('users').doc(s.docs[0].id).update({isAdmin:true,adminRole:$('adminRoleSelect').value});await logAction('add_admin',s.docs[0].id,{role:$('adminRoleSelect').value});Swal.fire({icon:'success',title:'Added!',timer:1500});closeModal('addAdminModal');loadAdmins();}
+async function removeAdmin(uid){if(uid===admin?.uid)return Swal.fire({icon:'error',title:'Cannot remove yourself'});const r=await Swal.fire({title:'Remove admin?',icon:'warning',showCancelButton:true,confirmButtonColor:'#EF4444'});if(!r.isConfirmed)return;await db.collection('users').doc(uid).update({isAdmin:false,adminRole:FV.delete()});await logAction('remove_admin',uid,{});Swal.fire({icon:'success',title:'Removed',timer:1500});loadAdmins();}
+
+async function loadAdminLogs(){
+  try{
+    const s=await db.collection('admin_actions').orderBy('createdAt','desc').limit(200).get();
+    const q=($('logSearch')?.value||'').toLowerCase();
+    let logs=s.docs.map(d=>d.data());
+    if(q)logs=logs.filter(l=>(l.action||'').toLowerCase().includes(q)||(l.adminName||'').toLowerCase().includes(q)||(l.targetUserId||'').toLowerCase().includes(q));
+    $('logsTable').innerHTML=logs.map(l=>`<tr><td><strong>${l.adminName||l.adminId?.slice(0,8)||'N/A'}</strong></td><td><span class="status-badge active">${(l.action||'').replace(/_/g,' ')}</span></td><td><small>${l.targetUserId?.slice(0,8)||'—'}...</small></td><td><small>${JSON.stringify(l.details||{}).slice(0,60)}</small></td><td>${l.createdAt?.toDate?.()?.toLocaleString()||'—'}</td></tr>`).join('')||'<tr><td colspan="5" style="text-align:center;">No logs</td></tr>';
+  }catch(e){$('logsTable').innerHTML='<tr><td colspan="5" style="text-align:center;">Index required for admin_actions. Create composite index: createdAt DESC</td></tr>';}
+}
+
+async function logAction(action,target,details){await db.collection('admin_actions').add({adminId:admin.uid,adminName:admin.fullName||admin.username||'Admin',action,targetUserId:target,details,createdAt:FV.serverTimestamp()}).catch(()=>{});}
+
+async function updateBadges(){const[dp,wp]=await Promise.all([db.collection('deposits').where('status','==','pending').get(),db.collection('withdrawals').where('status','==','pending').get()]);$('pendingDepBadge').textContent=dp.size;$('pendingWitBadge').textContent=wp.size;}
+
+function openModal(id){$(id).classList.add('active');}
+function closeModal(id){$(id).classList.remove('active');}
+function showAddPlanModal(){openModal('addPlanModal');}
+function showAddAdminModal(){openModal('addAdminModal');}
+
+async function adminLogout(){const r=await Swal.fire({title:'Sign Out?',icon:'question',showCancelButton:true,confirmButtonColor:'#EF4444'});if(r.isConfirmed){auth.signOut();window.location.href='login.html';}}
+
+// Close modals on backdrop click
+document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('active');}));
+
+// Expose to global scope
+window.toggleSidebar=toggleSidebar;window.refreshCurrentPage=refreshCurrentPage;
+window.toggleSelectAllUsers=toggleSelectAllUsers;window.updateSelected=updateSelected;
+window.showBulkActions=showBulkActions;window.executeBulkAction=executeBulkAction;
+window.showAdjust=showAdjust;window.showSuspend=showSuspend;window.showBan=showBan;
+window.showDelete=showDelete;window.selectDur=selectDur;window.executeUserAction=executeUserAction;
+window.viewUser=viewUser;window.approveDep=approveDep;window.rejectDep=rejectDep;
+window.approveWit=approveWit;window.rejectWit=rejectWit;
+window.addPlan=addPlan;window.deletePlan=deletePlan;window.addAdmin=addAdmin;window.removeAdmin=removeAdmin;
+window.closeModal=closeModal;window.showAddPlanModal=showAddPlanModal;window.showAddAdminModal=showAddAdminModal;
+window.adminLogout=adminLogout;window.loadUsers=loadUsers;window.loadTransactions=loadTransactions;
+window.loadAdminLogs=loadAdminLogs;
+
+console.log('✅ Kinetic Wealth Admin Panel Ready');
+</script>
+
+</body>
+</html>
