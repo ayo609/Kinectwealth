@@ -484,7 +484,7 @@ function showNotifications(){
   Swal.fire({title:'Notifications',html:'<p>✅ Welcome to Kinetic Wealth!</p><p>💰 Claim daily ROI every 24h</p><p>👥 Earn referrals 10%/3%/1%</p><p>🏆 Check Subordinate Rewards</p>',confirmButtonColor:'#0052CC'});
 }
 function showSupport(){
-  Swal.fire({title:'Support',html:'<p><a href="https://wa.me/420722586066" target="_blank">WhatsApp Support</a></p><p><a href="mailto:support@kineticwealth.com">Email Support</a></p>',confirmButtonColor:'#0052CC'});
+  Swal.fire({title:'Support',html:'<p><a href="https://wa.me/" target="_blank">WhatsApp Support</a></p><p><a href="mailto:support@kineticwealth.com">Email Support</a></p>',confirmButtonColor:'#0052CC'});
 }
 function confirmLogout(){
   Swal.fire({title:'Sign out?',icon:'warning',showCancelButton:true,confirmButtonText:'Sign Out',confirmButtonColor:'#DC2626'}).then(r=>{if(r.isConfirmed)auth.signOut().then(()=>window.location.href='login.html');});
