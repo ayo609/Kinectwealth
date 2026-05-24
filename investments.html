@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover"/>
+<title>Kinetic Wealth · My Portfolio</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --primary: #0052CC; --primary-dark: #003D99; --primary-light: #E5EFFF;
+  --bg-main: #F4F7FB; --card-bg: #FFFFFF; --card-bg-inner: #F8FAFC;
+  --text-primary: #0F172A; --text-muted: #64748B; --border-light: #E2E8F0;
+  --success: #059669; --success-light: #D1FAE5;
+  --danger: #DC2626; --danger-light: #FEE2E2;
+  --warning: #D97706; --warning-light: #FEF3C7; --accent: #3B82F6;
+}
+[data-theme="dark"] {
+  --primary: #3B82F6; --primary-dark: #60A5FA; --primary-light: #1E3A8A;
+  --bg-main: #0F172A; --card-bg: #1E293B; --card-bg-inner: #151D2A;
+  --text-primary: #F8FAFC; --text-muted: #94A3B8; --border-light: #334155;
+  --success: #10B981; --success-light: #064E3B;
+  --danger: #EF4444; --danger-light: #7F1D1D;
+  --warning: #F59E0B; --warning-light: #78350F;
+}
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Inter',sans-serif; }
+body { background:var(--bg-main); color:var(--text-primary); min-height:100vh; -webkit-font-smoothing:antialiased; padding-bottom:100px; transition:background-color 0.3s,color 0.3s; }
+
+.app-header { background:var(--primary); padding:16px 20px; position:sticky; top:0; z-index:100; box-shadow:0 4px 12px rgba(0,82,204,0.15); }
+.header-top { display:flex; align-items:center; justify-content:space-between; max-width:500px; margin:0 auto 14px; }
+.header-left { display:flex; align-items:center; gap:12px; }
+.back-btn { width:38px; height:38px; background:rgba(255,255,255,0.2); border-radius:12px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#fff; font-size:15px; text-decoration:none; border:none; }
+.header-title { font-size:18px; font-weight:700; color:#fff; }
+.header-actions { display:flex; gap:8px; }
+.icon-btn { width:38px; height:38px; background:rgba(255,255,255,0.2); border-radius:12px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#fff; font-size:15px; border:none; }
+.stats-row { display:flex; gap:10px; max-width:500px; margin:0 auto; }
+.stat-mini { flex:1; background:rgba(255,255,255,0.15); border-radius:12px; padding:10px; text-align:center; color:#fff; }
+.stat-mini-value { font-size:16px; font-weight:700; }
+.stat-mini-label { font-size:10px; opacity:0.8; }
+
+.main-container { max-width:500px; margin:0 auto; padding:16px 16px 100px; }
+.filter-tabs { display:flex; gap:6px; background:var(--card-bg); border-radius:30px; padding:4px; margin-bottom:20px; border:1px solid var(--border-light); }
+.filter-tab { flex:1; padding:10px; border-radius:26px; font-size:13px; font-weight:600; text-align:center; cursor:pointer; color:var(--text-muted); background:none; border:none; font-family:inherit; }
+.filter-tab.active { background:var(--primary); color:#fff; }
+
+.investment-card { background:var(--card-bg); border-radius:18px; overflow:hidden; margin-bottom:14px; border:1px solid var(--border-light); }
+.investment-card.completed { opacity:0.7; }
+.card-header { padding:16px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-light); }
+.plan-dot { width:10px; height:10px; border-radius:50%; background:var(--success); }
+.investment-card.completed .plan-dot { background:var(--text-muted); }
+.plan-name { font-weight:700; font-size:15px; color:var(--text-primary); margin-left:8px; }
+.status-badge { font-size:10px; padding:5px 10px; border-radius:20px; font-weight:600; }
+.status-badge.active { background:var(--success-light); color:var(--success); }
+.status-badge.completed { background:var(--border-light); color:var(--text-muted); }
+
+.card-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; padding:14px 16px; }
+.card-stat { text-align:center; }
+.card-stat-label { font-size:10px; color:var(--text-muted); margin-bottom:3px; }
+.card-stat-value { font-size:14px; font-weight:700; }
+.card-stat-value.green { color:var(--success); }
+
+.progress-area { padding:0 16px 10px; }
+.progress-header { display:flex; justify-content:space-between; font-size:10px; color:var(--text-muted); margin-bottom:6px; }
+.progress-bar { height:6px; background:var(--border-light); border-radius:3px; overflow:hidden; }
+.progress-fill { height:100%; background:linear-gradient(90deg,var(--primary),var(--accent)); border-radius:3px; }
+
+.claim-area { background:var(--card-bg-inner); margin:12px 16px 16px; border-radius:14px; padding:14px; border:1px solid var(--border-light); }
+.claim-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+.claim-label { font-size:11px; color:var(--text-muted); }
+.claim-value { font-size:18px; font-weight:700; color:var(--success); }
+.countdown-timer { text-align:right; font-size:13px; font-weight:600; letter-spacing:0.5px; margin-bottom:10px; color:var(--text-muted); }
+.countdown-timer.ready { color:var(--success); }
+.claim-btn { width:100%; padding:12px; background:var(--primary); color:#fff; border:none; border-radius:12px; font-weight:700; font-size:13px; cursor:pointer; font-family:inherit; display:flex; align-items:center; justify-content:center; gap:6px; }
+.claim-btn:disabled { background:#94A3B8; cursor:not-allowed; opacity:0.5; }
+.completed-notice { margin:12px 16px 16px; padding:14px; background:var(--card-bg-inner); border-radius:14px; text-align:center; border:1px solid var(--border-light); color:var(--text-muted); font-size:13px; }
+.card-footer { padding:14px 16px; border-top:1px solid var(--border-light); display:flex; justify-content:space-between; align-items:center; }
+.footer-label { font-size:12px; color:var(--text-muted); }
+.footer-value { font-size:16px; font-weight:700; color:var(--primary); }
+
+.empty-state { text-align:center; padding:50px 24px; background:var(--card-bg); border-radius:20px; border:2px dashed var(--border-light); }
+.empty-icon { font-size:48px; margin-bottom:12px; }
+.empty-title { font-size:16px; font-weight:700; margin-bottom:6px; }
+.empty-text { font-size:13px; color:var(--text-muted); margin-bottom:18px; }
+.empty-btn { display:inline-block; padding:12px 24px; background:var(--primary); color:#fff; border-radius:25px; text-decoration:none; font-weight:600; font-size:14px; }
+
+.claim-toast { position:fixed; bottom:90px; left:16px; right:16px; max-width:400px; margin:0 auto; background:var(--card-bg); border-left:4px solid var(--success); border-radius:16px; padding:14px; display:flex; align-items:center; gap:12px; z-index:999; animation:slideUp 0.3s ease; }
+@keyframes slideUp { from{opacity:0;transform:translateY(20px);} to{opacity:1;transform:translateY(0);} }
+.toast-icon { width:40px; height:40px; border-radius:12px; background:var(--success-light); color:var(--success); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+
+.tab-bar { position:fixed; bottom:0; left:0; right:0; background:var(--card-bg); border-top:1px solid var(--border-light); display:flex; justify-content:space-around; padding:10px 16px 22px; max-width:500px; margin:0 auto; z-index:100; }
+.tab-item { display:flex; flex-direction:column; align-items:center; gap:4px; text-decoration:none; font-size:10px; font-weight:600; color:var(--text-muted); }
+.tab-item i { font-size:20px; }
+.tab-item.active { color:var(--primary); }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="header-top">
+    <div class="header-left"><a href="home.html" class="back-btn"><i class="fas fa-arrow-left"></i></a><div class="header-title">My Portfolio</div></div>
+    <div class="header-actions"><button class="icon-btn" onclick="refreshAll()"><i class="fas fa-sync-alt"></i></button><button class="icon-btn" onclick="toggleTheme()" id="themeToggleBtn"><i class="fas fa-moon"></i></button></div>
+  </div>
+  <div class="stats-row">
+    <div class="stat-mini"><div class="stat-mini-value" id="statDeposit">₦0</div><div class="stat-mini-label">Deposit</div></div>
+    <div class="stat-mini"><div class="stat-mini-value" id="statWithdraw">₦0</div><div class="stat-mini-label">Withdrawable</div></div>
+    <div class="stat-mini"><div class="stat-mini-value" id="statEarned">₦0</div><div class="stat-mini-label">Earned</div></div>
+  </div>
+</div>
+
+<div class="main-container">
+  <div class="filter-tabs">
+    <button class="filter-tab active" data-filter="active" onclick="setFilter('active',this)">Active</button>
+    <button class="filter-tab" data-filter="completed" onclick="setFilter('completed',this)">Completed</button>
+    <button class="filter-tab" data-filter="all" onclick="setFilter('all',this)">All</button>
+  </div>
+  <div id="investmentList"><div class="empty-state"><div class="empty-icon"><i class="fas fa-spinner fa-spin" style="color:var(--primary);"></i></div><div class="empty-title">Loading...</div></div></div>
+</div>
+
+<div class="tab-bar">
+  <a href="home.html" class="tab-item"><i class="fas fa-home"></i><span>Home</span></a>
+  <a href="plans.html" class="tab-item"><i class="fas fa-bolt"></i><span>Invest</span></a>
+  <a href="withdraw.html" class="tab-item"><i class="fas fa-money-bill-transfer"></i><span>Withdraw</span></a>
+  <a href="referrals.html" class="tab-item"><i class="fas fa-users"></i><span>Team</span></a>
+  <a href="dashboard.html" class="tab-item"><i class="fas fa-user"></i><span>Profile</span></a>
+</div>
+
+<script>
+const fc={apiKey:"AIzaSyBl6HEVa9mUuROvnohMKzeEzzc0aTREU54",authDomain:"kinetic-dc8e6.firebaseapp.com",projectId:"kinetic-dc8e6",storageBucket:"kinetic-dc8e6.firebasestorage.app",messagingSenderId:"980527555815",appId:"1:980527555815:web:131ccee594e0c8f122ee42"};
+firebase.initializeApp(fc);
+const auth=firebase.auth(),db=firebase.firestore(),FV=firebase.firestore.FieldValue,MS=86400000;
+
+let currentUser=null,authReady=false,allInvestments=[],currentFilter='active',countdownInterval=null;
+
+const fm=n=>(Number(n)||0).toLocaleString('en-NG'),fc2=n=>'₦'+fm(n),fs=n=>{const v=Number(n)||0;return v>=1e6?'₦'+(v/1e6).toFixed(1)+'M':v>=1e3?'₦'+(v/1e3).toFixed(1)+'K':'₦'+v;}
+function st(id,t){const e=document.getElementById(id);if(e)e.textContent=t;}
+
+// 🔥 FIXED: Parse any timestamp format
+function parseTimestamp(ts){
+  if(!ts)return 0;
+  if(typeof ts==='number')return ts<1e12?ts*1000:ts;
+  if(ts.toMillis)return ts.toMillis();
+  if(ts.seconds)return ts.seconds*1000;
+  if(typeof ts==='string'){const d=new Date(ts).getTime();return isNaN(d)?0:d;}
+  return 0;
+}
+
+function fmtCountdown(ms){
+  if(ms<=0)return'Ready!';
+  const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000),s=Math.floor((ms%60000)/1000);
+  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+
+function toggleTheme(){const h=document.documentElement,d=h.getAttribute('data-theme')==='dark',t=d?'light':'dark';h.setAttribute('data-theme',t);localStorage.setItem('kw-theme',t);const i=document.querySelector('#themeToggleBtn i');if(i)i.className=t==='dark'?'fas fa-sun':'fas fa-moon';}
+(function(){const s=localStorage.getItem('kw-theme')||'light';document.documentElement.setAttribute('data-theme',s);document.addEventListener('DOMContentLoaded',()=>{const i=document.querySelector('#themeToggleBtn i');if(i)i.className=s==='dark'?'fas fa-sun':'fas fa-moon';});})();
+
+auth.onAuthStateChanged(async(u)=>{if(!u){window.location.replace('login.html');return;}currentUser=u;authReady=true;await loadAll();startCountdownIfNeeded();});
+
+async function loadAll(){await loadBalances();await loadInvestments();}
+async function loadBalances(){try{const d=await db.collection('users').doc(currentUser.uid).get();if(d.exists){const x=d.data();st('statDeposit',fs(x.depositBalance||0));st('statWithdraw',fs(x.withdrawalBalance||0));st('statEarned',fs(x.totalEarnings||0));}}catch(e){}}
+async function loadInvestments(){try{const s=await db.collection('investments').where('userId','==',currentUser.uid).get();allInvestments=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>parseTimestamp(b.activatedAt||b.createdAt)-parseTimestamp(a.activatedAt||a.createdAt));renderInvestments();}catch(e){document.getElementById('investmentList').innerHTML='<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Failed</div><button class="empty-btn" onclick="refreshAll()">Retry</button></div>';}}
+
+// 🔥 FIXED: Get next claim time properly
+function getNextClaimTime(inv){
+  const now=Date.now();
+  // Check nextClaimAt first (could be ISO string or Timestamp)
+  if(inv.nextClaimAt){
+    const ms=parseTimestamp(inv.nextClaimAt);
+    if(ms>0)return ms;
+  }
+  // Fallback: lastClaimAt + 24 hours
+  if(inv.lastClaimAt){
+    const ms=parseTimestamp(inv.lastClaimAt);
+    if(ms>0)return ms+MS;
+  }
+  // Fallback: activatedAt + 24 hours
+  if(inv.activatedAt){
+    const ms=parseTimestamp(inv.activatedAt);
+    if(ms>0)return ms+MS;
+  }
+  // Last resort: now + 24h
+  return now+MS;
+}
+
+function renderInvestments(){
+  const c=document.getElementById('investmentList');
+  const filtered=allInvestments.filter(inv=>{if(currentFilter==='active')return inv.status==='active';if(currentFilter==='completed')return inv.status==='completed';return true;});
+  if(!filtered.length){const msgs={active:{icon:'📊',title:'No Active Investments',text:'Start earning daily returns!',btn:true},completed:{icon:'✅',title:'No Completed',text:'Finished plans appear here',btn:false},all:{icon:'📭',title:'No Investments',text:'Choose a plan to start',btn:true}};const m=msgs[currentFilter]||msgs.all;c.innerHTML=`<div class="empty-state"><div class="empty-icon">${m.icon}</div><div class="empty-title">${m.title}</div><div class="empty-text">${m.text}</div>${m.btn?'<a href="plans.html" class="empty-btn">View Plans</a>':''}</div>`;return;}
+  c.innerHTML=filtered.map(inv=>buildCard(inv)).join('');
+}
+
+function buildCard(inv){
+  const now=Date.now(),isActive=inv.status==='active';
+  const dur=Number(inv.duration)||1,cd=Number(inv.claimedDays)||0,roi=Number(inv.dailyROI)||0,cap=Number(inv.capital)||0;
+  const prog=Math.min((cd/dur)*100,100),te=Number(inv.totalEarned)||0,dl=Math.max(0,dur-cd),isF=dl<=1&&isActive;
+  const nct=getNextClaimTime(inv),tl=Math.max(0,nct-now),can=isActive&&tl<=0;
+  const ca=isF?roi+cap:roi;
+  return`<div class="investment-card${isActive?'':' completed'}" id="card_${inv.id}">
+    <div class="card-header"><div style="display:flex;align-items:center;"><div class="plan-dot"></div><div class="plan-name">${inv.planName||'Plan'}</div></div><div class="status-badge ${isActive?'active':'completed'}">${isActive?'● Active':'✓ Completed'}</div></div>
+    <div class="card-stats"><div class="card-stat"><div class="card-stat-label">Capital</div><div class="card-stat-value">${fc2(cap)}</div></div><div class="card-stat"><div class="card-stat-label">Daily ROI</div><div class="card-stat-value green">+${fc2(roi)}</div></div><div class="card-stat"><div class="card-stat-label">${isActive?'Remaining':'Status'}</div><div class="card-stat-value">${isActive?dl+' days':'Done'}</div></div></div>
+    <div class="progress-area"><div class="progress-header"><span>Day ${cd} of ${dur}</span><span>${Math.round(prog)}%</span></div><div class="progress-bar"><div class="progress-fill" style="width:${prog}%"></div></div></div>
+    ${isActive?`<div class="claim-area"><div class="claim-top"><span class="claim-label">${isF?'🏁 Final Payout':'Next Payout'}</span><span class="claim-value">+${fc2(ca)}</span></div><div class="countdown-timer${can?' ready':''}" id="cd_${inv.id}">${can?'✅ Ready!':fmtCountdown(tl)}</div><button class="claim-btn" id="btn_${inv.id}" onclick="claimROI('${inv.id}')"${can?'':' disabled'}>${isF?'Claim All':'Claim'}</button></div>`:`<div class="completed-notice"><i class="fas fa-check-circle"></i> Completed — All returns paid</div>`}
+    <div class="card-footer"><span class="footer-label">Total Earned</span><span class="footer-value">${fc2(te)}</span></div></div>`;
+}
+
+function startCountdownIfNeeded(){if(countdownInterval)clearInterval(countdownInterval);if(allInvestments.some(i=>i.status==='active'))countdownInterval=setInterval(updateCountdowns,1000);}
+
+function updateCountdowns(){
+  const now=Date.now();
+  document.querySelectorAll('[id^="cd_"]').forEach(el=>{
+    const invId=el.id.replace('cd_',''),inv=allInvestments.find(i=>i.id===invId);
+    if(!inv||inv.status!=='active')return;
+    const nct=getNextClaimTime(inv),tl=Math.max(0,nct-now),can=tl<=0;
+    el.textContent=can?'✅ Ready!':fmtCountdown(tl);
+    el.classList.toggle('ready',can);
+    const btn=document.getElementById('btn_'+invId);
+    if(btn)btn.disabled=!can;
+  });
+}
+
+async function claimROI(invId){
+  if(!currentUser)return;
+  const inv=allInvestments.find(i=>i.id===invId);
+  if(!inv||inv.status!=='active')return Swal.fire({icon:'warning',title:'Not Available',confirmButtonColor:'#0052CC'});
+  const now=Date.now(),nct=getNextClaimTime(inv);
+  if(now<nct)return Swal.fire({icon:'warning',title:'Not Ready',text:'Wait for countdown.',confirmButtonColor:'#0052CC'});
+
+  const dur=Number(inv.duration)||1,cd=Number(inv.claimedDays)||0,isF=(cd+1)>=dur,roi=Number(inv.dailyROI)||0,cap=Number(inv.capital)||0,ca=isF?roi+cap:roi;
+  const cf=await Swal.fire({title:isF?'Final Claim!':'Claim ROI',html:`<div style="font-size:30px;font-weight:800;color:var(--success);">+${fc2(ca)}</div><p>${isF?'Includes capital!':`Day ${cd+1} of ${dur}`}</p>`,icon:'question',showCancelButton:true,confirmButtonText:`Claim ${fc2(ca)}`,confirmButtonColor:'#0052CC'});
+  if(!cf.isConfirmed)return;
+
+  Swal.fire({title:'Processing...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+  try{
+    const b=db.batch(),at=parseTimestamp(inv.activatedAt||inv.createdAt),ds=Math.floor((now-at)/MS),nnc=new Date(at+((ds+1)*MS));
+    b.update(db.collection('users').doc(currentUser.uid),{withdrawalBalance:FV.increment(ca),totalEarnings:FV.increment(ca)});
+    if(isF){b.update(db.collection('investments').doc(invId),{status:'completed',completedAt:new Date().toISOString(),lastClaimAt:new Date().toISOString(),claimedDays:FV.increment(1),daysRemaining:0,totalEarned:FV.increment(ca)});}
+    else{b.update(db.collection('investments').doc(invId),{lastClaimAt:new Date().toISOString(),nextClaimAt:nnc.toISOString(),claimedDays:FV.increment(1),daysRemaining:FV.increment(-1),totalEarned:FV.increment(roi)});}
+    b.set(db.collection('transactions').doc(),{userId:currentUser.uid,investmentId:invId,type:isF?'roi_final':'roi_daily',amount:ca,planName:inv.planName||'Plan',description:(isF?'Final':'Daily')+' ROI',wallet:'withdrawal',status:'completed',createdAt:new Date()});
+    await b.commit();
+    showToast(ca,isF);
+    await loadAll();startCountdownIfNeeded();Swal.close();
+  }catch(e){Swal.fire({icon:'error',title:'Failed',text:e.message,confirmButtonColor:'#DC2626'});}
+}
+
+function showToast(a,f){const x=document.querySelector('.claim-toast');if(x)x.remove();const t=document.createElement('div');t.className='claim-toast';t.innerHTML=`<div class="toast-icon">${f?'🎉':'💰'}</div><div class="toast-text"><strong>+${fc2(a)}</strong><br><small>Added to withdrawal wallet${f?' (incl. capital)':''}</small></div>`;document.body.appendChild(t);setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity 0.3s';setTimeout(()=>t.remove(),300);},3500);}
+
+function setFilter(f,el){currentFilter=f;document.querySelectorAll('.filter-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderInvestments();startCountdownIfNeeded();}
+async function refreshAll(){const b=document.querySelector('.icon-btn .fa-sync-alt');if(b)b.classList.add('fa-spin');await loadAll();startCountdownIfNeeded();setTimeout(()=>{if(b)b.classList.remove('fa-spin');},600);}
+
+window.addEventListener('beforeunload',()=>{if(countdownInterval)clearInterval(countdownInterval);});
+window.toggleTheme=toggleTheme;window.setFilter=setFilter;window.claimROI=claimROI;window.refreshAll=refreshAll;
+</script>
+
+</body>
+</html>
