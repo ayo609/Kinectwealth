@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover"/>
+<title>Kinetic Wealth · Admin Panel</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --gold:#F5C842; --gold-dim:#C9A227; --gold-glow:rgba(245,200,66,0.15);
+  --blue:#3B8BEB; --blue-dim:#2266C4; --success:#22C55E; --danger:#F43F5E;
+  --warning:#FB923C; --info:#38BDF8;
+  --bg:#07080D; --surface:#0E1118; --surface2:#141820; --surface3:#1C2230;
+  --border:rgba(255,255,255,0.05); --border-bright:rgba(255,255,255,0.10);
+  --text:#E8EAED; --text-dim:#8A94A6; --text-faint:#4A5568;
+  --radius:16px; --radius-sm:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:99px}
+
+.bg-orbs{position:fixed;inset:0;pointer-events:none;z-index:0}
+.orb{position:absolute;border-radius:50%;filter:blur(100px);opacity:0.2;animation:float 15s ease-in-out infinite}
+.orb1{width:500px;height:500px;background:#1a3a6e;top:-150px;left:-100px}
+.orb2{width:400px;height:400px;background:#2a1a0e;bottom:-100px;right:-80px;animation-delay:-7s}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-40px)}}
+
+.sidebar{width:280px;background:var(--surface);border-right:1px solid var(--border);position:fixed;left:0;top:0;bottom:0;z-index:900;display:flex;flex-direction:column;transition:transform 0.3s;overflow-y:auto}
+.sidebar-header{padding:24px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.logo-icon{width:44px;height:44px;background:linear-gradient(135deg,var(--gold),#E8A800);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#07080D;flex-shrink:0}
+.logo-text{font-size:18px;font-weight:800;color:#fff;letter-spacing:-0.3px}
+.logo-sub{font-size:9px;font-weight:700;color:var(--gold);letter-spacing:2px;font-family:'JetBrains Mono',monospace;margin-top:2px}
+.sidebar-nav{padding:16px 10px;flex:1}
+.nav-section{font-size:9px;font-weight:700;color:var(--text-faint);letter-spacing:2px;padding:10px 12px 6px;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:10px;cursor:pointer;transition:all 0.2s;color:var(--text-dim);font-size:12px;font-weight:500}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:linear-gradient(135deg,rgba(245,200,66,0.15),rgba(245,200,66,0.04));color:var(--gold);border:1px solid rgba(245,200,66,0.15)}
+.nav-item i{width:18px;font-size:13px;text-align:center}
+.nav-badge{background:var(--danger);color:#fff;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;margin-left:auto}
+.sidebar-footer{padding:16px;border-top:1px solid var(--border)}
+.admin-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.admin-av{width:40px;height:40px;background:linear-gradient(135deg,var(--gold),#C9A227);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;color:#07080D;flex-shrink:0}
+.admin-name{font-size:12px;font-weight:700;color:#fff}.admin-role{font-size:9px;color:var(--gold);font-weight:600;letter-spacing:1px}
+.logout-btn{width:100%;padding:10px;border-radius:10px;background:transparent;border:1px solid rgba(244,63,94,0.3);color:var(--danger);cursor:pointer;font-size:11px;font-weight:600;font-family:'Sora',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s}
+.logout-btn:hover{background:rgba(244,63,94,0.1)}
+
+.main-content{margin-left:280px;min-height:100vh;padding:28px 28px 40px;position:relative;z-index:1}
+.top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;flex-wrap:wrap;gap:12px}
+.page-bread{font-size:10px;color:var(--text-faint);font-family:'JetBrains Mono',monospace;letter-spacing:1px}
+.page-title{font-size:28px;font-weight:800;color:#fff;letter-spacing:-0.5px}
+.top-right{display:flex;gap:10px;align-items:center}
+.refresh-btn{padding:10px 18px;background:var(--surface2);border:1px solid var(--border-bright);border-radius:10px;cursor:pointer;font-size:11px;font-weight:600;color:var(--text);font-family:'Sora',sans-serif;display:flex;align-items:center;gap:8px;transition:all 0.2s}
+.refresh-btn:hover{border-color:var(--gold);color:var(--gold)}
+
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:24px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;transition:all 0.2s}
+.stat-card:hover{transform:translateY(-2px);border-color:rgba(245,200,66,0.2)}
+.stat-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;margin-bottom:12px}
+.stat-icon.gold{background:rgba(245,200,66,0.12);color:var(--gold)}
+.stat-icon.blue{background:rgba(59,139,235,0.12);color:var(--blue)}
+.stat-icon.green{background:rgba(34,197,94,0.12);color:var(--success)}
+.stat-icon.red{background:rgba(244,63,94,0.12);color:var(--danger)}
+.stat-icon.orange{background:rgba(251,146,60,0.12);color:var(--warning)}
+.stat-icon.cyan{background:rgba(56,189,248,0.12);color:var(--info)}
+.stat-value{font-size:26px;font-weight:800;color:#fff;letter-spacing:-1px;margin-bottom:4px}
+.stat-label{font-size:10px;color:var(--text-dim);font-weight:500}
+
+.table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:20px}
+.table-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;background:linear-gradient(180deg,var(--surface2),var(--surface))}
+.table-title{font-size:14px;font-weight:700;color:#fff;display:flex;align-items:center;gap:8px}
+.table-dot{width:7px;height:7px;border-radius:50%;background:var(--gold)}
+.table-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.search-input,.filter-select{padding:9px 14px;background:var(--surface2);border:1px solid var(--border-bright);border-radius:10px;font-size:11px;color:var(--text);font-family:'Sora',sans-serif;outline:none}
+.search-input:focus,.filter-select:focus{border-color:var(--gold)}
+.search-input::placeholder{color:var(--text-faint)}
+.filter-select option{background:var(--surface2)}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:11px 16px;background:var(--surface2);font-size:9px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:12px 16px;font-size:12px;color:var(--text-dim);border-bottom:1px solid var(--border)}
+td strong{color:var(--text);font-weight:600}
+tbody tr:hover{background:rgba(255,255,255,0.02)}
+.mono{font-family:'JetBrains Mono',monospace;font-size:11px}
+
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:9px;font-weight:700;letter-spacing:0.3px}
+.badge-dot{width:5px;height:5px;border-radius:50%}
+.badge.active,.badge.approved,.badge.completed{background:rgba(34,197,94,0.1);color:var(--success);border:1px solid rgba(34,197,94,0.2)}
+.badge.active .badge-dot{background:var(--success)}
+.badge.pending{background:rgba(251,146,60,0.1);color:var(--warning);border:1px solid rgba(251,146,60,0.2)}
+.badge.pending .badge-dot{background:var(--warning)}
+.badge.rejected,.badge.banned{background:rgba(244,63,94,0.1);color:var(--danger);border:1px solid rgba(244,63,94,0.2)}
+.badge.suspended{background:rgba(56,189,248,0.1);color:var(--info);border:1px solid rgba(56,189,248,0.2)}
+
+.btn{padding:8px 15px;border-radius:10px;font-size:11px;font-weight:600;cursor:pointer;border:none;font-family:'Sora',sans-serif;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;transition:all 0.2s}
+.btn:active{transform:scale(0.97)}
+.btn-primary{background:linear-gradient(135deg,var(--gold),#C9A227);color:#07080D}
+.btn-success{background:linear-gradient(135deg,#16A34A,#14532D);color:#fff}
+.btn-danger{background:linear-gradient(135deg,#BE123C,#9F1239);color:#fff}
+.btn-warning{background:linear-gradient(135deg,#C2410C,#9A3412);color:#fff}
+.btn-outline{background:transparent;border:1px solid var(--border-bright);color:var(--text-dim)}
+.btn-outline:hover{border-color:var(--gold);color:var(--gold)}
+.btn-sm{padding:5px 10px;font-size:10px;border-radius:8px}
+.btn-icon{width:30px;height:30px;padding:0;justify-content:center;border-radius:8px}
+
+.page-section{display:none;animation:fadeIn 0.3s ease}
+.page-section.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);z-index:2000;align-items:center;justify-content:center;padding:20px}
+.modal.active{display:flex}
+.modal-content{background:var(--surface);border:1px solid var(--border-bright);border-radius:20px;width:100%;max-width:500px;max-height:85vh;overflow-y:auto;animation:modalIn 0.25s ease}
+@keyframes modalIn{from{opacity:0;transform:scale(0.92)}to{opacity:1;transform:scale(1)}}
+.modal-header{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.modal-title{font-size:15px;font-weight:700;color:#fff}
+.modal-close{width:30px;height:30px;border-radius:8px;border:none;background:var(--surface2);color:var(--text-dim);cursor:pointer;font-size:16px}
+.modal-body{padding:20px}
+.modal-footer{padding:16px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+
+.form-group{margin-bottom:15px}
+.form-label{display:block;font-size:10px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.form-input,.form-select,.form-textarea{width:100%;padding:10px 14px;background:var(--surface2);border:1px solid var(--border-bright);border-radius:10px;font-size:13px;color:var(--text);font-family:'Sora',sans-serif;outline:none}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--gold)}
+.form-textarea{resize:vertical;min-height:80px}
+.form-select option{background:var(--surface2)}
+
+.alert-box{padding:12px 14px;border-radius:10px;font-size:11px;display:flex;align-items:flex-start;gap:8px;line-height:1.5}
+.alert-danger{background:rgba(244,63,94,0.08);border:1px solid rgba(244,63,94,0.2);color:#FDA4AF}
+.alert-warning{background:rgba(251,146,60,0.08);border:1px solid rgba(251,146,60,0.2);color:#FDBA74}
+
+.empty-state{text-align:center;padding:50px 20px;color:var(--text-faint)}
+.empty-state i{font-size:40px;margin-bottom:12px;opacity:0.4}
+.spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin 0.6s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.menu-toggle{display:none;position:fixed;top:14px;left:14px;z-index:1100;background:var(--surface);border:1px solid var(--border-bright);width:42px;height:42px;border-radius:10px;font-size:18px;cursor:pointer;color:var(--text);align-items:center;justify-content:center}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:850;backdrop-filter:blur(3px)}
+
+@media(max-width:900px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0);box-shadow:20px 0 60px rgba(0,0,0,0.5)}
+  .sidebar-overlay.show{display:block}
+  .main-content{margin-left:0;padding:75px 16px 32px}
+  .menu-toggle{display:flex}
+  .page-title{font-size:22px}
+}
+@media(max-width:500px){.stats-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<div class="bg-orbs"><div class="orb orb1"></div><div class="orb orb2"></div></div>
+<button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<div style="display:flex">
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="logo-icon"><i class="fas fa-bolt"></i></div>
+    <div><div class="logo-text">Kinetic Wealth</div><div class="logo-sub">ADMIN CONTROL</div></div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Overview</div>
+    <div class="nav-item active" data-page="dashboard"><i class="fas fa-th-large"></i> Dashboard</div>
+    <div class="nav-section" style="margin-top:10px">Management</div>
+    <div class="nav-item" data-page="users"><i class="fas fa-users"></i> Users <span class="nav-badge" id="userBadge">0</span></div>
+    <div class="nav-item" data-page="deposits"><i class="fas fa-credit-card"></i> Deposits <span class="nav-badge" id="pendingDepBadge">0</span></div>
+    <div class="nav-item" data-page="withdrawals"><i class="fas fa-paper-plane"></i> Withdrawals <span class="nav-badge" id="pendingWitBadge">0</span></div>
+    <div class="nav-item" data-page="investments"><i class="fas fa-chart-line"></i> Investments</div>
+    <div class="nav-section" style="margin-top:10px">Finance</div>
+    <div class="nav-item" data-page="transactions"><i class="fas fa-receipt"></i> Transactions</div>
+    <div class="nav-item" data-page="referrals"><i class="fas fa-user-plus"></i> Referrals</div>
+    <div class="nav-section" style="margin-top:10px">System</div>
+    <div class="nav-item" data-page="admins"><i class="fas fa-shield-halved"></i> Admins</div>
+    <div class="nav-item" data-page="audit"><i class="fas fa-history"></i> Audit Logs</div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="admin-card"><div class="admin-av" id="adminAvatar">A</div><div><div class="admin-name" id="adminName">Admin</div><div class="admin-role" id="adminRole">ADMIN</div></div></div>
+    <button class="logout-btn" onclick="adminLogout()"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main-content">
+  <div class="top-bar">
+    <div><div class="page-bread" id="breadcrumb">OVERVIEW</div><h1 class="page-title" id="pageTitle">Dashboard</h1></div>
+    <div class="top-right"><button class="refresh-btn" onclick="refreshPage()"><i class="fas fa-sync-alt"></i> Refresh</button></div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="page-section active" id="page-dashboard"><div class="stats-grid" id="dashStats"></div></div>
+
+  <!-- USERS -->
+  <div class="page-section" id="page-users">
+    <div class="table-card"><div class="table-header"><div class="table-title"><div class="table-dot"></div>User Management</div><div class="table-actions"><input type="text" class="search-input" id="userSearch" placeholder="Search name/email…" style="padding-left:30px" oninput="loadUsers()"></div></div><div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Deposit</th><th>Withdraw</th><th>Invested</th><th>Status</th><th>Actions</th></tr></thead><tbody id="usersTable"><tr><td colspan="7"><div class="empty-state"><div class="spinner"></div></div></td></tr></tbody></table></div></div>
+  </div>
+
+  <!-- DEPOSITS -->
+  <div class="page-section" id="page-deposits">
+    <div class="table-card"><div class="table-header"><div class="table-title"><div class="table-dot"></div>Deposit Requests</div><div class="table-actions"><select class="filter-select" id="depositFilter" onchange="loadDeposits()"><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="all">All</option></select></div></div><div class="table-wrap"><table><thead><tr><th>User</th><th>Amount</th><th>Sender</th><th>Gateway</th><th>Ref</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead><tbody id="depositsTable"><tr><td colspan="8"><div class="empty-state"><div class="spinner"></div></div></td></tr></tbody></table></div></div>
+  </div>
+
+  <!-- WITHDRAWALS -->
+  <div class="page-section" id="page-withdrawals">
+    <div class="table-card"><div class="table-header"><div class="table-title"><div class="table-dot"></div>Withdrawal Requests</div><div class="table-actions"><select class="filter-select" id="withdrawFilter" onchange="loadWithdrawals()"><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="all">All</option></select></div></div><div class="table-wrap"><table><thead><tr><th>User</th><th>Amount</th><th>Fee</th><th>Receive</th><th>Bank</th><th>Account</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead><tbody id="withdrawalsTable"><tr><td colspan="9"><div class="empty-state"><div class="spinner"></div></div></td></tr></tbody></table></div></div>
+  </div>
+
+  <!-- INVESTMENTS -->
+  <div class="page-section" id="page-investments">
+    <div class="table-card"><div class="table-header"><div class="table-title"><div class="table-dot"></div>Investments</div></div><div class="table-wrap"><table><thead><tr><th>User</th><th>Plan</th><th>Capital</th><th>Daily ROI</th><th>Progress</th><th>Status</th><th>Date</th></tr></thead><tbody id="investmentsTable"><tr><td colspan="7"><div class="empty-state"><div class="spinner"></div></div></td></tr></tbody></table></div></div>
+  </div>
+
+  <!-- TRANSACTIONS -->
+  <div class="page-section" id="page-transactions">
+    <div class="table-card"><div class="table-header"><div class="table-title"><div class="table-dot"></div>Transactions</div></div><div class="table-wrap"><table><thead><tr><th>User</th><th>Type</th><th>Amount</th><th>Description</th><th>Date</th></tr></thead><tbody id="transactionsTable"><tr><td colspan="5"><div class="empty-state"><div class="spinner"></div></div></td></tr></tbody></table></div></div>
+  </div>
+
+  <!-- REFERRALS -->
+  <div class="page-section" id="page-referrals">
+    <div class="table-card"><div class="table-header"><div class="table-title"><div class="table-dot"></div>Referral Network</div></div><div class="table-wrap"><table><thead><tr><th>User</th><th>Code</th><th>L1</th><th>L2</th><th>L3</th><th>Total</th><th>Earnings</th><th>Actions</th></tr></thead><tbody id="referralsTable"><tr><td colspan="8"><div class="empty-state"><div class="spinner"></div></div></td></tr></tbody></table></div></div>
+  </div>
+
+  <!-- ADMINS -->
+  <div class="page-section" id="page-admins">
+    <div class="table-card"><div class="table-header"><div class="table-title"><div class="table-dot"></div>Admin Users</div><div class="table-actions"><button class="btn btn-primary" onclick="showAddAdmin()"><i class="fas fa-plus"></i> Add Admin</button></div></div><div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Actions</th></tr></thead><tbody id="adminsTable"><tr><td colspan="4"><div class="empty-state"><div class="spinner"></div></div></td></tr></tbody></table></div></div>
+  </div>
+
+  <!-- AUDIT -->
+  <div class="page-section" id="page-audit">
+    <div class="table-card"><div class="table-header"><div class="table-title"><div class="table-dot"></div>Audit Logs</div></div><div class="table-wrap"><table><thead><tr><th>Admin</th><th>Action</th><th>Target</th><th>Details</th><th>Date</th></tr></thead><tbody id="auditTable"><tr><td colspan="5"><div class="empty-state"><div class="spinner"></div></div></td></tr></tbody></table></div></div>
+  </div>
+</main>
+</div>
+
+<!-- MODALS -->
+<div class="modal" id="addAdminModal"><div class="modal-content"><div class="modal-header"><div class="modal-title">Add Admin</div><button class="modal-close" onclick="closeM('addAdminModal')">&times;</button></div><div class="modal-body"><div class="form-group"><label class="form-label">User Email</label><input type="email" class="form-input" id="adminEmail" placeholder="user@email.com"></div></div><div class="modal-footer"><button class="btn btn-outline" onclick="closeM('addAdminModal')">Cancel</button><button class="btn btn-primary" onclick="addAdmin()">Grant Admin</button></div></div></div>
+
+<div class="modal" id="actionModal"><div class="modal-content"><div class="modal-header"><div class="modal-title" id="actionTitle">Action</div><button class="modal-close" onclick="closeM('actionModal')">&times;</button></div><div class="modal-body" id="actionBody"></div><div class="modal-footer"><button class="btn btn-outline" onclick="closeM('actionModal')">Cancel</button><button class="btn btn-primary" id="actionBtn" onclick="execAction()">Confirm</button></div></div></div>
+
+<div class="modal" id="treeModal"><div class="modal-content" style="max-width:650px"><div class="modal-header"><div class="modal-title">Referral Tree</div><button class="modal-close" onclick="closeM('treeModal')">&times;</button></div><div class="modal-body" id="treeBody"></div></div></div>
+
+<script>
+const fc={apiKey:"AIzaSyBl6HEVa9mUuROvnohMKzeEzzc0aTREU54",authDomain:"kinetic-dc8e6.firebaseapp.com",projectId:"kinetic-dc8e6",storageBucket:"kinetic-dc8e6.firebasestorage.app",messagingSenderId:"980527555815",appId:"1:980527555815:web:131ccee594e0c8f122ee42"};
+firebase.initializeApp(fc);
+const auth=firebase.auth(),db=firebase.firestore(),FV=firebase.firestore.FieldValue;
+
+const $=id=>document.getElementById(id);
+const fm=n=>(Number(n)||0).toLocaleString('en-NG'),fc2=n=>'₦'+fm(n),fs=n=>{const v=Number(n)||0;return v>=1e6?'₦'+(v/1e6).toFixed(2)+'M':v>=1e3?'₦'+(v/1e3).toFixed(1)+'K':'₦'+v};
+const fmtDate=ts=>{if(!ts)return'—';try{if(ts.toDate)return ts.toDate().toLocaleDateString('en-NG',{day:'2-digit',month:'short',year:'numeric'});if(ts.seconds)return new Date(ts.seconds*1000).toLocaleDateString('en-NG',{day:'2-digit',month:'short',year:'numeric'});const d=new Date(ts);return isNaN(d.getTime())?'—':d.toLocaleDateString('en-NG',{day:'2-digit',month:'short',year:'numeric'});}catch(e){return'—';}};
+const fmtDateTime=ts=>{if(!ts)return'—';try{if(ts.toDate)return ts.toDate().toLocaleString('en-NG',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});if(ts.seconds)return new Date(ts.seconds*1000).toLocaleString('en-NG',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});const d=new Date(ts);return isNaN(d.getTime())?'—':d.toLocaleString('en-NG',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});}catch(e){return'—';}};
+const badge=s=>`<span class="badge ${s}"><span class="badge-dot"></span>${s}</span>`;
+
+let admin=null,actionUid=null,currentAction=null;
+
+function toggleSidebar(){$('sidebar').classList.toggle('open');$('sidebarOverlay').classList.toggle('show');}
+
+auth.onAuthStateChanged(async u=>{
+  if(!u){window.location.replace('admin-login.html');return}
+  const d=await db.collection('users').doc(u.uid).get();
+  if(!d.exists||!d.data().isAdmin){auth.signOut();window.location.replace('login.html');return}
+  admin={uid:u.uid,...d.data()};
+  $('adminAvatar').textContent=(admin.fullName||admin.username||'A').charAt(0).toUpperCase();
+  $('adminName').textContent=admin.fullName||admin.username||'Admin';
+  $('adminRole').textContent=(admin.adminRole||'ADMIN').toUpperCase();
+  initNav();loadDashboard();updateBadges();
+});
+
+function initNav(){document.querySelectorAll('.nav-item').forEach(i=>i.addEventListener('click',()=>{const p=i.dataset.page;document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));i.classList.add('active');document.querySelectorAll('.page-section').forEach(s=>s.classList.remove('active'));$('page-'+p).classList.add('active');$('pageTitle').textContent=p.charAt(0).toUpperCase()+p.slice(1);$('breadcrumb').textContent=p.toUpperCase();navTo(p);$('sidebar').classList.remove('open');$('sidebarOverlay').classList.remove('show');}));}
+function navTo(p){({dashboard:loadDashboard,users:loadUsers,deposits:loadDeposits,withdrawals:loadWithdrawals,investments:loadInvestments,transactions:loadTransactions,referrals:loadReferrals,admins:loadAdmins,audit:loadAudit}[p]||(()=>{}))();}
+function refreshPage(){const p=document.querySelector('.page-section.active')?.id.replace('page-','');if(p)navTo(p);}
+
+async function loadDashboard(){
+  const[us,ai,pd,pw,ad]=await Promise.all([db.collection('users').get(),db.collection('investments').where('status','==','active').get(),db.collection('deposits').where('status','==','pending').get(),db.collection('withdrawals').where('status','==','pending').get(),db.collection('deposits').where('status','==','approved').get()]);
+  const td=ad.docs.reduce((s,d)=>s+(d.data().amount||0),0);
+  $('userBadge').textContent=us.size;
+  $('dashStats').innerHTML=`
+    <div class="stat-card"><div class="stat-icon gold"><i class="fas fa-users"></i></div><div class="stat-value">${us.size}</div><div class="stat-label">Total Users</div></div>
+    <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-chart-line"></i></div><div class="stat-value">${ai.size}</div><div class="stat-label">Active Investments</div></div>
+    <div class="stat-card"><div class="stat-icon orange"><i class="fas fa-clock"></i></div><div class="stat-value">${pd.size}</div><div class="stat-label">Pending Deposits</div></div>
+    <div class="stat-card"><div class="stat-icon red"><i class="fas fa-paper-plane"></i></div><div class="stat-value">${pw.size}</div><div class="stat-label">Pending Withdrawals</div></div>
+    <div class="stat-card"><div class="stat-icon green"><i class="fas fa-arrow-down"></i></div><div class="stat-value" style="font-size:20px">${fs(td)}</div><div class="stat-label">Total Deposits (Approved)</div></div>
+    <div class="stat-card"><div class="stat-icon cyan"><i class="fas fa-coins"></i></div><div class="stat-value">${fs(us.docs.reduce((s,d)=>s+(d.data().totalEarnings||0),0))}</div><div class="stat-label">Platform Earnings Paid</div></div>`;
+}
+
+async function loadUsers(){
+  const s=await db.collection('users').get();let u=s.docs.map(d=>({id:d.id,...d.data()}));
+  const q=($('userSearch')?.value||'').toLowerCase();
+  if(q)u=u.filter(x=>(x.fullName||'').toLowerCase().includes(q)||(x.email||'').toLowerCase().includes(q));
+  $('usersTable').innerHTML=u.length?u.map(x=>{const st=x.accountStatus?.status||'active';return`<tr>
+    <td><strong>${x.fullName||x.username||'N/A'}</strong></td><td><span class="mono">${x.email||'—'}</span></td>
+    <td>${fc2(x.depositBalance||0)}</td><td>${fc2(x.withdrawalBalance||0)}</td><td>${fc2(x.totalInvested||0)}</td>
+    <td>${badge(st)}</td>
+    <td style="white-space:nowrap">
+      <button class="btn btn-sm btn-outline btn-icon" title="View" onclick="viewUser('${x.id}')"><i class="fas fa-eye"></i></button>
+      <button class="btn btn-sm btn-outline btn-icon" title="Balance" onclick="showAdj('${x.id}')" style="color:var(--gold)"><i class="fas fa-wallet"></i></button>
+      <button class="btn btn-sm btn-outline btn-icon" title="Reset PW" onclick="resetPW('${x.id}','${(x.email||'').replace(/'/g,"\\'")}')"><i class="fas fa-key"></i></button>
+      <button class="btn btn-sm btn-outline btn-icon" title="Reset PIN" onclick="resetPIN('${x.id}')"><i class="fas fa-lock"></i></button>
+      <button class="btn btn-sm btn-outline btn-icon" title="Suspend" onclick="showSus('${x.id}')" style="color:var(--warning)"><i class="fas fa-pause"></i></button>
+      <button class="btn btn-sm btn-outline btn-icon" title="Ban" onclick="showBan('${x.id}')" style="color:var(--danger)"><i class="fas fa-ban"></i></button>
+    </td></tr>`}).join(''):`<tr><td colspan="7"><div class="empty-state"><i class="fas fa-search"></i><p>No users</p></div></td></tr>`;
+}
+
+async function viewUser(uid){const d=await db.collection('users').doc(uid).get();if(!d.exists)return;const u=d.data();Swal.fire({title:'User Profile',html:`<div style="text-align:left;font-size:13px;color:#ccc;display:grid;grid-template-columns:1fr 1fr;gap:12px"><div style="background:#141820;padding:12px;border-radius:10px"><div style="font-size:10px;color:#4A5568">Name</div><div style="color:#fff;font-weight:600">${u.fullName||'N/A'}</div></div><div style="background:#141820;padding:12px;border-radius:10px"><div style="font-size:10px;color:#4A5568">Status</div><div style="color:${u.accountStatus?.status==='active'?'#22C55E':'#F43F5E'}">${u.accountStatus?.status||'active'}</div></div><div style="background:#141820;padding:12px;border-radius:10px"><div style="font-size:10px;color:#4A5568">Deposit</div><div style="color:#22C55E;font-weight:700;font-family:JetBrains Mono">${fc2(u.depositBalance||0)}</div></div><div style="background:#141820;padding:12px;border-radius:10px"><div style="font-size:10px;color:#4A5568">Withdraw</div><div style="color:#F5C842">${fc2(u.withdrawalBalance||0)}</div></div><div style="background:#141820;padding:12px;border-radius:10px"><div style="font-size:10px;color:#4A5568">Invested</div><div>${fc2(u.totalInvested||0)}</div></div><div style="background:#141820;padding:12px;border-radius:10px"><div style="font-size:10px;color:#4A5568">Earned</div><div>${fc2(u.totalEarnings||0)}</div></div></div>`,background:'#0E1118',color:'#E8EAED',confirmButtonColor:'#F5C842'});}
+
+function showAdj(uid){actionUid=uid;currentAction='balance';$('actionTitle').innerHTML='Adjust Balance';$('actionBody').innerHTML=`<div class="form-group"><label class="form-label">Wallet</label><select class="form-select" id="balWallet"><option value="deposit">Deposit</option><option value="withdrawal">Withdrawal</option></select></div><div class="form-group"><label class="form-label">Amount (negative to deduct)</label><input type="number" class="form-input" id="balAmt" placeholder="50000"></div><div class="form-group"><label class="form-label">Reason</label><textarea class="form-textarea" id="balReason"></textarea></div>`;openM('actionModal');}
+function showSus(uid){actionUid=uid;currentAction='suspend';$('actionTitle').innerHTML='Suspend User';$('actionBody').innerHTML=`<div class="form-group"><label class="form-label">Duration (hours)</label><input type="number" class="form-input" id="susHrs" value="24"></div><div class="form-group"><label class="form-label">Reason</label><textarea class="form-textarea" id="susReason"></textarea></div>`;openM('actionModal');}
+function showBan(uid){actionUid=uid;currentAction='ban';$('actionTitle').innerHTML='Ban User';$('actionBody').innerHTML=`<div class="form-group"><label class="form-label">Reason</label><textarea class="form-textarea" id="banReason"></textarea></div><div class="alert-box alert-danger"><i class="fas fa-triangle-exclamation"></i> Permanent ban — cannot be undone!</div>`;openM('actionModal');}
+
+// 🔥 RESET PASSWORD
+async function resetPW(uid,email){
+  const r=await Swal.fire({title:'Reset Password?',text:`A password reset email will be sent to ${email||'this user'}.`,icon:'question',showCancelButton:true,confirmButtonColor:'#F5C842',confirmButtonText:'Send Reset',background:'#0E1118',color:'#E8EAED'});
+  if(!r.isConfirmed)return;
+  try{await auth.sendPasswordResetEmail(email);Swal.fire({icon:'success',title:'Reset Email Sent!',timer:2000,background:'#0E1118',color:'#E8EAED',showConfirmButton:false});}catch(e){Swal.fire({icon:'error',title:'Failed',text:e.message,background:'#0E1118',color:'#E8EAED'});}
+}
+
+// 🔥 RESET WITHDRAWAL PIN
+async function resetPIN(uid){
+  const r=await Swal.fire({title:'Reset Withdrawal PIN?',text:'This will clear the user\'s withdrawal PIN. They will need to set a new one.',icon:'question',showCancelButton:true,confirmButtonColor:'#FB923C',confirmButtonText:'Reset PIN',background:'#0E1118',color:'#E8EAED'});
+  if(!r.isConfirmed)return;
+  await db.collection('users').doc(uid).update({withdrawalPin:''});
+  Swal.fire({icon:'success',title:'PIN Reset!',timer:1800,background:'#0E1118',color:'#E8EAED',showConfirmButton:false});
+}
+
+async function execAction(){
+  if(currentAction==='balance'){
+    const w=$('balWallet').value,a=Number($('balAmt').value);if(!a)return Swal.fire({icon:'warning',title:'Enter amount',background:'#0E1118',color:'#E8EAED'});
+    const f=w==='deposit'?'depositBalance':'withdrawalBalance';
+    await db.collection('users').doc(actionUid).update({[f]:FV.increment(a)});
+    closeM('actionModal');Swal.fire({icon:'success',title:'Updated!',timer:1500,background:'#0E1118',color:'#E8EAED',showConfirmButton:false});loadUsers();
+  }else if(currentAction==='suspend'){
+    const h=Number($('susHrs').value)||24,until=new Date(Date.now()+h*3600000),reason=$('susReason').value||'Admin suspension';
+    await db.collection('users').doc(actionUid).update({accountStatus:{status:'suspended',reason,suspendedUntil:until,suspendedBy:admin.uid}});
+    closeM('actionModal');Swal.fire({icon:'success',title:'Suspended!',timer:1500,background:'#0E1118',color:'#E8EAED',showConfirmButton:false});loadUsers();
+  }else if(currentAction==='ban'){
+    const reason=$('banReason').value||'Banned';
+    await db.collection('users').doc(actionUid).update({accountStatus:{status:'banned',reason,bannedBy:admin.uid,bannedAt:FV.serverTimestamp()}});
+    closeM('actionModal');Swal.fire({icon:'success',title:'Banned!',timer:1500,background:'#0E1118',color:'#E8EAED',showConfirmButton:false});loadUsers();
+  }
+}
+
+// 🔥 DEPOSITS — WITH FULL DETAILS
+async function loadDeposits(){
+  const f=$('depositFilter')?.value||'pending';let q=db.collection('deposits');if(f!=='all')q=q.where('status','==',f);
+  const s=await q.get();let docs=s.docs.map(d=>({id:d.id,...d.data()}));
+  docs.sort((a,b)=>{const at=a.createdAt?.toMillis?.()||a.createdAt?.seconds*1000||new Date(a.createdAt).getTime()||0,bt=b.createdAt?.toMillis?.()||b.createdAt?.seconds*1000||new Date(b.createdAt).getTime()||0;return bt-at;});
+  $('depositsTable').innerHTML=docs.length?docs.map(d=>`<tr>
+    <td><strong>${d.userName||'N/A'}</strong></td><td>${fc2(d.amount)}</td><td>${d.senderName||'—'}</td>
+    <td><span class="mono">Gateway ${d.gateway||1} · ${d.accountName||'—'}</span></td>
+    <td><span class="mono" style="font-size:10px">${d.refCode||'—'}</span></td><td>${badge(d.status)}</td>
+    <td><span class="mono">${fmtDateTime(d.createdAt)}</span></td>
+    <td>${d.status==='pending'?`<button class="btn btn-sm btn-success" onclick="approveDep('${d.id}','${d.userId}',${d.amount})">Approve</button> <button class="btn btn-sm btn-danger" onclick="rejectDep('${d.id}')">Reject</button>`:'—'}
+    </td></tr>`).join(''):`<tr><td colspan="8"><div class="empty-state"><i class="fas fa-credit-card"></i><p>No ${f} deposits</p></div></td></tr>`;
+}
+async function approveDep(id,uid,amt){
+  const r=await Swal.fire({title:'Approve Deposit?',text:`Credit ${fc2(amt)} to user`,icon:'question',showCancelButton:true,confirmButtonColor:'#22C55E',confirmButtonText:'Approve',background:'#0E1118',color:'#E8EAED'});
+  if(!r.isConfirmed)return;
+  await db.runTransaction(async tr=>{tr.update(db.collection('deposits').doc(id),{status:'approved',approvedAt:FV.serverTimestamp()});tr.update(db.collection('users').doc(uid),{depositBalance:FV.increment(amt)});});
+  Swal.fire({icon:'success',title:'Approved!',timer:1500,background:'#0E1118',color:'#E8EAED',showConfirmButton:false});loadDeposits();updateBadges();
+}
+async function rejectDep(id){
+  const{value:reason}=await Swal.fire({title:'Reject',input:'textarea',inputLabel:'Reason',showCancelButton:true,confirmButtonColor:'#F43F5E',background:'#0E1118',color:'#E8EAED'});
+  if(reason===undefined)return;
+  await db.collection('deposits').doc(id).update({status:'rejected',rejectReason:reason,rejectedAt:FV.serverTimestamp()});
+  Swal.fire({icon:'success',title:'Rejected',timer:1500,background:'#0E1118',color:'#E8EAED',showConfirmButton:false});loadDeposits();updateBadges();
+}
+
+// 🔥 WITHDRAWALS — WITH FULL DETAILS
+async function loadWithdrawals(){
+  const f=$('withdrawFilter')?.value||'pending';let q=db.collection('withdrawals');if(f!=='all')q=q.where('status','==',f);
+  const s=await q.get();let docs=s.docs.map(d=>({id:d.id,...d.data()}));
+  docs.sort((a,b)=>{const at=a.requestedAt?.toMillis?.()||a.requestedAt?.seconds*1000||new Date(a.requestedAt).getTime()||0,bt=b.requestedAt?.toMillis?.()||b.requestedAt?.seconds*1000||new Date(b.requestedAt).getTime()||0;return bt-at;});
+  $('withdrawalsTable').innerHTML=docs.length?docs.map(d=>`<tr>
+    <td><strong>${d.userName||'N/A'}</strong></td><td>${fc2(d.amount)}</td><td style="color:var(--danger)">-${fc2(d.feeAmount||0)}</td><td style="color:var(--success)">${fc2(d.receiveAmount||0)}</td>
+    <td>${d.bankName||'—'}</td><td><span class="mono">${d.accountNumber||'—'}<br><small style="color:var(--text-faint)">${d.accountName||''}</small></span></td>
+    <td>${badge(d.status)}</td><td><span class="mono">${fmtDateTime(d.requestedAt||d.createdAt)}</span></td>
+    <td>${d.status==='pending'?`<button class="btn btn-sm btn-success" onclick="approveWit('${d.id}','${d.userId}')">Approve</button> <button class="btn btn-sm btn-danger" onclick="rejectWit('${d.id}','${d.userId}',${d.amount})">Reject</button>`:'—'}
+    </td></tr>`).join(''):`<tr><td colspan="9"><div class="empty-state"><i class="fas fa-paper-plane"></i><p>No ${f} withdrawals</p></div></td></tr>`;
+}
+async function approveWit(id,uid){
+  const r=await Swal.fire({title:'Approve?',icon:'question',showCancelButton:true,confirmButtonColor:'#22C55E',confirmButtonText:'Yes',background:'#0E1118',color:'#E8EAED'});
+  if(!r.isConfirmed)return;
+  await db.collection('withdrawals').doc(id).update({status:'approved',approvedAt:FV.serverTimestamp()});
+  Swal.fire({icon:'success',title:'Approved!',timer:1500,background:'#0E1118',color:'#E8EAED',showConfirmButton:false});loadWithdrawals();updateBadges();
+}
+async function rejectWit(id,uid,amt){
+  const{value:reason}=await Swal.fire({title:'Reject & Refund?',input:'textarea',inputLabel:'Reason',showCancelButton:true,confirmButtonColor:'#F43F5E',background:'#0E1118',color:'#E8EAED'});
+  if(reason===undefined)return;
+  await db.runTransaction(async tr=>{tr.update(db.collection('withdrawals').doc(id),{status:'rejected',rejectReason:reason,rejectedAt:FV.serverTimestamp()});tr.update(db.collection('users').doc(uid),{withdrawalBalance:FV.increment(amt)});});
+  Swal.fire({icon:'success',title:'Refunded!',timer:1500,background:'#0E1118',color:'#E8EAED',showConfirmButton:false});loadWithdrawals();updateBadges();
+}
+
+// 🔥 INVESTMENTS
+async function loadInvestments(){
+  const s=await db.collection('investments').get();let docs=s.docs.map(d=>({id:d.id,...d.data()}));
+  docs.sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));
+  $('investmentsTable').innerHTML=docs.length?docs.map(d=>{const p=d.duration?Math.round(((d.claimedDays||0)/d.duration)*100):0;return`<tr>
+    <td><strong>${d.userName||d.userId?.slice(0,10)||'N/A'}</strong></td><td>${d.planName||'—'}</td><td>${fc2(d.capital)}</td><td>${fc2(d.dailyROI)}</td>
+    <td><div style="display:flex;align-items:center;gap:6px"><div style="flex:1;background:var(--surface3);border-radius:99px;height:4px;min-width:50px"><div style="width:${p}%;background:var(--gold);height:4px;border-radius:99px"></div></div><span style="font-size:10px">${d.claimedDays||0}/${d.duration||0}</span></div></td>
+    <td>${badge(d.status)}</td><td><span class="mono">${fmtDate(d.createdAt)}</span></td></tr>`}).join(''):`<tr><td colspan="7"><div class="empty-state"><i class="fas fa-chart-line"></i><p>No investments</p></div></td></tr>`;
+}
+
+// 🔥 TRANSACTIONS
+async function loadTransactions(){const s=await db.collection('transactions').get();let docs=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0)).slice(0,100);$('transactionsTable').innerHTML=docs.length?docs.map(d=>`<tr><td><span class="mono">${d.userId?.slice(0,12)||'N/A'}</span></td><td>${badge('active')} ${(d.type||'').replace(/_/g,' ')}</td><td>${fc2(d.amount)}</td><td><small>${d.description||'—'}</small></td><td><span class="mono">${fmtDateTime(d.createdAt)}</span></td></tr>`).join(''):`<tr><td colspan="5"><div class="empty-state"><i class="fas fa-receipt"></i><p>No transactions</p></div></td></tr>`;}
+
+// 🔥 REFERRALS WITH TREE VIEW
+async function loadReferrals(){
+  const s=await db.collection('users').get();let refs=s.docs.map(d=>({id:d.id,...d.data()})).filter(u=>(u.referralCount||0)>0).sort((a,b)=>(b.referralCount||0)-(a.referralCount||0));
+  $('referralsTable').innerHTML=refs.length?refs.map(u=>`<tr>
+    <td><strong>${u.fullName||u.username||'N/A'}</strong></td><td><span class="mono" style="color:var(--gold)">${u.referralCode||'—'}</span></td>
+    <td>${u.level1Count||0}</td><td>${u.level2Count||0}</td><td>${u.level3Count||0}</td>
+    <td style="font-weight:700;color:var(--gold)">${u.referralCount||0}</td><td>${fc2(u.totalRefEarnings||0)}</td>
+    <td><button class="btn btn-sm btn-outline" onclick="viewTree('${u.id}')"><i class="fas fa-sitemap"></i> Tree</button></td>
+  </tr>`).join(''):`<tr><td colspan="8"><div class="empty-state"><i class="fas fa-user-plus"></i><p>No referrals</p></div></td></tr>`;
+}
+
+// 🔥 REFERRAL TREE — SHOWS ALL 3 LEVELS
+async function viewTree(uid){
+  Swal.fire({title:'Loading tree…',allowOutsideClick:false,background:'#0E1118',color:'#E8EAED',didOpen:()=>Swal.showLoading()});
+  const ud=await db.collection('users').doc(uid).get();if(!ud.exists){Swal.close();return}
+  const un=ud.data().fullName||ud.data().username||'User';
+
+  // Level 1
+  const l1s=await db.collection('users').where('referrerUid','==',uid).get();
+  const l1=l1s.docs.map(d=>({id:d.id,...d.data()}));let l1Inv=0;l1.forEach(u=>l1Inv+=(u.totalInvested||0));
+
+  // Level 2
+  const l1ids=new Set(l1.map(u=>u.id));let l2=[];
+  if(l1ids.size>0){const a=Array.from(l1ids);for(let i=0;i<a.length;i+=10){const s=await db.collection('users').where('referrerUid','in',a.slice(i,i+10)).get();s.docs.forEach(d=>{if(!l1ids.has(d.id))l2.push({id:d.id,...d.data()});});}}
+  const l2ids=new Set(l2.map(u=>u.id));let l2Inv=0;l2.forEach(u=>l2Inv+=(u.totalInvested||0));
+
+  // Level 3
+  let l3=[];if(l2ids.size>0){const a=Array.from(l2ids);for(let i=0;i<a.length;i+=10){const s=await db.collection('users').where('referrerUid','in',a.slice(i,i+10)).get();s.docs.forEach(d=>{if(!l1ids.has(d.id)&&!l2ids.has(d.id))l3.push({id:d.id,...d.data()});});}}
+  let l3Inv=0;l3.forEach(u=>l3Inv+=(u.totalInvested||0));
+
+  Swal.close();
+  $('treeBody').innerHTML=`
+    <div style="background:var(--surface2);padding:16px;border-radius:12px;margin-bottom:16px;text-align:center">
+      <div style="font-size:18px;font-weight:700;color:#fff">${un}</div>
+      <div style="font-size:11px;color:var(--text-faint);margin-top:4px">Total Team: ${l1.length+l2.length+l3.length} members</div>
+    </div>
+    <div style="background:rgba(0,82,204,0.08);border:1px solid rgba(0,82,204,0.2);padding:14px;border-radius:10px;margin-bottom:10px">
+      <div style="font-weight:700;color:#3B82F6;margin-bottom:8px">🔵 Level 1 (10%) — ${l1.length} members | Total Invested: ${fc2(l1Inv)}</div>
+      ${l1.length?l1.map(u=>`<div style="font-size:11px;padding:4px 0;color:var(--text-dim)">• ${u.fullName||u.username||'User'} — ${fc2(u.totalInvested||0)}</div>`).join(''):'<div style="font-size:11px;color:var(--text-faint)">No members</div>'}
+    </div>
+    <div style="background:rgba(6,182,212,0.08);border:1px solid rgba(6,182,212,0.2);padding:14px;border-radius:10px;margin-bottom:10px">
+      <div style="font-weight:700;color:#06B6D4;margin-bottom:8px">🟢 Level 2 (3%) — ${l2.length} members | Total Invested: ${fc2(l2Inv)}</div>
+      ${l2.length?l2.map(u=>`<div style="font-size:11px;padding:4px 0;color:var(--text-dim)">• ${u.fullName||u.username||'User'} — ${fc2(u.totalInvested||0)}</div>`).join(''):'<div style="font-size:11px;color:var(--text-faint)">No members</div>'}
+    </div>
+    <div style="background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.2);padding:14px;border-radius:10px">
+      <div style="font-weight:700;color:#A78BFA;margin-bottom:8px">🟣 Level 3 (1%) — ${l3.length} members | Total Invested: ${fc2(l3Inv)}</div>
+      ${l3.length?l3.map(u=>`<div style="font-size:11px;padding:4px 0;color:var(--text-dim)">• ${u.fullName||u.username||'User'} — ${fc2(u.totalInvested||0)}</div>`).join(''):'<div style="font-size:11px;color:var(--text-faint)">No members</div>'}
+    </div>`;
+  openM('treeModal');
+}
+
+// 🔥 ADMINS
+async function loadAdmins(){const s=await db.collection('users').where('isAdmin','==',true).get();$('adminsTable').innerHTML=s.docs.map(d=>{const u=d.data();return`<tr><td><strong>${u.fullName||u.username||'N/A'}</strong></td><td><span class="mono">${u.email||'—'}</span></td><td>${badge('active')}</td><td>${d.id!==admin?.uid?`<button class="btn btn-sm btn-danger" onclick="removeAdmin('${d.id}')">Remove</button>`:`<span style="color:var(--gold);font-weight:600"><i class="fas fa-crown"></i> You</span>`}</td></tr>`}).join('')||`<tr><td colspan="4"><div class="empty-state"><p>No admins</p></div></td></tr>`;}
+async function addAdmin(){const e=$('adminEmail').value.trim();if(!e)return Swal.fire({icon:'warning',title:'Enter email',background:'#0E1118',color:'#E8EAED'});const s=await db.collection('users').where('email','==',e).limit(1).get();if(s.empty)return Swal.fire({icon:'error',title:'Not found',background:'#0E1118',color:'#E8EAED'});await db.collection('users').doc(s.docs[0].id).update({isAdmin:true,adminRole:'admin'});Swal.fire({icon:'success',title:'Added!',timer:1500,background:'#0E1118',color:'#E8EAED',showConfirmButton:false});closeM('addAdminModal');loadAdmins();}
+async function removeAdmin(uid){if(uid===admin?.uid)return Swal.fire({icon:'error',title:'Cannot remove self',background:'#0E1118',color:'#E8EAED'});const r=await Swal.fire({title:'Remove?',icon:'warning',showCancelButton:true,confirmButtonColor:'#F43F5E',confirmButtonText:'Remove',background:'#0E1118',color:'#E8EAED'});if(!r.isConfirmed)return;await db.collection('users').doc(uid).update({isAdmin:false,adminRole:FV.delete()});Swal.fire({icon:'success',title:'Removed',timer:1500,background:'#0E1118',color:'#E8EAED',showConfirmButton:false});loadAdmins();}
+
+// 🔥 AUDIT LOGS
+async function loadAudit(){try{const s=await db.collection('admin_actions').get();let logs=s.docs.map(d=>d.data()).sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0)).slice(0,100);$('auditTable').innerHTML=logs.length?logs.map(l=>`<tr><td><strong>${l.adminName||'N/A'}</strong></td><td>${badge('active')} ${(l.action||'').replace(/_/g,' ')}</td><td><span class="mono">${l.targetUserId?.slice(0,12)||'—'}</span></td><td><small>${JSON.stringify(l.details||{}).slice(0,50)}</small></td><td><span class="mono">${fmtDateTime(l.createdAt)}</span></td></tr>`).join(''):`<tr><td colspan="5"><div class="empty-state"><p>No logs</p></div></td></tr>`;}catch(e){$('auditTable').innerHTML='<tr><td colspan="5"><div class="empty-state"><i class="fas fa-database"></i><p>Index needed for admin_actions</p></div></td></tr>';}}
+
+async function updateBadges(){try{const[dp,wp]=await Promise.all([db.collection('deposits').where('status','==','pending').get(),db.collection('withdrawals').where('status','==','pending').get()]);$('pendingDepBadge').textContent=dp.size;$('pendingWitBadge').textContent=wp.size;}catch(e){}}
+
+function openM(id){$(id).classList.add('active');}
+function closeM(id){$(id).classList.remove('active');}
+function showAddAdmin(){$('adminEmail').value='';openM('addAdminModal');}
+async function adminLogout(){const r=await Swal.fire({title:'Sign Out?',icon:'question',showCancelButton:true,confirmButtonColor:'#F43F5E',confirmButtonText:'Yes',background:'#0E1118',color:'#E8EAED'});if(r.isConfirmed){auth.signOut();window.location.href='login.html';}}
+
+document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('active');}));
+setInterval(updateBadges,60000);
+
+Object.assign(window,{refreshPage,loadUsers,loadDeposits,loadWithdrawals,loadInvestments,loadTransactions,loadReferrals,loadAdmins,loadAudit,showAdj,showSus,showBan,viewUser,resetPW,resetPIN,execAction,approveDep,rejectDep,approveWit,rejectWit,viewTree,addAdmin,removeAdmin,showAddAdmin,closeM,adminLogout,toggleSidebar});
+
+console.log('%c⚡ Admin Panel v2.0 Ready','color:#F5C842;font-size:14px;font-weight:bold');
+</script>
+</body>
+</html>
