@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover"/>
+<title>Kinetic Wealth · Home</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --primary: #0052CC; --primary-dark: #003D99; --primary-light: #E5EFFF;
+  --bg-main: #F4F7FB; --card-bg: #FFFFFF; --text-primary: #0F172A;
+  --text-muted: #64748B; --border-light: #E2E8F0;
+  --success: #059669; --danger: #DC2626; --warning: #D97706; --accent: #3B82F6;
+}
+* { margin:0; padding:0; box-sizing:border-box; font-family: 'Inter', sans-serif; }
+html { scroll-behavior:smooth; }
+body { background:var(--bg-main); color:var(--text-primary); min-height:100vh; -webkit-font-smoothing:antialiased; }
+
+.app-header { background:var(--primary); padding:14px 20px; position:sticky; top:0; z-index:100; box-shadow:0 4px 12px rgba(0,82,204,0.15); }
+.header-row { display:flex; align-items:center; justify-content:space-between; max-width:500px; margin:0 auto; }
+.header-left { display:flex; align-items:center; gap:10px; }
+.header-logo { width:36px; height:36px; background:rgba(255,255,255,0.2); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:17px; color:#fff; }
+.header-greeting { color:#fff; line-height:1.2; }
+.header-greeting .greeting-text { font-size:10px; font-weight:500; opacity:0.8; }
+.header-greeting .greeting-name { font-size:15px; font-weight:700; }
+.header-actions { display:flex; gap:8px; }
+.icon-btn { width:36px; height:36px; background:rgba(255,255,255,0.2); border:none; border-radius:10px; color:#fff; font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.icon-btn:active { background:rgba(255,255,255,0.35); }
+
+.main-container { max-width:500px; margin:0 auto; padding:16px 16px 100px; }
+
+.bonus-banner { background:linear-gradient(135deg,#0052CC,#003D99); border-radius:18px; padding:18px; margin-bottom:16px; color:#fff; display:flex; align-items:center; gap:14px; box-shadow:0 8px 25px rgba(0,82,204,0.30); cursor:pointer; transition:transform 0.2s; }
+.bonus-banner:active { transform:scale(0.98); }
+.bonus-banner-icon { width:50px; height:50px; background:rgba(255,255,255,0.2); border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:26px; flex-shrink:0; }
+.bonus-banner-content { flex:1; }
+.bonus-banner-label { font-size:11px; font-weight:600; opacity:0.85; margin-bottom:3px; text-transform:uppercase; letter-spacing:0.5px; }
+.bonus-banner-amount { font-size:28px; font-weight:800; letter-spacing:-0.5px; }
+.bonus-banner-hint { font-size:11px; opacity:0.7; margin-top:3px; }
+.bonus-banner-arrow { font-size:18px; opacity:0.6; }
+
+.balance-card { background:var(--card-bg); border-radius:20px; padding:22px; margin-bottom:14px; border:1px solid var(--border-light); box-shadow:0 2px 12px rgba(0,0,0,0.03); }
+.balance-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+.balance-label { font-size:12px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.3px; }
+.balance-refresh { background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:13px; padding:4px 8px; border-radius:6px; }
+.balance-amount { font-size:36px; font-weight:800; letter-spacing:-1px; color:var(--text-primary); margin-bottom:16px; }
+.balance-actions { display:flex; gap:10px; }
+.action-btn { flex:1; padding:14px; border-radius:14px; font-weight:600; font-size:14px; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer; border:none; font-family:inherit; text-decoration:none; }
+.action-btn.primary { background:var(--primary); color:#fff; }
+.action-btn.secondary { background:var(--primary-light); color:var(--primary); }
+
+.wallet-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+.wallet-mini { background:var(--card-bg); border-radius:16px; padding:14px; border:1px solid var(--border-light); display:flex; align-items:center; gap:10px; }
+.wallet-mini-icon { width:38px; height:38px; background:var(--primary-light); color:var(--primary); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+.wallet-mini-info { flex:1; }
+.wallet-mini-label { font-size:10px; color:var(--text-muted); font-weight:500; margin-bottom:2px; text-transform:uppercase; }
+.wallet-mini-amount { font-size:15px; font-weight:700; color:var(--text-primary); }
+
+.section-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.section-title { font-size:15px; font-weight:700; display:flex; align-items:center; gap:8px; }
+.section-link { font-size:12px; color:var(--primary); text-decoration:none; font-weight:600; }
+
+.investment-card { background:var(--card-bg); border-radius:18px; padding:18px; margin-bottom:16px; border:1px solid var(--border-light); }
+.investment-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+.investment-name { font-size:15px; font-weight:700; color:var(--primary); }
+.investment-badge { font-size:10px; padding:5px 10px; background:#D1FAE5; color:#059669; border-radius:20px; font-weight:600; }
+.investment-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px; }
+.inv-stat { text-align:center; }
+.inv-stat-value { font-size:14px; font-weight:700; }
+.inv-stat-label { font-size:10px; color:var(--text-muted); margin-top:2px; }
+.progress-wrap { margin-bottom:12px; }
+.progress-bar { height:6px; background:var(--border-light); border-radius:3px; overflow:hidden; margin-bottom:4px; }
+.progress-fill { height:100%; background:linear-gradient(90deg,var(--primary),var(--accent)); border-radius:3px; }
+.progress-label { font-size:10px; color:var(--text-muted); text-align:right; }
+.claim-row { display:flex; justify-content:space-between; align-items:center; padding-top:12px; border-top:1px solid var(--border-light); }
+.claim-amount { font-size:18px; font-weight:700; color:var(--warning); }
+.claim-timer { font-size:11px; color:var(--text-muted); margin-top:2px; }
+.claim-btn { padding:11px 22px; background:var(--primary); color:#fff; border:none; border-radius:25px; font-weight:600; font-size:13px; cursor:pointer; font-family:inherit; }
+.claim-btn:disabled { background:#94A3B8; cursor:not-allowed; opacity:0.5; }
+
+.empty-investment { text-align:center; padding:36px 20px; background:var(--card-bg); border-radius:18px; border:2px dashed var(--border-light); margin-bottom:16px; }
+.empty-investment .empty-icon { font-size:40px; margin-bottom:8px; }
+.empty-investment .empty-title { font-size:15px; font-weight:700; margin-bottom:4px; }
+.empty-investment .empty-text { font-size:12px; color:var(--text-muted); margin-bottom:14px; }
+.empty-btn { display:inline-block; padding:12px 28px; background:var(--primary); color:#fff; border-radius:25px; font-weight:600; font-size:14px; text-decoration:none; cursor:pointer; border:none; font-family:inherit; }
+
+.referral-card { background:var(--card-bg); border-radius:18px; padding:16px; margin-bottom:16px; border:1px solid var(--border-light); }
+.referral-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.referral-code-box { background:var(--primary-light); color:var(--primary); padding:7px 16px; border-radius:20px; font-size:14px; font-weight:700; letter-spacing:0.5px; cursor:pointer; }
+.referral-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+.ref-cell { text-align:center; padding:10px 4px; background:var(--bg-main); border-radius:10px; }
+.ref-cell-value { font-size:16px; font-weight:700; color:var(--primary); }
+.ref-cell-label { font-size:10px; color:var(--text-muted); margin-top:2px; }
+
+.chart-container { background:var(--card-bg); border-radius:18px; padding:16px; margin-bottom:16px; border:1px solid var(--border-light); }
+.chart-container canvas { max-height:160px; width:100% !important; }
+
+.tab-bar { position:fixed; bottom:0; left:0; right:0; background:var(--card-bg); border-top:1px solid var(--border-light); display:flex; justify-content:space-around; padding:10px 16px 22px; max-width:500px; margin:0 auto; z-index:100; }
+.tab-item { display:flex; flex-direction:column; align-items:center; gap:4px; text-decoration:none; font-size:10px; font-weight:600; color:var(--text-muted); }
+.tab-item i { font-size:20px; }
+.tab-item.active { color:var(--primary); }
+
+/* 🔥 POPUP MODAL OVERLAY */
+.popup-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  z-index: 9999; display: flex; align-items: center; justify-content: center;
+  padding: 20px; animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+
+.popup-card {
+  background: #fff; border-radius: 24px; width: 100%; max-width: 420px;
+  max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+  position: relative;
+}
+
+.popup-close {
+  position: absolute; top: 12px; right: 12px;
+  width: 36px; height: 36px; background: #F1F5F9; border: none;
+  border-radius: 50%; font-size: 20px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: #64748B; z-index: 2; transition: all 0.2s;
+}
+.popup-close:hover { background: #E2E8F0; color: #0F172A; }
+
+.popup-header {
+  background: linear-gradient(135deg, #0052CC, #003D99);
+  padding: 28px 24px 24px; text-align: center; color: #fff;
+  border-radius: 24px 24px 0 0;
+}
+.popup-header-icon { font-size: 44px; margin-bottom: 8px; }
+.popup-header h2 { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+.popup-header p { font-size: 12px; opacity: 0.85; }
+
+.popup-body { padding: 20px 20px 24px; }
+
+.popup-section { margin-bottom: 18px; }
+.popup-section:last-child { margin-bottom: 0; }
+.popup-section-title {
+  font-size: 13px; font-weight: 700; color: #0052CC;
+  margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+}
+
+.telegram-link {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; background: #F0F7FF; border-radius: 14px;
+  margin-bottom: 8px; text-decoration: none; color: #0F172A;
+  transition: all 0.2s; border: 1px solid #E5EFFF;
+}
+.telegram-link:active { background: #E5EFFF; transform: scale(0.98); }
+.telegram-link i { font-size: 22px; color: #0088CC; flex-shrink: 0; }
+.telegram-link-info { flex: 1; }
+.telegram-link-title { font-size: 13px; font-weight: 600; }
+.telegram-link-sub { font-size: 11px; color: #64748B; margin-top: 1px; }
+.telegram-link-arrow { color: #0088CC; font-size: 14px; }
+
+.info-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 0; font-size: 12px; color: #475569;
+}
+.info-item i { color: #0052CC; font-size: 14px; margin-top: 1px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="header-row">
+    <div class="header-left">
+      <div class="header-logo"><i class="fas fa-chart-line"></i></div>
+      <div class="header-greeting">
+        <div class="greeting-text">Good morning</div>
+        <div class="greeting-name" id="headerName">Investor</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" onclick="refreshData()"><i class="fas fa-sync-alt"></i></button>
+      <button class="icon-btn" onclick="goTo('dashboard.html')"><i class="fas fa-user"></i></button>
+    </div>
+  </div>
+</div>
+
+<div class="main-container" id="mainContent">
+
+  <div class="bonus-banner" id="bonusBanner" onclick="goTo('plans.html')">
+    <div class="bonus-banner-icon">🎁</div>
+    <div class="bonus-banner-content">
+      <div class="bonus-banner-label">Welcome Bonus Active</div>
+      <div class="bonus-banner-amount" id="bonusAmount">₦1,000</div>
+      <div class="bonus-banner-hint" id="bonusHint">Available in your deposit wallet</div>
+    </div>
+    <div class="bonus-banner-arrow"><i class="fas fa-chevron-right"></i></div>
+  </div>
+
+  <div class="balance-card">
+    <div class="balance-header">
+      <span class="balance-label">Total Balance</span>
+      <button class="balance-refresh" onclick="refreshData()"><i class="fas fa-sync-alt"></i></button>
+    </div>
+    <div class="balance-amount" id="totalBalance">₦0</div>
+    <div class="balance-actions">
+      <a href="deposit.html" class="action-btn primary"><i class="fas fa-plus-circle"></i> Deposit</a>
+      <a href="withdraw.html" class="action-btn secondary"><i class="fas fa-arrow-up"></i> Withdraw</a>
+    </div>
+  </div>
+
+  <div class="wallet-row">
+    <div class="wallet-mini">
+      <div class="wallet-mini-icon"><i class="fas fa-wallet"></i></div>
+      <div class="wallet-mini-info"><div class="wallet-mini-label">Deposit Wallet</div><div class="wallet-mini-amount" id="depositWallet">₦0</div></div>
+    </div>
+    <div class="wallet-mini">
+      <div class="wallet-mini-icon"><i class="fas fa-building-columns"></i></div>
+      <div class="wallet-mini-info"><div class="wallet-mini-label">Withdrawable</div><div class="wallet-mini-amount" id="withdrawWallet">₦0</div></div>
+    </div>
+  </div>
+
+  <div class="chart-container"><canvas id="earningsChart"></canvas></div>
+
+  <div class="section-header">
+    <div class="section-title"><i class="fas fa-bolt" style="color:var(--warning);"></i> Active Investment</div>
+    <a href="plans.html" class="section-link">Invest More →</a>
+  </div>
+  <div id="investmentContainer">
+    <div class="empty-investment"><div class="empty-icon">📊</div><div class="empty-title">Loading...</div></div>
+  </div>
+
+  <div class="section-header">
+    <div class="section-title"><i class="fas fa-users" style="color:var(--primary);"></i> Referral Program</div>
+    <a href="referrals.html" class="section-link">View Team →</a>
+  </div>
+  <div class="referral-card">
+    <div class="referral-top">
+      <span style="font-size:14px;font-weight:600;">Your Code</span>
+      <div class="referral-code-box" id="refCodeBox" onclick="copyReferralCode()">Loading...</div>
+    </div>
+    <div class="referral-grid">
+      <div class="ref-cell"><div class="ref-cell-value" id="refL1">—</div><div class="ref-cell-label">Level 1</div></div>
+      <div class="ref-cell"><div class="ref-cell-value" id="refL2">—</div><div class="ref-cell-label">Level 2</div></div>
+      <div class="ref-cell"><div class="ref-cell-value" id="refL3">—</div><div class="ref-cell-label">Level 3</div></div>
+      <div class="ref-cell"><div class="ref-cell-value" id="refEarn">—</div><div class="ref-cell-label">Earnings</div></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="tab-bar">
+  <a href="home.html" class="tab-item active"><i class="fas fa-home"></i><span>Home</span></a>
+  <a href="plans.html" class="tab-item"><i class="fas fa-bolt"></i><span>Invest</span></a>
+  <a href="withdraw.html" class="tab-item"><i class="fas fa-money-bill-transfer"></i><span>Withdraw</span></a>
+  <a href="referrals.html" class="tab-item"><i class="fas fa-users"></i><span>Team</span></a>
+  <a href="dashboard.html" class="tab-item"><i class="fas fa-user"></i><span>Profile</span></a>
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBl6HEVa9mUuROvnohMKzeEzzc0aTREU54",
+  authDomain: "kinetic-dc8e6.firebaseapp.com",
+  projectId: "kinetic-dc8e6",
+  storageBucket: "kinetic-dc8e6.firebasestorage.app",
+  messagingSenderId: "980527555815",
+  appId: "1:980527555815:web:131ccee594e0c8f122ee42"
+};
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth(),db=firebase.firestore();
+
+let currentUser=null,authReady=false,redirecting=false,activeInvestment=null,countdownTimer=null,earningsChart=null;
+const MS_PER_DAY=86400000;
+
+const fm=n=>(Number(n)||0).toLocaleString('en-NG'),fc=n=>'₦'+fm(n);
+const fs=n=>{const v=Number(n)||0;return v>=1e6?'₦'+(v/1e6).toFixed(1)+'M':v>=1e3?'₦'+(v/1e3).toFixed(1)+'K':'₦'+v;}
+function st(id,t){const e=document.getElementById(id);if(e)e.textContent=t;}
+
+// ═════════════════════ POPUP MODAL ═════════════════════
+function showInfoPopup() {
+  const today = new Date().toDateString();
+  // Show once per day
+  if (localStorage.getItem('kw-popup-date') === today) return;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'popup-overlay';
+  overlay.id = 'infoPopup';
+  overlay.innerHTML = `
+    <div class="popup-card">
+      <button class="popup-close" onclick="closeInfoPopup()">✕</button>
+      <div class="popup-header">
+        <div class="popup-header-icon">🚀</div>
+        <h2>Welcome to Kinetic Wealth!</h2>
+        <p>Stay connected & get support anytime</p>
+      </div>
+      <div class="popup-body">
+
+        <div class="popup-section">
+          <div class="popup-section-title"><i class="fas fa-users"></i> Official Telegram Groups</div>
+          <a href="https://t.me/KINECTIC_WEALTH" target="_blank" class="telegram-link">
+            <i class="fab fa-telegram"></i>
+            <div class="telegram-link-info">
+              <div class="telegram-link-title">Kinetic Wealth Official</div>
+              <div class="telegram-link-sub">Announcements, updates & community</div>
+            </div>
+            <i class="fas fa-external-link-alt telegram-link-arrow"></i>
+          </a>
+          <a href="https://t.me/+zRUEJ3uds9E3Mzg0" target="_blank" class="telegram-link">
+            <i class="fab fa-telegram"></i>
+            <div class="telegram-link-info">
+              <div class="telegram-link-title">Kinetic Wealth Community</div>
+              <div class="telegram-link-sub">Discussion, tips & member chat</div>
+            </div>
+            <i class="fas fa-external-link-alt telegram-link-arrow"></i>
+          </a>
+        </div>
+
+        <div class="popup-section">
+          <div class="popup-section-title"><i class="fas fa-headset"></i> Customer Support</div>
+          <a href="https://t.me/VictorSterling89" target="_blank" class="telegram-link">
+            <i class="fab fa-telegram"></i>
+            <div class="telegram-link-info">
+              <div class="telegram-link-title">Victor Sterling</div>
+              <div class="telegram-link-sub">Customer service · Account help · Inquiries</div>
+            </div>
+            <i class="fas fa-external-link-alt telegram-link-arrow"></i>
+          </a>
+        </div>
+
+        <div class="popup-section">
+          <div class="popup-section-title"><i class="fas fa-circle-info"></i> Important Info</div>
+          <div class="info-item"><i class="fas fa-check-circle"></i> <span>₦1,000 welcome bonus added to your deposit wallet</span></div>
+          <div class="info-item"><i class="fas fa-check-circle"></i> <span>Earn daily ROI by investing in any plan</span></div>
+          <div class="info-item"><i class="fas fa-check-circle"></i> <span>Refer friends & earn 10%/3%/1% commissions</span></div>
+          <div class="info-item"><i class="fas fa-check-circle"></i> <span>Withdrawals processed weekdays 10AM–5PM</span></div>
+          <div class="info-item"><i class="fas fa-check-circle"></i> <span>Join our Telegram groups for updates & support</span></div>
+        </div>
+
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  // Close on backdrop click
+  overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) closeInfoPopup();
+  });
+
+  localStorage.setItem('kw-popup-date', today);
+}
+
+function closeInfoPopup() {
+  const popup = document.getElementById('infoPopup');
+  if (popup) popup.remove();
+}
+
+// ═════════════════════ CHART ═════════════════════
+function initChart(){
+  const ctx=document.getElementById('earningsChart')?.getContext('2d');if(!ctx)return;
+  if(earningsChart)earningsChart.destroy();
+  earningsChart=new Chart(ctx,{type:'line',data:{labels:['Start','Now'],datasets:[{label:'Earnings',data:[0,0],borderColor:'#0052CC',backgroundColor:'rgba(0,82,204,0.04)',fill:true,tension:0.4,pointBackgroundColor:'#0052CC',pointBorderColor:'#fff',pointBorderWidth:2,pointRadius:4,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{y:{grid:{color:'#E2E8F0'},ticks:{color:'#64748B',font:{size:10},callback:v=>fs(v)}},x:{grid:{display:false},ticks:{color:'#64748B',font:{size:10}}}}}});
+}
+function updateChartData(e){if(!earningsChart)return;const v=Number(e)||0;earningsChart.data.labels=['7d ago','5d ago','3d ago','Today'];earningsChart.data.datasets[0].data=[Math.round(v*0.15),Math.round(v*0.35),Math.round(v*0.65),v];earningsChart.update();}
+
+function updateGreeting(n){const h=new Date().getHours();let g='Good morning';if(h>=12&&h<17)g='Good afternoon';else if(h>=17)g='Good evening';document.querySelector('.greeting-text').textContent=g;st('headerName',n||'Investor');}
+function safeRedirect(u){if(redirecting)return;redirecting=true;setTimeout(()=>window.location.replace(u),300);}
+
+// ═════════════════════ AUTH ═════════════════════
+auth.onAuthStateChanged((user)=>{
+  if(!user){safeRedirect('login.html');return;}
+  currentUser=user;authReady=true;initChart();loadAllData();
+  // 🔥 Show popup after data loads
+  setTimeout(() => showInfoPopup(), 800);
+});
+
+// ═════════════════════ LOAD DATA ═════════════════════
+async function loadAllData(){
+  if(!currentUser)return;
+  try{
+    const userDoc=await db.collection('users').doc(currentUser.uid).get();
+    if(!userDoc.exists){showRecoveryOption();return;}
+    const data=userDoc.data(),name=data.fullName||data.username||'User';
+    updateGreeting(name.split(' ')[0]);
+    const db2=Number(data.depositBalance)||0,wb=Number(data.withdrawalBalance)||0,te=Number(data.totalEarnings)||0;
+    st('totalBalance',fc(db2+wb));st('depositWallet',fc(db2));st('withdrawWallet',fc(wb));
+    const bb=document.getElementById('bonusBanner');
+    if(bb){
+      if(db2>=1000){bb.style.background='linear-gradient(135deg,#0052CC,#003D99)';st('bonusAmount',fc(db2));document.getElementById('bonusHint').textContent='Ready to invest — start earning!';bb.onclick=()=>goTo('plans.html');}
+      else if(db2>0){bb.style.background='linear-gradient(135deg,#0052CC,#003D99)';st('bonusAmount',fc(db2));document.getElementById('bonusHint').textContent='Add funds to unlock plans';bb.onclick=()=>goTo('deposit.html');}
+      else{bb.style.background='linear-gradient(135deg,#64748B,#475569)';st('bonusAmount','₦0');document.getElementById('bonusHint').textContent='Deposit to start investing';bb.onclick=()=>goTo('deposit.html');}
+    }
+    updateChartData(te);
+    st('refCodeBox',data.referralCode||'KW------');st('refL1',data.level1Count||0);st('refL2',data.level2Count||0);st('refL3',data.level3Count||0);st('refEarn',fs(data.totalRefEarnings||0));
+    await loadActiveInvestment();
+  }catch(err){showErrorPage('Could not load data.');}
+}
+
+function showRecoveryOption(){
+  document.getElementById('mainContent').innerHTML='<div style="text-align:center;padding:60px 20px;"><div style="font-size:64px;">🔄</div><h3>Account Recovery</h3><p>Your data is missing.</p><button onclick="recoverAccount()" style="padding:14px 28px;background:#0052CC;color:#fff;border:none;border-radius:25px;font-weight:600;cursor:pointer;font-family:inherit;">Recover & Get ₦1,000</button></div>';
+}
+async function recoverAccount(){
+  if(!currentUser)return;
+  Swal.fire({title:'Recovering...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+  const n=new Date().toISOString(),rc='KW'+Math.random().toString(36).substring(2,8).toUpperCase();
+  await db.collection('users').doc(currentUser.uid).set({uid:currentUser.uid,fullName:'User',username:(currentUser.email||'user').split('@')[0],email:currentUser.email||'',phone:'',referralCode:rc,referrerUid:'direct',referredBy:'',depositBalance:1000,withdrawalBalance:0,balance:1000,totalEarnings:1000,welcomeBonusPaid:true,totalInvested:0,totalRefEarnings:0,referralCount:0,level1Count:0,level2Count:0,level3Count:0,purchasedPlans:[],isAdmin:false,status:'active',createdAt:n,lastLogin:n,lastUpdated:n});
+  Swal.fire({icon:'success',title:'Recovered!',confirmButtonColor:'#0052CC'}).then(()=>location.reload());
+}
+function showErrorPage(msg){document.getElementById('mainContent').innerHTML='<div style="text-align:center;padding:60px;"><h3>Error</h3><p>'+msg+'</p><button onclick="location.reload()" style="padding:12px 24px;background:#0052CC;color:#fff;border:none;border-radius:25px;cursor:pointer;">Retry</button></div>';}
+
+// ═════════════════════ INVESTMENT ═════════════════════
+async function loadActiveInvestment(){
+  const c=document.getElementById('investmentContainer');if(!c)return;
+  try{
+    const s=await db.collection('investments').where('userId','==',currentUser.uid).where('status','==','active').limit(1).get();
+    if(s.empty){c.innerHTML='<div class="empty-investment"><div class="empty-icon">📊</div><div class="empty-title">No Active Investment</div><div class="empty-text">Start investing to earn daily returns</div><a href="plans.html" class="empty-btn">View Plans</a></div>';return;}
+    activeInvestment={id:s.docs[0].id,...s.docs[0].data()};renderInvestment();
+  }catch(e){c.innerHTML='<div class="empty-investment"><div class="empty-icon">⚠️</div><div class="empty-title">Error</div><button class="empty-btn" onclick="refreshData()">Retry</button></div>';}
+}
+function renderInvestment(){
+  if(!activeInvestment)return;
+  const c=document.getElementById('investmentContainer');if(!c)return;
+  const n=Date.now(),gm=ts=>ts?.toMillis?.()||(ts?.seconds?ts.seconds*1000:n);
+  const aa=gm(activeInvestment.activatedAt||activeInvestment.createdAt),lc=gm(activeInvestment.lastClaimAt)||aa,nc=gm(activeInvestment.nextClaimAt)||(lc+MS_PER_DAY),can=n>=nc;
+  const dur=Number(activeInvestment.duration)||1,cd=Number(activeInvestment.claimedDays)||0,dr2=Math.max(0,dur-cd),pg=Math.min((cd/dur)*100,100),roi=Number(activeInvestment.dailyROI)||0,cap=Number(activeInvestment.capital)||0,isF=dr2<=1,ca=isF?roi+cap:roi;
+  c.innerHTML='<div class="investment-card"><div class="investment-top"><div class="investment-name">'+(activeInvestment.planName||'Plan')+'</div><div class="investment-badge">Active</div></div><div class="investment-stats"><div class="inv-stat"><div class="inv-stat-value">'+fc(cap)+'</div><div class="inv-stat-label">Capital</div></div><div class="inv-stat"><div class="inv-stat-value">'+fc(roi)+'</div><div class="inv-stat-label">Daily ROI</div></div><div class="inv-stat"><div class="inv-stat-value">'+dr2+'</div><div class="inv-stat-label">Days Left</div></div></div><div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" style="width:'+pg+'%"></div></div><div class="progress-label">Day '+cd+' of '+dur+(isF?' (Final)':'')+'</div></div><div class="claim-row"><div><div class="claim-amount">+'+fc(ca)+'</div><div class="claim-timer" id="claimTimer">'+(can?'Ready!':'')+'</div></div><button class="claim-btn" id="claimBtn" onclick="claimDaily()" '+(can?'':'disabled')+'>'+(isF?'Claim All':'Claim')+'</button></div></div>';
+  if(!can&&nc>n)startCountdown(nc);
+}
+function startCountdown(t){if(countdownTimer)clearInterval(countdownTimer);countdownTimer=setInterval(()=>{const r=Math.max(0,t-Date.now()),e=document.getElementById('claimTimer'),b=document.getElementById('claimBtn');if(!e||!b){clearInterval(countdownTimer);return;}if(r<=0){e.textContent='Ready!';b.disabled=false;clearInterval(countdownTimer);}else{const h=Math.floor(r/3600000),m=Math.floor((r%3600000)/60000),s=Math.floor((r%60000)/1000);e.textContent='In '+h+'h '+m+'m '+s+'s';}},1000);}
+async function claimDaily(){
+  if(!activeInvestment||!currentUser)return;
+  const roi=Number(activeInvestment.dailyROI)||0,cap=Number(activeInvestment.capital)||0,dur=Number(activeInvestment.duration)||1,cd=Number(activeInvestment.claimedDays)||0,isF=(cd+1)>=dur,ca=isF?roi+cap:roi;
+  const cf=await Swal.fire({title:isF?'Final Claim!':'Claim Returns',html:'<div style="font-size:28px;font-weight:800;color:#D97706;">+'+fc(ca)+'</div>',icon:'question',showCancelButton:true,confirmButtonText:'Yes',confirmButtonColor:'#0052CC'});
+  if(!cf.isConfirmed)return;
+  Swal.fire({title:'Processing...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+  try{
+    const b=db.batch();
+    b.update(db.collection('users').doc(currentUser.uid),{withdrawalBalance:firebase.firestore.FieldValue.increment(ca),totalEarnings:firebase.firestore.FieldValue.increment(ca)});
+    if(isF){b.update(db.collection('investments').doc(activeInvestment.id),{status:'completed',completedAt:new Date().toISOString(),lastClaimAt:new Date().toISOString(),claimedDays:firebase.firestore.FieldValue.increment(1),daysRemaining:0});}
+    else{b.update(db.collection('investments').doc(activeInvestment.id),{lastClaimAt:new Date().toISOString(),nextClaimAt:new Date(Date.now()+MS_PER_DAY),claimedDays:firebase.firestore.FieldValue.increment(1),daysRemaining:firebase.firestore.FieldValue.increment(-1)});}
+    b.set(db.collection('transactions').doc(),{userId:currentUser.uid,type:isF?'roi_final':'roi_daily',amount:ca,status:'completed',description:(isF?'Final':'Daily')+' ROI',wallet:'withdrawal',createdAt:new Date()});
+    await b.commit();
+    Swal.fire({icon:'success',title:'Claimed!',html:'<div style="font-size:24px;font-weight:800;color:#059669;">+'+fc(ca)+'</div>',confirmButtonColor:'#0052CC'});
+    await loadAllData();
+  }catch(e){Swal.fire({icon:'error',title:'Failed',text:e.message,confirmButtonColor:'#0052CC'});}
+}
+function copyReferralCode(){const c=document.getElementById('refCodeBox')?.textContent||'';if(c&&c!=='Loading...'){navigator.clipboard.writeText(c).then(()=>Swal.fire({icon:'success',title:'Copied!',toast:true,position:'top-end',showConfirmButton:false,timer:2000}));}}
+function goTo(u){window.location.href=u;}
+async function refreshData(){const b=document.querySelector('.balance-refresh i');if(b)b.classList.add('fa-spin');await loadAllData();setTimeout(()=>{if(b)b.classList.remove('fa-spin');},500);}
+
+window.addEventListener('beforeunload',()=>{if(countdownTimer)clearInterval(countdownTimer);});
+window.goTo=goTo;window.claimDaily=claimDaily;window.copyReferralCode=copyReferralCode;window.refreshData=refreshData;
+window.recoverAccount=recoverAccount;window.closeInfoPopup=closeInfoPopup;window.showInfoPopup=showInfoPopup;
+</script>
+
+</body>
+</html>
