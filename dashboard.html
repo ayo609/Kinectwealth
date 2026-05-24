@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover"/>
+<title>Kinetic Wealth · Dashboard</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --primary:       #0052CC;
+  --primary-dark:  #003D99;
+  --primary-light: #E5EFFF;
+  --bg-main:       #F4F7FB;
+  --card-bg:       #FFFFFF;
+  --text-primary:  #0F172A;
+  --text-muted:    #64748B;
+  --border-light:  #E2E8F0;
+  --success:       #059669;
+  --success-light: #D1FAE5;
+  --danger:        #DC2626;
+  --danger-light:  #FEE2E2;
+  --warning:       #D97706;
+  --warning-light: #FEF3C7;
+}
+[data-theme="dark"] {
+  --primary: #3B82F6; --primary-dark: #60A5FA; --primary-light: #1E3A8A;
+  --bg-main: #0F172A; --card-bg: #1E293B; --text-primary: #F8FAFC;
+  --text-muted: #94A3B8; --border-light: #334155;
+  --success: #10B981; --success-light: #064E3B;
+  --danger: #EF4444; --danger-light: #7F1D1D;
+  --warning: #F59E0B; --warning-light: #78350F;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; font-family: 'Inter', sans-serif; }
+
+body {
+  background: var(--bg-main); color: var(--text-primary);
+  min-height: 100vh; -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.app-header {
+  background: var(--primary); padding: 16px 20px;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 4px 12px rgba(0,82,204,0.15);
+}
+.header-row {
+  display: flex; align-items: center; justify-content: space-between;
+  max-width: 500px; margin: 0 auto;
+}
+.header-title { font-size: 18px; font-weight: 700; color: #fff; }
+.header-actions { display: flex; gap: 10px; }
+
+.icon-circle {
+  width: 38px; height: 38px; background: rgba(255,255,255,0.2);
+  border-radius: 12px; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: #fff; font-size: 16px; border: none;
+  position: relative; transition: background 0.2s;
+}
+.icon-circle:active { background: rgba(255,255,255,0.35); }
+
+.notif-dot {
+  position: absolute; top: 6px; right: 6px;
+  width: 8px; height: 8px; background: #EF4444;
+  border-radius: 50%; border: 2px solid var(--primary); display: none;
+}
+
+.main-container { max-width: 500px; margin: 0 auto; padding: 0 16px 100px; }
+
+.profile-card {
+  background: var(--card-bg); border-radius: 20px; padding: 22px;
+  margin: 18px 0; text-align: center;
+  border: 1px solid var(--border-light);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+}
+.avatar {
+  width: 64px; height: 64px; background: var(--primary); color: #fff;
+  border-radius: 18px; display: flex; align-items: center; justify-content: center;
+  font-size: 26px; font-weight: 700; margin: 0 auto 10px;
+}
+.user-name { font-size: 19px; font-weight: 700; color: var(--text-primary); margin-bottom: 2px; }
+.user-email { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; }
+
+.user-badges { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.badge {
+  padding: 6px 12px; border-radius: 30px; font-size: 11px; font-weight: 600;
+  display: flex; align-items: center; gap: 5px;
+}
+.badge-verified { background: var(--success-light); color: var(--success); }
+.badge-vip { background: var(--warning-light); color: var(--warning); }
+.badge-new { background: var(--primary-light); color: var(--primary); }
+
+.stats-grid {
+  display: grid; grid-template-columns: repeat(2,1fr);
+  gap: 10px; margin-bottom: 18px;
+}
+.stat-block {
+  background: var(--card-bg); border-radius: 14px; padding: 14px;
+  border: 1px solid var(--border-light);
+}
+.stat-value { font-size: 20px; font-weight: 700; color: var(--primary); margin-bottom: 2px; }
+.stat-label { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+
+.wallets-row { display: flex; gap: 10px; margin-bottom: 20px; }
+.wallet-box {
+  flex: 1; background: var(--card-bg); border-radius: 14px; padding: 14px;
+  border: 1px solid var(--border-light);
+}
+.wallet-box.deposit { border-left: 4px solid var(--primary); }
+.wallet-box.withdraw { border-left: 4px solid var(--success); }
+.wallet-label { font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 6px; }
+.wallet-amount { font-size: 18px; font-weight: 700; color: var(--text-primary); margin-bottom: 10px; }
+.wallet-action { font-size: 12px; font-weight: 700; text-decoration: none; }
+.wallet-box.deposit .wallet-action { color: var(--primary); }
+.wallet-box.withdraw .wallet-action { color: var(--success); }
+
+/* 🔥 SUBORDINATE REWARDS — PROMINENT */
+.rewards-card {
+  background: linear-gradient(135deg, #FFF7ED, #FFFBEB);
+  border: 2px solid var(--warning);
+  border-radius: 18px; padding: 18px; margin-bottom: 20px;
+  cursor: pointer; position: relative; overflow: hidden;
+  box-shadow: 0 4px 15px rgba(217,119,6,0.10);
+  transition: all 0.2s;
+}
+[data-theme="dark"] .rewards-card {
+  background: linear-gradient(135deg, #1E293B, #1A1F2E);
+  border-color: var(--warning);
+}
+.rewards-card:active { transform: scale(0.98); }
+
+.rewards-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.rewards-card-icon {
+  width: 48px; height: 48px; background: var(--warning-light);
+  color: var(--warning); border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
+}
+.rewards-card-info { flex: 1; }
+.rewards-card-title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 2px; }
+.rewards-card-sub { font-size: 11px; color: var(--text-muted); }
+.rewards-card-arrow { color: var(--warning); font-size: 18px; }
+
+.rewards-card-stats { display: flex; gap: 10px; }
+.reward-stat-box {
+  flex: 1; background: var(--card-bg); border-radius: 10px;
+  padding: 10px; text-align: center;
+}
+.reward-stat-value { font-size: 16px; font-weight: 700; color: var(--warning); margin-bottom: 2px; }
+.reward-stat-label { font-size: 10px; color: var(--text-muted); }
+
+/* 🔥 VIEW FULL REWARDS BUTTON */
+.view-rewards-btn {
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px; width: 100%; padding: 14px;
+  background: var(--warning); color: #fff;
+  border: none; border-radius: 14px;
+  font-size: 14px; font-weight: 700; cursor: pointer;
+  margin-bottom: 20px; font-family: inherit;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(217,119,6,0.25);
+}
+.view-rewards-btn:active { transform: scale(0.97); }
+
+.section-title {
+  font-size: 14px; font-weight: 700; color: var(--text-primary);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+
+.menu-grid {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  gap: 10px; margin-bottom: 20px;
+}
+.menu-item {
+  background: var(--card-bg); border-radius: 14px; padding: 14px 6px;
+  text-align: center; text-decoration: none;
+  border: 1px solid var(--border-light);
+  transition: transform 0.2s;
+}
+.menu-item:active { transform: scale(0.94); }
+.menu-icon {
+  width: 38px; height: 38px; background: var(--primary-light); color: var(--primary);
+  border-radius: 10px; display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 6px; font-size: 17px;
+}
+.menu-label { font-size: 11px; font-weight: 600; color: var(--text-primary); }
+
+.links-list {
+  background: var(--card-bg); border-radius: 14px;
+  border: 1px solid var(--border-light); overflow: hidden; margin-bottom: 20px;
+}
+.link-item {
+  display: flex; align-items: center; gap: 12px; padding: 14px 16px;
+  border-bottom: 1px solid var(--border-light); cursor: pointer;
+}
+.link-item:last-child { border-bottom: none; }
+.link-item:active { background: var(--bg-main); }
+.link-icon {
+  width: 34px; height: 34px; background: var(--bg-main); color: var(--text-muted);
+  border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 15px;
+}
+.link-content { flex: 1; }
+.link-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.link-sub { font-size: 11px; color: var(--text-muted); }
+.link-arrow { color: var(--border-light); font-size: 13px; }
+
+.logout-btn {
+  width: 100%; padding: 15px; background: var(--danger-light); color: var(--danger);
+  border: none; border-radius: 14px; font-size: 14px; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: inherit;
+}
+
+.tab-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--card-bg); border-top: 1px solid var(--border-light);
+  display: flex; justify-content: space-around; padding: 10px 16px 22px;
+  max-width: 500px; margin: 0 auto; z-index: 100;
+}
+.tab-item {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  text-decoration: none; font-size: 10px; font-weight: 600; color: var(--text-muted);
+}
+.tab-item i { font-size: 20px; }
+.tab-item.active { color: var(--primary); }
+
+.error-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+.error-state i { font-size: 44px; color: var(--danger); margin-bottom: 14px; }
+.error-state button {
+  margin-top: 14px; padding: 12px 24px; background: var(--primary);
+  color: #fff; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; font-family: inherit;
+}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="header-row">
+    <div class="header-title">Dashboard</div>
+    <div class="header-actions">
+      <button class="icon-circle" onclick="showNotifications()"><i class="fas fa-bell"></i><span class="notif-dot" id="notifDot"></span></button>
+      <button class="icon-circle" onclick="toggleTheme()" id="themeToggleBtn"><i class="fas fa-moon"></i></button>
+    </div>
+  </div>
+</div>
+
+<div class="main-container" id="mainContent">
+
+  <div class="profile-card">
+    <div class="avatar" id="userAvatar">?</div>
+    <div class="user-name" id="userName">Loading...</div>
+    <div class="user-email" id="userEmail">—</div>
+    <div class="user-badges">
+      <span class="badge badge-verified"><i class="fas fa-shield-check"></i> Verified</span>
+      <span class="badge badge-vip" id="vipBadge"><i class="fas fa-star"></i> Member</span>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-block"><div class="stat-value" id="activePlans">—</div><div class="stat-label">Active Plans</div></div>
+    <div class="stat-block"><div class="stat-value" id="totalEarned">—</div><div class="stat-label">Total Earned</div></div>
+    <div class="stat-block"><div class="stat-value" id="referralsCount">—</div><div class="stat-label">Team Size</div></div>
+    <div class="stat-block"><div class="stat-value" id="refEarnings">—</div><div class="stat-label">Team Bonus</div></div>
+  </div>
+
+  <div class="wallets-row">
+    <div class="wallet-box deposit">
+      <div class="wallet-label"><i class="fas fa-wallet"></i> Deposit</div>
+      <div class="wallet-amount" id="depositWallet">—</div>
+      <a href="deposit.html" class="wallet-action">Add Funds →</a>
+    </div>
+    <div class="wallet-box withdraw">
+      <div class="wallet-label"><i class="fas fa-money-bill-transfer"></i> Withdraw</div>
+      <div class="wallet-amount" id="withdrawWallet">—</div>
+      <a href="withdraw.html" class="wallet-action">Withdraw →</a>
+    </div>
+  </div>
+
+  <!-- 🔥 SUBORDINATE REWARDS CARD — CLICKABLE -->
+  <div class="rewards-card" onclick="goTo('subordinate-rewards.html')">
+    <div class="rewards-card-header">
+      <div class="rewards-card-icon"><i class="fas fa-trophy"></i></div>
+      <div class="rewards-card-info">
+        <div class="rewards-card-title">Subordinate Rewards</div>
+        <div class="rewards-card-sub">Earn daily & weekly bonuses from your team</div>
+      </div>
+      <i class="fas fa-chevron-right rewards-card-arrow"></i>
+    </div>
+    <div class="rewards-card-stats">
+      <div class="reward-stat-box">
+        <div class="reward-stat-value" id="subDailyAmount">₦0</div>
+        <div class="reward-stat-label">Daily Available</div>
+      </div>
+      <div class="reward-stat-box">
+        <div class="reward-stat-value" id="subWeeklyAmount">₦0</div>
+        <div class="reward-stat-label">Weekly Available</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🔥 VIEW FULL SUBORDINATE REWARDS BUTTON -->
+  <button class="view-rewards-btn" onclick="goTo('subordinate-rewards.html')">
+    <i class="fas fa-trophy"></i> View Full Subordinate Rewards
+  </button>
+
+  <div class="section-title"><i class="fas fa-th-large" style="color:var(--primary);"></i> Quick Menu</div>
+  <div class="menu-grid">
+    <a href="investments.html" class="menu-item">
+      <div class="menu-icon"><i class="fas fa-chart-pie"></i></div>
+      <div class="menu-label">Portfolio</div>
+    </a>
+    <a href="plans.html" class="menu-item">
+      <div class="menu-icon"><i class="fas fa-bolt"></i></div>
+      <div class="menu-label">Invest</div>
+    </a>
+    <a href="transactions.html" class="menu-item">
+      <div class="menu-icon"><i class="fas fa-receipt"></i></div>
+      <div class="menu-label">History</div>
+    </a>
+    <a href="referrals.html" class="menu-item">
+      <div class="menu-icon"><i class="fas fa-users"></i></div>
+      <div class="menu-label">Team</div>
+    </a>
+  </div>
+
+  <div class="section-title"><i class="fas fa-cog" style="color:var(--text-muted);"></i> Settings</div>
+  <div class="links-list">
+    <div class="link-item" onclick="goTo('bind-wallet.html')">
+      <div class="link-icon"><i class="fas fa-building-columns"></i></div>
+      <div class="link-content"><div class="link-title">Bank Account</div><div class="link-sub">Link withdrawal account</div></div>
+      <i class="fas fa-chevron-right link-arrow"></i>
+    </div>
+    <div class="link-item" onclick="goTo('change-password.html')">
+      <div class="link-icon"><i class="fas fa-shield-halved"></i></div>
+      <div class="link-content"><div class="link-title">Security</div><div class="link-sub">Change password & PIN</div></div>
+      <i class="fas fa-chevron-right link-arrow"></i>
+    </div>
+    <div class="link-item" onclick="showSupport()">
+      <div class="link-icon"><i class="fas fa-headset"></i></div>
+      <div class="link-content"><div class="link-title">Support</div><div class="link-sub">24/7 customer service</div></div>
+      <i class="fas fa-chevron-right link-arrow"></i>
+    </div>
+  </div>
+
+  <button class="logout-btn" onclick="confirmLogout()"><i class="fas fa-arrow-right-from-bracket"></i> Sign Out</button>
+
+</div>
+
+<div class="tab-bar">
+  <a href="home.html" class="tab-item"><i class="fas fa-home"></i><span>Home</span></a>
+  <a href="plans.html" class="tab-item"><i class="fas fa-bolt"></i><span>Invest</span></a>
+  <a href="withdraw.html" class="tab-item"><i class="fas fa-money-bill-transfer"></i><span>Withdraw</span></a>
+  <a href="referrals.html" class="tab-item"><i class="fas fa-users"></i><span>Team</span></a>
+  <a href="dashboard.html" class="tab-item active"><i class="fas fa-user"></i><span>Profile</span></a>
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBl6HEVa9mUuROvnohMKzeEzzc0aTREU54",
+  authDomain: "kinetic-dc8e6.firebaseapp.com",
+  projectId: "kinetic-dc8e6",
+  storageBucket: "kinetic-dc8e6.firebasestorage.app",
+  messagingSenderId: "980527555815",
+  appId: "1:980527555815:web:131ccee594e0c8f122ee42"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+let authReady = false;
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  const newTheme = isDark ? 'light' : 'dark';
+  html.setAttribute('data-theme', newTheme);
+  localStorage.setItem('kw-theme', newTheme);
+  const icon = document.querySelector('#themeToggleBtn i');
+  if (icon) icon.className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+}
+
+const savedTheme = localStorage.getItem('kw-theme') || 'light';
+document.documentElement.setAttribute('data-theme', savedTheme);
+document.addEventListener('DOMContentLoaded', () => {
+  const icon = document.querySelector('#themeToggleBtn i');
+  if (icon) icon.className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+});
+
+const DAILY_TIERS=[{c:3,r:1500},{c:6,r:3000},{c:10,r:5000},{c:15,r:7500},{c:20,r:10000}];
+const WEEKLY_TIERS=[{c:10,r:6500},{c:20,r:13000},{c:30,r:20000}];
+function gdr(c){for(let i=DAILY_TIERS.length-1;i>=0;i--)if(c>=DAILY_TIERS[i].c)return DAILY_TIERS[i].r;return 0;}
+function gwr(c){for(let i=WEEKLY_TIERS.length-1;i>=0;i--)if(c>=WEEKLY_TIERS[i].c)return WEEKLY_TIERS[i].r;return 0;}
+
+const fm=n=>(Number(n)||0).toLocaleString('en-NG');
+const fc=n=>'₦'+fm(n);
+const fs=n=>{const v=Number(n)||0;return v>=1e6?'₦'+(v/1e6).toFixed(1)+'M':v>=1e3?'₦'+(v/1e3).toFixed(1)+'K':'₦'+v;}
+function st(id,t){const e=document.getElementById(id);if(e)e.textContent=t;}
+
+async function countActiveDownlines(uid){
+  try{
+    const s=await db.collection('users').where('referrerUid','==',uid).get();
+    if(s.empty)return 0;
+    let c=0;
+    for(const d of s.docs){
+      const u=d.data();
+      if((u.totalInvested||0)<10000)continue;
+      try{const inv=await db.collection('investments').where('userId','==',d.id).where('status','==','active').limit(1).get();if(!inv.empty)c++;}catch(e){}
+    }
+    return c;
+  }catch(e){return 0;}
+}
+
+async function loadAllData(){
+  const u=auth.currentUser;
+  if(!u)return;
+  try{
+    const doc=await db.collection('users').doc(u.uid).get();
+    if(!doc.exists){showError('User data not found.');return;}
+    const d=doc.data();
+    const name=d.fullName||d.username||'User';
+    document.getElementById('userAvatar').textContent=name.charAt(0).toUpperCase();
+    st('userName',name);
+    st('userEmail',u.email||'—');
+    st('depositWallet',fc(d.depositBalance||0));
+    st('withdrawWallet',fc(d.withdrawalBalance||0));
+    st('totalEarned',fs(d.totalEarnings||0));
+    st('referralsCount',d.referralCount||0);
+    st('refEarnings',fs(d.totalRefEarnings||0));
+
+    const[apc,dnc]=await Promise.all([
+      db.collection('investments').where('userId','==',u.uid).where('status','==','active').get().then(s=>s.size).catch(()=>0),
+      countActiveDownlines(u.uid)
+    ]);
+    st('activePlans',apc);
+
+    const vip=getVIP(d);
+    const vb=document.getElementById('vipBadge');
+    if(vb){
+      if(vip>0){vb.innerHTML='<i class="fas fa-crown"></i> VIP '+vip;vb.className='badge badge-vip';}
+      else if((d.totalInvested||0)===0){vb.innerHTML='<i class="fas fa-user"></i> New Member';vb.className='badge badge-new';}
+      else{vb.innerHTML='<i class="fas fa-star"></i> Member';vb.className='badge badge-vip';}
+    }
+
+    const dr=gdr(dnc),wr=gwr(dnc);
+    const sub=d.subordinateRewards||{},sd=sub.daily||{},sw=sub.weekly||{};
+    const today=new Date().toISOString().split('T')[0];
+    const ws=new Date();ws.setDate(ws.getDate()-ws.getDay());
+    const wk=ws.toISOString().split('T')[0];
+    st('subDailyAmount',sd.lastClaimDate===today?'₦0 (Claimed)':fc(dr));
+    st('subWeeklyAmount',sw.lastClaimWeek===wk?'₦0 (Claimed)':fc(wr));
+
+    const nd=document.getElementById('notifDot');
+    if(nd)nd.style.display=((sd.lastClaimDate!==today&&dr>0)||(sw.lastClaimWeek!==wk&&wr>0))?'block':'none';
+
+    db.collection('users').doc(u.uid).update({lastLogin:new Date().toISOString()}).catch(()=>{});
+  }catch(e){showError('Failed to load data. Please refresh.');}
+}
+
+function getVIP(d){
+  if(!d)return 0;
+  const pp=d.purchasedPlans||[];
+  let m=0;
+  for(const p of pp){if(typeof p==='string'&&p.toLowerCase().startsWith('vip')){const l=parseInt(p.replace(/[^0-9]/g,''))||0;if(l>m)m=l;}}
+  if(m===0){const ti=d.totalInvested||0;if(ti>=1000000)m=5;else if(ti>=500000)m=4;else if(ti>=200000)m=3;else if(ti>=100000)m=2;else if(ti>=50000)m=1;}
+  return m;
+}
+
+function showError(msg){
+  document.getElementById('mainContent').innerHTML=`
+    <div class="error-state"><i class="fas fa-exclamation-triangle"></i><p>${msg}</p>
+    <button onclick="location.reload()"><i class="fas fa-redo"></i> Retry</button></div>`;
+}
+
+function goTo(p){window.location.href=p;}
+
+function showNotifications(){
+  Swal.fire({title:'Notifications',html:'<p>✅ Welcome to Kinetic Wealth!</p><p>💰 Claim daily ROI every 24h</p><p>👥 Earn referrals 10%/3%/1%</p><p>🏆 Check Subordinate Rewards</p>',confirmButtonColor:'#0052CC'});
+}
+function showSupport(){
+  Swal.fire({title:'Support',html:'<p><a href="https://wa.me/420722586066" target="_blank">WhatsApp Support</a></p><p><a href="mailto:support@kineticwealth.com">Email Support</a></p>',confirmButtonColor:'#0052CC'});
+}
+function confirmLogout(){
+  Swal.fire({title:'Sign out?',icon:'warning',showCancelButton:true,confirmButtonText:'Sign Out',confirmButtonColor:'#DC2626'}).then(r=>{if(r.isConfirmed)auth.signOut().then(()=>window.location.href='login.html');});
+}
+
+auth.onAuthStateChanged((user)=>{
+  if(!user){window.location.replace('login.html');return;}
+  if(!authReady){authReady=true;loadAllData();}
+});
+
+window.goTo=goTo;window.toggleTheme=toggleTheme;window.showNotifications=showNotifications;
+window.showSupport=showSupport;window.confirmLogout=confirmLogout;
+</script>
+
+</body>
+</html>
