@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover"/>
+<title>Kinetic Wealth · Withdraw</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --primary:       #0052CC;
+  --primary-dark:  #003D99;
+  --primary-light: #E5EFFF;
+  --bg-main:       #F4F7FB;
+  --card-bg:       #FFFFFF;
+  --card-bg-inner: #F8FAFC;
+  --text-primary:  #0F172A;
+  --text-muted:    #64748B;
+  --border-light:  #E2E8F0;
+  --success:       #059669;
+  --success-light: #D1FAE5;
+  --danger:        #DC2626;
+  --danger-light:  #FEE2E2;
+  --warning:       #D97706;
+  --warning-light: #FEF3C7;
+}
+[data-theme="dark"] {
+  --primary: #3B82F6; --primary-dark: #60A5FA; --primary-light: #1E3A8A;
+  --bg-main: #0F172A; --card-bg: #1E293B; --card-bg-inner: #151D2A;
+  --text-primary: #F8FAFC; --text-muted: #94A3B8; --border-light: #334155;
+  --success: #10B981; --success-light: #064E3B;
+  --danger: #EF4444; --danger-light: #7F1D1D;
+  --warning: #F59E0B; --warning-light: #78350F;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; font-family: 'Inter', sans-serif; }
+
+body {
+  background: var(--bg-main); color: var(--text-primary);
+  min-height: 100vh; -webkit-font-smoothing: antialiased;
+  padding-bottom: 100px; transition: background-color 0.3s, color 0.3s;
+}
+
+.app-header {
+  background: var(--primary); padding: 16px 20px;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 4px 12px rgba(0,82,204,0.15);
+}
+.header-row {
+  display: flex; align-items: center; justify-content: space-between;
+  max-width: 500px; margin: 0 auto;
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+
+.back-btn {
+  width: 38px; height: 38px; background: rgba(255,255,255,0.2);
+  border-radius: 12px; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: #fff; font-size: 15px; text-decoration: none; border: none;
+}
+.back-btn:active { background: rgba(255,255,255,0.35); }
+.header-title { font-size: 18px; font-weight: 700; color: #fff; }
+.header-actions { display: flex; gap: 8px; }
+
+.icon-btn {
+  width: 38px; height: 38px; background: rgba(255,255,255,0.2);
+  border-radius: 12px; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: #fff; font-size: 15px; border: none;
+}
+.icon-btn:active { background: rgba(255,255,255,0.35); }
+
+.main-container { max-width: 500px; margin: 0 auto; padding: 16px 16px 100px; }
+
+.balance-card {
+  background: var(--card-bg); border-radius: 22px; padding: 24px;
+  margin-bottom: 16px; text-align: center;
+  border: 1px solid var(--border-light); box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+}
+.balance-label { font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+.balance-amount { font-size: 42px; font-weight: 800; color: var(--primary); letter-spacing: -1px; }
+
+.info-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.info-pill {
+  background: var(--card-bg); border: 1px solid var(--border-light);
+  border-radius: 20px; padding: 8px 14px; font-size: 11px; font-weight: 500;
+  color: var(--text-muted); display: flex; align-items: center; gap: 6px;
+}
+.info-pill i { color: var(--primary); font-size: 12px; }
+
+.alert-box {
+  border-radius: 14px; padding: 14px 16px; margin-bottom: 16px;
+  display: flex; align-items: center; gap: 12px; font-size: 13px; font-weight: 500;
+}
+.alert-box.warning { background: var(--warning-light); color: var(--warning); border-left: 4px solid var(--warning); }
+.alert-box.success { background: var(--success-light); color: var(--success); border-left: 4px solid var(--success); }
+.alert-box.error { background: var(--danger-light); color: var(--danger); border-left: 4px solid var(--danger); }
+.alert-box i { font-size: 18px; flex-shrink: 0; }
+.alert-text { flex: 1; line-height: 1.4; }
+
+.bank-card {
+  background: var(--card-bg); border-radius: 18px; padding: 18px;
+  margin-bottom: 16px; border: 1px solid var(--border-light);
+}
+.bank-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.bank-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+.bank-edit { color: var(--primary); font-size: 12px; font-weight: 600; text-decoration: none; }
+.bank-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border-light); }
+.bank-row:last-child { border-bottom: none; }
+.bank-row-label { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+.bank-row-value { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+
+.section-label { font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+
+.amount-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.chip {
+  background: var(--card-bg); border: 1.5px solid var(--border-light);
+  padding: 10px 18px; border-radius: 25px; font-size: 13px; font-weight: 600;
+  color: var(--text-primary); cursor: pointer; transition: all 0.2s; font-family: inherit;
+}
+.chip:active { transform: scale(0.96); }
+.chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+.custom-input-wrap {
+  background: var(--card-bg-inner); border: 1px solid var(--border-light);
+  border-radius: 14px; display: flex; align-items: center;
+  padding: 2px 2px 2px 16px; margin-bottom: 12px;
+}
+.custom-input-wrap .prefix { font-size: 16px; font-weight: 700; color: var(--text-muted); }
+.custom-input-wrap input {
+  flex: 1; padding: 14px 12px; border: none; background: transparent;
+  font-size: 15px; font-weight: 500; outline: none; color: var(--text-primary); font-family: inherit;
+}
+
+.preview-box {
+  background: var(--card-bg-inner); border-radius: 14px; padding: 16px;
+  margin-bottom: 16px; border: 1px solid var(--border-light);
+}
+.preview-row { display: flex; justify-content: space-between; padding: 7px 0; font-size: 13px; }
+.preview-label { color: var(--text-muted); }
+.preview-value { font-weight: 600; color: var(--text-primary); }
+.preview-value.green { color: var(--success); font-weight: 700; }
+.preview-value.red { color: var(--danger); }
+.preview-divider { height: 1px; background: var(--border-light); margin: 8px 0; }
+
+.pin-wrap { margin-bottom: 16px; }
+.pin-label { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; display: block; }
+.pin-input {
+  background: var(--card-bg-inner); border: 1px solid var(--border-light);
+  border-radius: 14px; padding: 14px 20px; width: 100%;
+  font-size: 20px; letter-spacing: 8px; text-align: center; outline: none;
+  font-weight: 600; color: var(--text-primary); font-family: inherit;
+}
+.pin-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+
+.submit-btn {
+  width: 100%; padding: 16px; background: var(--primary); color: #fff;
+  border: none; border-radius: 14px; font-size: 16px; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: inherit; transition: all 0.2s;
+}
+.submit-btn:active { background: var(--primary-dark); transform: scale(0.98); }
+.submit-btn:disabled { background: #94A3B8; cursor: not-allowed; }
+
+.empty-block {
+  text-align: center; padding: 36px 20px; background: var(--card-bg);
+  border-radius: 18px; border: 2px dashed var(--border-light);
+}
+.empty-icon { font-size: 40px; margin-bottom: 10px; }
+.empty-title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+.empty-text { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; }
+
+.action-link {
+  display: inline-block; padding: 12px 24px; background: var(--primary);
+  color: #fff; border-radius: 25px; text-decoration: none; font-weight: 600; font-size: 14px;
+}
+
+.history-header { display: flex; justify-content: space-between; align-items: center; margin: 20px 0 12px; }
+.history-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.history-count { font-size: 11px; color: var(--text-muted); background: var(--card-bg-inner); padding: 4px 10px; border-radius: 20px; }
+
+.history-item {
+  background: var(--card-bg); border-radius: 14px; padding: 14px;
+  margin-bottom: 8px; border: 1px solid var(--border-light);
+  display: flex; align-items: center; gap: 12px;
+}
+.history-dot {
+  width: 40px; height: 40px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;
+}
+.history-dot.pending { background: var(--warning-light); color: var(--warning); }
+.history-dot.approved { background: var(--success-light); color: var(--success); }
+.history-dot.rejected { background: var(--danger-light); color: var(--danger); }
+.history-info { flex: 1; }
+.history-amount { font-weight: 700; font-size: 14px; color: var(--text-primary); }
+.history-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.history-status { font-size: 10px; font-weight: 600; padding: 4px 10px; border-radius: 20px; }
+.history-status.pending { background: var(--warning-light); color: var(--warning); }
+.history-status.approved { background: var(--success-light); color: var(--success); }
+.history-status.rejected { background: var(--danger-light); color: var(--danger); }
+
+.tab-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--card-bg); border-top: 1px solid var(--border-light);
+  display: flex; justify-content: space-around; padding: 10px 16px 22px;
+  max-width: 500px; margin: 0 auto; z-index: 100;
+}
+.tab-item { display: flex; flex-direction: column; align-items: center; gap: 4px; text-decoration: none; font-size: 10px; font-weight: 600; color: var(--text-muted); }
+.tab-item i { font-size: 20px; }
+.tab-item.active { color: var(--primary); }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="header-row">
+    <div class="header-left">
+      <a href="home.html" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+      <div class="header-title">Withdraw</div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" onclick="refreshAll()"><i class="fas fa-sync-alt"></i></button>
+      <button class="icon-btn" onclick="toggleTheme()" id="themeToggleBtn"><i class="fas fa-moon"></i></button>
+    </div>
+  </div>
+</div>
+
+<div class="main-container">
+
+  <div class="balance-card">
+    <div class="balance-label">Withdrawable Balance</div>
+    <div class="balance-amount" id="withdrawBalance">₦0</div>
+  </div>
+
+  <div class="info-row">
+    <div class="info-pill"><i class="fas fa-coins"></i> Min ₦1,500</div>
+    <div class="info-pill"><i class="fas fa-percent"></i> 15% fee</div>
+    <div class="info-pill"><i class="fas fa-calendar-day"></i> Once daily</div>
+    <div class="info-pill"><i class="fas fa-clock"></i> 10AM–5PM</div>
+  </div>
+
+  <div id="statusAlert"></div>
+
+  <div class="bank-card">
+    <div class="bank-header">
+      <div class="bank-title">🏦 Receiving Account</div>
+      <a href="bind-wallet.html" class="bank-edit"><i class="fas fa-pen"></i> Change</a>
+    </div>
+    <div id="bankDisplay">
+      <div class="bank-row"><span class="bank-row-label">Status</span><span class="bank-row-value">Loading...</span></div>
+    </div>
+  </div>
+
+  <div id="formArea"></div>
+
+  <div class="history-header">
+    <div class="history-title"><i class="fas fa-clock-rotate-left" style="color:var(--text-muted);"></i> Recent Requests</div>
+    <div class="history-count" id="historyCount">—</div>
+  </div>
+  <div id="historyList">
+    <div class="empty-block"><div class="empty-icon"><i class="fas fa-spinner fa-spin" style="color:var(--primary);"></i></div><div class="empty-title">Loading history...</div></div>
+  </div>
+
+</div>
+
+<div class="tab-bar">
+  <a href="home.html" class="tab-item"><i class="fas fa-home"></i><span>Home</span></a>
+  <a href="plans.html" class="tab-item"><i class="fas fa-bolt"></i><span>Invest</span></a>
+  <a href="withdraw.html" class="tab-item active"><i class="fas fa-money-bill-transfer"></i><span>Withdraw</span></a>
+  <a href="referrals.html" class="tab-item"><i class="fas fa-users"></i><span>Team</span></a>
+  <a href="dashboard.html" class="tab-item"><i class="fas fa-user"></i><span>Profile</span></a>
+</div>
+
+<script>
+const fc={apiKey:"AIzaSyBl6HEVa9mUuROvnohMKzeEzzc0aTREU54",authDomain:"kinetic-dc8e6.firebaseapp.com",projectId:"kinetic-dc8e6",storageBucket:"kinetic-dc8e6.firebasestorage.app",messagingSenderId:"980527555815",appId:"1:980527555815:web:131ccee594e0c8f122ee42"};
+firebase.initializeApp(fc);
+const auth=firebase.auth(),db=firebase.firestore(),FV=firebase.firestore.FieldValue;
+
+const MIN_WITHDRAW=1500,FEE_PERCENT=15,OPEN_HOUR=10,CLOSE_HOUR=17;
+const WEEKEND_DAYS=['Saturday','Sunday'];
+const QUICK_AMOUNTS=[2000,5000,10000,20000,50000,100000];
+
+let currentUser=null,authReady=false,userData=null,withdrawBalance=0,hasActivePlan=false,selectedAmount=0;
+
+const fm=n=>(Number(n)||0).toLocaleString('en-NG'),fc2=n=>'₦'+fm(n);
+function st(id,t){const e=document.getElementById(id);if(e)e.textContent=t;}
+
+function hashPin(p){let h=0;for(let i=0;i<p.length;i++){h=((h<<5)-h)+p.charCodeAt(i);h|=0;}return'KW-'+Math.abs(h).toString(16).toUpperCase();}
+function getTodayStr(){const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function isWeekday(){return!WEEKEND_DAYS.includes(new Date().toLocaleDateString('en-US',{weekday:'long'}));}
+function isOpenNow(){if(!isWeekday())return false;const h=new Date().getHours();return h>=OPEN_HOUR&&h<CLOSE_HOUR;}
+function getNextOpenText(){const n=new Date(),d=n.toLocaleDateString('en-US',{weekday:'long'});if(WEEKEND_DAYS.includes(d))return`Opens Monday at ${OPEN_HOUR}:00 AM`;if(n.getHours()<OPEN_HOUR)return`Opens today at ${OPEN_HOUR}:00 AM`;return`Opens tomorrow at ${OPEN_HOUR}:00 AM`;}
+
+function toggleTheme(){const h=document.documentElement,d=h.getAttribute('data-theme')==='dark',t=d?'light':'dark';h.setAttribute('data-theme',t);localStorage.setItem('kw-theme',t);const i=document.querySelector('#themeToggleBtn i');if(i)i.className=t==='dark'?'fas fa-sun':'fas fa-moon';}
+(function(){const s=localStorage.getItem('kw-theme')||'light';document.documentElement.setAttribute('data-theme',s);document.addEventListener('DOMContentLoaded',()=>{const i=document.querySelector('#themeToggleBtn i');if(i)i.className=s==='dark'?'fas fa-sun':'fas fa-moon';});})();
+
+auth.onAuthStateChanged(async(u)=>{if(!u){window.location.replace('login.html');return;}currentUser=u;authReady=true;await loadAllData();});
+
+async function loadAllData(){
+  try{
+    const d=await db.collection('users').doc(currentUser.uid).get();
+    if(!d.exists){window.location.replace('login.html');return;}
+    userData=d.data();withdrawBalance=Number(userData.withdrawalBalance)||0;st('withdrawBalance',fc2(withdrawBalance));
+    const inv=await db.collection('investments').where('userId','==',currentUser.uid).where('status','==','active').limit(1).get();
+    hasActivePlan=!inv.empty;
+    renderBankDisplay();renderStatusAlert();await renderFormArea();await loadHistory();
+  }catch(e){console.error(e);}
+}
+
+function renderBankDisplay(){
+  const b=userData.bankDetails||{},c=document.getElementById('bankDisplay');
+  if(b.isBound&&b.bankName){
+    c.innerHTML=`<div class="bank-row"><span class="bank-row-label">Bank</span><span class="bank-row-value">${b.bankName||'—'}</span></div><div class="bank-row"><span class="bank-row-label">Account Name</span><span class="bank-row-value">${b.accountName||'—'}</span></div><div class="bank-row"><span class="bank-row-label">Account Number</span><span class="bank-row-value">${b.accountNumber||'—'}</span></div>`;
+  }else{
+    c.innerHTML=`<div class="bank-row"><span class="bank-row-label">Status</span><span class="bank-row-value" style="color:var(--danger);">Not bound</span></div><div style="margin-top:12px;"><a href="bind-wallet.html" class="action-link" style="font-size:13px;padding:10px 18px;"><i class="fas fa-plus"></i> Bind Account</a></div>`;
+  }
+}
+
+function renderStatusAlert(){
+  const c=document.getElementById('statusAlert');
+  if(!hasActivePlan){c.innerHTML='<div class="alert-box warning"><i class="fas fa-exclamation-triangle"></i><div class="alert-text">You need an active investment plan to withdraw.</div></div>';return;}
+  if(!isOpenNow()){c.innerHTML=`<div class="alert-box warning"><i class="fas fa-clock"></i><div class="alert-text">${getNextOpenText()}</div></div>`;return;}
+  c.innerHTML=`<div class="alert-box success"><i class="fas fa-check-circle"></i><div class="alert-text">Withdrawal window is open (${OPEN_HOUR}:00 – ${CLOSE_HOUR}:00)</div></div>`;
+}
+
+async function renderFormArea(){
+  const a=document.getElementById('formArea');
+  if(!hasActivePlan){a.innerHTML='<div class="empty-block"><div class="empty-icon">🔒</div><div class="empty-title">Active Plan Required</div><div class="empty-text">Invest in a plan to unlock withdrawals</div><a href="plans.html" class="action-link">View Plans →</a></div>';return;}
+  if(!isOpenNow()){a.innerHTML=`<div class="empty-block"><div class="empty-icon">⏰</div><div class="empty-title">Window Closed</div><div class="empty-text">${getNextOpenText()}</div></div>`;return;}
+  const aw=await hasWithdrawnToday();
+  if(aw){a.innerHTML='<div class="empty-block"><div class="empty-icon">✅</div><div class="empty-title">Daily Limit Reached</div><div class="empty-text">You\'ve already withdrawn today.</div></div>';return;}
+  const bk=userData.bankDetails||{};
+  if(!bk.isBound){a.innerHTML='<div class="empty-block"><div class="empty-icon">🏦</div><div class="empty-title">No Bank Account</div><div class="empty-text">Bind your bank account to withdraw</div><a href="bind-wallet.html" class="action-link">Bind Account →</a></div>';return;}
+  if(withdrawBalance<MIN_WITHDRAW){a.innerHTML=`<div class="empty-block"><div class="empty-icon">💰</div><div class="empty-title">Balance Too Low</div><div class="empty-text">Minimum is ${fc2(MIN_WITHDRAW)}</div></div>`;return;}
+  if(!userData.withdrawalPin){renderSetPinForm(a);}else{renderWithdrawForm(a);}
+}
+
+function renderSetPinForm(a){
+  a.innerHTML='<div class="bank-card"><div class="section-label">🔐 Set Withdrawal PIN</div><p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Create a 4-digit PIN</p><input type="password" id="newPinInput" class="pin-input" placeholder="••••" maxlength="4" inputmode="numeric"><button onclick="setPin()" class="submit-btn" style="margin-top:14px;"><i class="fas fa-lock"></i> Create PIN</button></div>';
+}
+
+function renderWithdrawForm(a){
+  const chips=QUICK_AMOUNTS.filter(x=>x<=withdrawBalance).map(x=>`<button class="chip" onclick="selectAmount(${x},this)">${fc2(x)}</button>`).join('');
+  a.innerHTML=`<div class="bank-card"><div class="section-label">💰 Withdrawal Amount</div><div class="amount-chips">${chips||'<span style="color:var(--text-muted);">No quick amounts</span>'}</div><div class="custom-input-wrap"><span class="prefix">₦</span><input type="number" id="amountInput" placeholder="Custom amount" min="${MIN_WITHDRAW}" max="${withdrawBalance}" oninput="onAmountChange(this.value)" inputmode="numeric"></div><div id="previewArea" style="display:none;"></div><div class="pin-wrap"><label class="pin-label">Withdrawal PIN</label><input type="password" id="pinInput" class="pin-input" placeholder="••••" maxlength="4" inputmode="numeric"></div><button onclick="submitWithdraw()" class="submit-btn"><i class="fas fa-paper-plane"></i> Confirm Withdrawal</button></div>`;
+  if(selectedAmount>=MIN_WITHDRAW)updatePreview(selectedAmount);
+}
+
+function selectAmount(a,b){selectedAmount=a;document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));if(b)b.classList.add('active');const i=document.getElementById('amountInput');if(i)i.value=a;const p=document.getElementById('previewArea');if(p)p.style.display='block';updatePreview(a);}
+function onAmountChange(v){const a=parseInt(v)||0;document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));if(a>=MIN_WITHDRAW&&a<=withdrawBalance){selectedAmount=a;const p=document.getElementById('previewArea');if(p)p.style.display='block';updatePreview(a);}else{selectedAmount=0;const p=document.getElementById('previewArea');if(p)p.style.display='none';}}
+function updatePreview(a){const f=Math.floor(a*FEE_PERCENT/100),r=a-f,p=document.getElementById('previewArea');if(!p)return;p.innerHTML=`<div class="preview-box"><div class="preview-row"><span class="preview-label">Request</span><span class="preview-value">${fc2(a)}</span></div><div class="preview-row"><span class="preview-label">Fee (${FEE_PERCENT}%)</span><span class="preview-value red">−${fc2(f)}</span></div><div class="preview-divider"></div><div class="preview-row"><span class="preview-label">You Receive</span><span class="preview-value green">${fc2(r)}</span></div></div>`;}
+
+async function setPin(){const p=document.getElementById('newPinInput')?.value;if(!p||p.length!==4||!/^\d{4}$/.test(p))return Swal.fire({icon:'warning',title:'Invalid PIN',text:'4 digits required',confirmButtonColor:'#0052CC'});try{await db.collection('users').doc(currentUser.uid).update({withdrawalPin:hashPin(p)});userData.withdrawalPin=hashPin(p);Swal.fire({icon:'success',title:'PIN Set!',toast:true,position:'top-end',showConfirmButton:false,timer:1500});await renderFormArea();}catch(e){Swal.fire({icon:'error',title:'Failed',text:e.message,confirmButtonColor:'#DC2626'});}}
+
+async function hasWithdrawnToday(){
+  try{const t=getTodayStr();const s=await db.collection('withdrawals').where('userId','==',currentUser.uid).where('withdrawalDate','==',t).limit(1).get();return!s.empty;}catch(e){return userData?.lastWithdrawalDate===getTodayStr();}
+}
+
+async function submitWithdraw(){
+  if(!hasActivePlan)return Swal.fire({icon:'error',title:'No Active Plan',confirmButtonColor:'#0052CC'});
+  if(!isOpenNow())return Swal.fire({icon:'error',title:'Window Closed',text:getNextOpenText(),confirmButtonColor:'#0052CC'});
+  if(await hasWithdrawnToday())return Swal.fire({icon:'error',title:'Daily Limit',confirmButtonColor:'#0052CC'});
+  if(selectedAmount<MIN_WITHDRAW)return Swal.fire({icon:'warning',title:'Too Low',text:`Min ${fc2(MIN_WITHDRAW)}`,confirmButtonColor:'#0052CC'});
+  if(selectedAmount>withdrawBalance)return Swal.fire({icon:'warning',title:'Insufficient',confirmButtonColor:'#0052CC'});
+  const pin=document.getElementById('pinInput')?.value;
+  if(!pin||pin.length!==4||!/^\d{4}$/.test(pin))return Swal.fire({icon:'warning',title:'PIN Required',confirmButtonColor:'#0052CC'});
+  if(!userData.withdrawalPin||hashPin(pin)!==userData.withdrawalPin)return Swal.fire({icon:'error',title:'Wrong PIN',confirmButtonColor:'#DC2626'});
+
+  const fee=Math.floor(selectedAmount*FEE_PERCENT/100),receive=selectedAmount-fee,bank=userData.bankDetails||{};
+  const cf=await Swal.fire({title:'Confirm',html:`<div style="text-align:left;font-size:13px;"><div style="display:flex;justify-content:space-between;padding:6px 0;"><span>Amount</span><strong>${fc2(selectedAmount)}</strong></div><div style="display:flex;justify-content:space-between;padding:6px 0;"><span>Fee</span><span style="color:var(--danger);">−${fc2(fee)}</span></div><div style="display:flex;justify-content:space-between;padding:6px 0;"><span>Receive</span><strong style="color:var(--success);">${fc2(receive)}</strong></div><div style="margin-top:8px;font-size:11px;color:var(--text-muted);">To: ${bank.bankName||'—'} · ${bank.accountNumber||'—'}</div></div>`,icon:'question',showCancelButton:true,confirmButtonText:'Confirm',confirmButtonColor:'#0052CC'});
+  if(!cf.isConfirmed)return;
+
+  Swal.fire({title:'Processing...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+  try{
+    const ref='WD-'+Date.now().toString(36).toUpperCase().slice(-8),today=getTodayStr(),now=new Date();
+    const b=db.batch();
+    b.update(db.collection('users').doc(currentUser.uid),{withdrawalBalance:FV.increment(-selectedAmount),lastWithdrawalDate:today});
+    b.set(db.collection('withdrawals').doc(),{userId:currentUser.uid,userName:userData.fullName||userData.username||'User',amount:selectedAmount,feeAmount:fee,feePercent:FEE_PERCENT,receiveAmount:receive,refCode:ref,status:'pending',bankName:bank.bankName||'',accountName:bank.accountName||'',accountNumber:bank.accountNumber||'',withdrawalDate:today,requestedAt:now.toISOString(),createdAt:now.toISOString()});
+    b.set(db.collection('transactions').doc(),{userId:currentUser.uid,type:'withdrawal',amount:selectedAmount,fee:fee,receiveAmount:receive,refCode:ref,status:'pending',description:`Withdrawal — ${fc2(receive)} to ${bank.bankName||'Bank'}`,wallet:'withdrawal',createdAt:now});
+    await b.commit();
+    Swal.fire({icon:'success',title:'Submitted!',html:`<p><strong>${fc2(receive)}</strong> will be sent</p><p style="font-size:11px;">Ref: ${ref}</p>`,confirmButtonColor:'#0052CC'});
+    await loadAllData();
+  }catch(err){Swal.fire({icon:'error',title:'Failed',text:err.message,confirmButtonColor:'#DC2626'});}
+}
+
+/* ═════════════════════ LOAD HISTORY — FIXED ═════════════════════ */
+async function loadHistory(){
+  const container=document.getElementById('historyList');
+  try{
+    // 🔥 Try ordered query first
+    let snap;
+    try{
+      snap=await db.collection('withdrawals').where('userId','==',currentUser.uid).orderBy('requestedAt','desc').limit(15).get();
+    }catch(idxErr){
+      // 🔥 FALLBACK: No composite index — fetch without ordering and sort manually
+      console.warn('Order index missing, using fallback sort');
+      const raw=await db.collection('withdrawals').where('userId','==',currentUser.uid).get();
+      const docs=raw.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>{
+        const at=a.requestedAt?.toMillis?.()||a.requestedAt?.seconds*1000||a.createdAt?.toMillis?.()||a.createdAt?.seconds*1000||0;
+        const bt=b.requestedAt?.toMillis?.()||b.requestedAt?.seconds*1000||b.createdAt?.toMillis?.()||b.createdAt?.seconds*1000||0;
+        return bt-at;
+      }).slice(0,15);
+      snap={docs:docs.map(d=>({id:d.id,data:()=>d})),empty:docs.length===0};
+    }
+
+    st('historyCount',`${snap.docs.length} requests`);
+
+    if(snap.empty){
+      container.innerHTML='<div class="empty-block"><div class="empty-icon">📭</div><div class="empty-title">No withdrawal requests</div><div class="empty-text">Your history will appear here</div></div>';
+      return;
+    }
+
+    container.innerHTML=snap.docs.map(doc=>{
+      const d=doc.data(),status=d.status||'pending';
+      const date=d.requestedAt?.toDate?.()||d.createdAt?.toDate?.()||new Date(d.requestedAt||d.createdAt);
+      const dotClass=status==='approved'?'approved':(status==='rejected'?'rejected':'pending');
+      const dotIcon=status==='approved'?'✓':(status==='rejected'?'✗':'⏳');
+      const statusText=status.charAt(0).toUpperCase()+status.slice(1);
+      return`<div class="history-item"><div class="history-dot ${dotClass}">${dotIcon}</div><div class="history-info"><div class="history-amount">${fc2(d.amount)} → ${fc2(d.receiveAmount||d.amount)}</div><div class="history-meta">${date.toLocaleDateString('en-NG',{day:'2-digit',month:'short',year:'numeric'})} · ${d.refCode||''}</div></div><div class="history-status ${status}">${statusText}</div></div>`;
+    }).join('');
+  }catch(e){
+    console.error('History error:',e);
+    container.innerHTML='<div class="empty-block"><div class="empty-icon">⚠️</div><div class="empty-title">Couldn\'t load history</div><button class="action-link" onclick="refreshAll()" style="border:none;cursor:pointer;">Retry</button></div>';
+  }
+}
+
+async function refreshAll(){const i=document.querySelector('.fa-sync-alt');if(i)i.classList.add('fa-spin');await loadAllData();setTimeout(()=>{if(i)i.classList.remove('fa-spin');},500);}
+
+window.toggleTheme=toggleTheme;window.selectAmount=selectAmount;window.onAmountChange=onAmountChange;
+window.setPin=setPin;window.submitWithdraw=submitWithdraw;window.refreshAll=refreshAll;
+</script>
+
+</body>
+</html>
