@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover"/>
+<title>Kinetic Wealth · Create Account</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --primary:       #0052CC;
+  --primary-dark:  #003D99;
+  --primary-light: #E5EFFF;
+  --bg-light:      #F4F7FB;
+  --card-bg:       #FFFFFF;
+  --text-primary:  #0F172A;
+  --text-muted:    #64748B;
+  --border-light:  #E2E8F0;
+  --success:       #059669;
+  --danger:        #DC2626;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; font-family: 'Inter', sans-serif; }
+html { scroll-behavior:smooth; }
+
+body {
+  background-color: var(--bg-light);
+  color: var(--text-primary);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.header-wrapper {
+  width: 100%;
+  background: var(--primary);
+  padding: 40px 20px 80px 20px;
+  text-align: center;
+  position: relative;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.logo-icon {
+  background: var(--card-bg);
+  color: var(--primary);
+  width: 45px; height: 45px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.logo-text {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--card-bg);
+  letter-spacing: -0.5px;
+}
+
+.bonus-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--card-bg);
+  color: var(--primary);
+  padding: 10px 20px;
+  border-radius: 30px;
+  font-weight: 700;
+  font-size: 15px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  animation: floatBadge 3s ease-in-out infinite;
+}
+
+@keyframes floatBadge {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.form-container {
+  width: 100%;
+  max-width: 500px;
+  padding: 0 20px;
+  margin-top: -40px;
+  z-index: 10;
+  margin-bottom: 40px;
+}
+
+.form-card {
+  background: var(--card-bg);
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0,82,204,0.08);
+  border: 1px solid var(--border-light);
+  overflow: hidden;
+}
+
+.form-header {
+  padding: 24px;
+  text-align: center;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.form-header h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.form-body {
+  padding: 30px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  background: var(--card-bg);
+  border: 1.5px solid var(--border-light);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.input-wrapper:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.input-wrapper.error { border-color: var(--danger); background: #FEF2F2; }
+.input-wrapper.success { border-color: var(--success); }
+
+.input-prefix {
+  padding: 14px 0 14px 16px;
+  color: var(--text-muted);
+  font-size: 15px;
+}
+
+.input-field {
+  flex: 1;
+  padding: 14px;
+  font-size: 15px;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text-primary);
+}
+
+.input-suffix {
+  padding: 0 16px;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.hint-text {
+  font-size: 12px;
+  font-weight: 500;
+  padding-left: 4px;
+}
+.hint-text.error { color: var(--danger); }
+.hint-text.success { color: var(--success); }
+.hint-text.muted { color: var(--text-muted); }
+
+.btn-primary {
+  width: 100%;
+  padding: 16px;
+  background: var(--primary);
+  color: var(--card-bg);
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.btn-primary:disabled { background: var(--text-muted); cursor: not-allowed; }
+
+.terms-wrapper {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.terms-wrapper input {
+  margin-top: 3px;
+  accent-color: var(--primary);
+  width: 16px; height: 16px;
+}
+
+.login-footer {
+  padding: 24px;
+  text-align: center;
+  background: var(--bg-light);
+  font-size: 14px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border-light);
+}
+
+.login-footer a {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+</style>
+</head>
+<body>
+
+<div class="header-wrapper">
+  <div class="logo-container">
+    <div class="logo-icon"><i class="fas fa-chart-line"></i></div>
+    <div class="logo-text">Kinetic Wealth</div>
+  </div>
+  <div class="bonus-badge">
+    <i class="fas fa-gift"></i> ₦1,000 Welcome Bonus Active
+  </div>
+</div>
+
+<div class="form-container">
+  <div class="form-card">
+    <div class="form-header">
+      <h2>Create Your Account</h2>
+    </div>
+
+    <div class="form-body">
+      
+      <div class="input-group">
+        <label class="input-label">Full Name</label>
+        <div class="input-wrapper" id="rowFullName">
+          <span class="input-prefix"><i class="fas fa-user"></i></span>
+          <input class="input-field" id="fullName" type="text" placeholder="John Doe" oninput="validateName()"/>
+        </div>
+        <span class="hint-text muted" id="hintName">Enter your full name</span>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Username</label>
+        <div class="input-wrapper" id="rowUsername">
+          <span class="input-prefix">@</span>
+          <input class="input-field" id="username" type="text" placeholder="johndoe" oninput="validateUsername()"/>
+        </div>
+        <span class="hint-text muted" id="hintUsername">Letters and numbers only (3-20 chars)</span>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Email Address</label>
+        <div class="input-wrapper" id="rowEmail">
+          <span class="input-prefix"><i class="fas fa-envelope"></i></span>
+          <input class="input-field" id="email" type="email" placeholder="name@example.com" oninput="validateEmail()"/>
+        </div>
+        <span class="hint-text muted" id="hintEmail">We'll never share your email</span>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Phone Number</label>
+        <div class="input-wrapper" id="rowPhone">
+          <span class="input-prefix"><i class="fas fa-phone"></i></span>
+          <input class="input-field" id="phone" type="tel" placeholder="08012345678" oninput="validatePhone()"/>
+        </div>
+        <span class="hint-text muted" id="hintPhone">Enter your phone number</span>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Password</label>
+        <div class="input-wrapper" id="rowPassword">
+          <span class="input-prefix"><i class="fas fa-lock"></i></span>
+          <input class="input-field" id="password" type="password" placeholder="Min 8 characters" oninput="validatePassword()"/>
+          <button class="input-suffix" onclick="togglePassword('password',this)" type="button"><i class="fas fa-eye"></i></button>
+        </div>
+        <span class="hint-text muted" id="hintPassword">Minimum 8 characters</span>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Confirm Password</label>
+        <div class="input-wrapper" id="rowConfirm">
+          <span class="input-prefix"><i class="fas fa-check-circle"></i></span>
+          <input class="input-field" id="confirmPassword" type="password" placeholder="Repeat password" oninput="validateConfirm()"/>
+          <button class="input-suffix" onclick="togglePassword('confirmPassword',this)" type="button"><i class="fas fa-eye"></i></button>
+        </div>
+        <span class="hint-text muted" id="hintConfirm">Re-enter your password</span>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Referral Code (Optional)</label>
+        <div class="input-wrapper" id="rowRefCode">
+          <span class="input-prefix"><i class="fas fa-ticket-alt"></i></span>
+          <input class="input-field" id="refCode" type="text" placeholder="Enter code if invited"/>
+        </div>
+        <span class="hint-text muted">Leave empty if you don't have one</span>
+      </div>
+
+      <div class="terms-wrapper">
+        <input type="checkbox" id="termsCheck"/>
+        <span>I agree to Kinetic Wealth's <a href="#" style="color:var(--primary);">Terms of Service</a> and <a href="#" style="color:var(--primary);">Privacy Policy</a>.</span>
+      </div>
+
+      <button class="btn-primary" id="signupBtn" onclick="doSignup()">
+        <i class="fas fa-gift"></i> Create Account & Claim ₦1,000
+      </button>
+    </div>
+
+    <div class="login-footer">
+      Already have an account? <a href="login.html">Sign In</a>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═════════════════════ FIREBASE INIT ═════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyBl6HEVa9mUuROvnohMKzeEzzc0aTREU54",
+  authDomain: "kinetic-dc8e6.firebaseapp.com",
+  projectId: "kinetic-dc8e6",
+  storageBucket: "kinetic-dc8e6.firebasestorage.app",
+  messagingSenderId: "980527555815",
+  appId: "1:980527555815:web:131ccee594e0c8f122ee42"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+const WELCOME_BONUS = 1000;
+const BTN_TEXT = '<i class="fas fa-gift"></i> Create Account & Claim ₦1,000';
+
+// ═════════════════════ VALIDATION ═════════════════════
+function setHint(id, msg, type) {
+  const el = document.getElementById(id);
+  if (el) { el.textContent = msg; el.className = 'hint-text ' + type; }
+}
+function ok(id) { const e = document.getElementById(id); if (e) { e.classList.remove('error'); e.classList.add('success'); } }
+function bad(id) { const e = document.getElementById(id); if (e) { e.classList.remove('success'); e.classList.add('error'); } }
+
+function togglePassword(id, btn) {
+  const inp = document.getElementById(id); if (!inp) return;
+  const t = inp.type === 'text';
+  inp.type = t ? 'password' : 'text';
+  btn.innerHTML = '<i class="fas fa-eye' + (t ? '' : '-slash') + '"></i>';
+}
+
+function validateName() {
+  const v = document.getElementById('fullName').value.trim();
+  if (v.length < 3) { bad('rowFullName'); setHint('hintName','Too short (min 3)','error'); return false; }
+  ok('rowFullName'); setHint('hintName','✓ Looks good!','success'); return true;
+}
+function validateUsername() {
+  const v = document.getElementById('username').value.trim();
+  if (v.length < 3 || v.length > 20 || !/^[a-zA-Z0-9_]+$/.test(v)) {
+    bad('rowUsername'); setHint('hintUsername','3-20 chars, letters/numbers/underscore','error'); return false;
+  }
+  ok('rowUsername'); setHint('hintUsername','✓ Great!','success'); return true;
+}
+function validateEmail() {
+  const v = document.getElementById('email').value.trim();
+  if (!v || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) {
+    bad('rowEmail'); setHint('hintEmail','Valid email required','error'); return false;
+  }
+  ok('rowEmail'); setHint('hintEmail','✓ Valid!','success'); return true;
+}
+function validatePhone() {
+  const v = document.getElementById('phone').value.trim();
+  if (!v || !/^[0-9+\s\-]{8,15}$/.test(v)) {
+    bad('rowPhone'); setHint('hintPhone','8-15 digits required','error'); return false;
+  }
+  ok('rowPhone'); setHint('hintPhone','✓ Valid!','success'); return true;
+}
+function validatePassword() {
+  const v = document.getElementById('password').value;
+  if (v.length < 8) { bad('rowPassword'); setHint('hintPassword','Min 8 characters','error'); return false; }
+  ok('rowPassword'); setHint('hintPassword','✓ OK','success'); return true;
+}
+function validateConfirm() {
+  const p1 = document.getElementById('password').value;
+  const p2 = document.getElementById('confirmPassword').value;
+  if (!p2 || p1 !== p2) { bad('rowConfirm'); setHint('hintConfirm','Must match password','error'); return false; }
+  ok('rowConfirm'); setHint('hintConfirm','✓ Match!','success'); return true;
+}
+
+function genRefCode() {
+  const c = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let r = 'KW';
+  for (let i=0; i<6; i++) r += c[Math.floor(Math.random()*c.length)];
+  return r;
+}
+
+function resetBtn() {
+  const b = document.getElementById('signupBtn');
+  b.disabled = false; b.innerHTML = BTN_TEXT;
+}
+
+// ═════════════════════ SIGNUP ═════════════════════
+async function doSignup() {
+  if (!(validateName() && validateUsername() && validateEmail() && validatePhone() && validatePassword() && validateConfirm())) {
+    return Swal.fire({ icon:'warning', title:'Check Fields', text:'Fill all fields correctly.', confirmButtonColor:'#0052CC' });
+  }
+  if (!document.getElementById('termsCheck').checked) {
+    return Swal.fire({ icon:'warning', title:'Terms Required', text:'You must agree to the terms.', confirmButtonColor:'#0052CC' });
+  }
+
+  const fullName = document.getElementById('fullName').value.trim();
+  const username = document.getElementById('username').value.trim().toLowerCase();
+  const email = document.getElementById('email').value.trim().toLowerCase();
+  const phone = document.getElementById('phone').value.trim();
+  const password = document.getElementById('password').value;
+  const refCode = document.getElementById('refCode').value.trim().toUpperCase();
+
+  const btn = document.getElementById('signupBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating account...';
+
+  try {
+    // Step 1: Create Firebase Auth account
+    const cred = await auth.createUserWithEmailAndPassword(email, password);
+    const uid = cred.user.uid;
+
+    // Step 2: Generate unique referral code
+    let myCode = genRefCode();
+    try {
+      for (let i=0; i<3; i++) {
+        const ck = await db.collection('users').where('referralCode','==',myCode).limit(1).get();
+        if (ck.empty) break;
+        myCode = genRefCode();
+      }
+    } catch(e) {}
+
+    // Step 3: Resolve referrer
+    let referrer = 'direct', refBy = '';
+    if (refCode) {
+      try {
+        const r = await db.collection('users').where('referralCode','==',refCode).limit(1).get();
+        if (!r.empty) { referrer = r.docs[0].id; refBy = refCode; }
+      } catch(e) {}
+    }
+
+    const now = new Date().toISOString();
+
+    // Step 4: SAVE TO FIRESTORE
+    await db.collection('users').doc(uid).set({
+      uid: uid,
+      fullName: fullName,
+      username: username,
+      email: email,
+      phone: phone,
+      referralCode: myCode,
+      referrerUid: referrer,
+      referredBy: refBy,
+      depositBalance: WELCOME_BONUS,
+      withdrawalBalance: 0,
+      balance: WELCOME_BONUS,
+      totalEarnings: WELCOME_BONUS,
+      welcomeBonusPaid: true,
+      totalInvested: 0,
+      totalRefEarnings: 0,
+      referralCount: 0,
+      level1Count: 0,
+      level2Count: 0,
+      level3Count: 0,
+      purchasedPlans: [],
+      isAdmin: false,
+      status: 'active',
+      createdAt: now,
+      lastLogin: now,
+      lastUpdated: now
+    });
+
+    // Step 5: Log transaction (optional)
+    try {
+      await db.collection('transactions').add({
+        userId: uid,
+        userName: fullName,
+        type: 'welcome_bonus',
+        amount: WELCOME_BONUS,
+        status: 'completed',
+        description: '₦1,000 Welcome Bonus — Deposit Wallet',
+        wallet: 'deposit',
+        createdAt: new Date()
+      });
+    } catch(e) {}
+
+    // Step 6: Update referrer (optional)
+    if (referrer !== 'direct') {
+      try {
+        await db.collection('users').doc(referrer).update({
+          referralCount: FV.increment(1),
+          level1Count: FV.increment(1),
+          lastUpdated: new Date().toISOString()
+        });
+      } catch(e) {}
+    }
+
+    // SUCCESS
+    await Swal.fire({
+      icon: 'success',
+      title: 'Welcome! 🎉',
+      html: '<div style="text-align:center;"><h3 style="color:#0052CC;">₦1,000 Bonus Credited!</h3><p>Your account is ready.</p></div>',
+      confirmButtonText: 'Enter Dashboard',
+      confirmButtonColor: '#0052CC'
+    });
+
+    window.location.href = 'home.html';
+
+  } catch (err) {
+    console.error('Signup Error:', err.code, err.message);
+
+    // Cleanup auth
+    if (auth.currentUser) {
+      try { await auth.currentUser.delete(); } catch(e) {}
+    }
+
+    let msg = 'Registration failed. Please try again.';
+    if (err.code === 'auth/email-already-in-use') msg = 'Email already registered.';
+    else if (err.code === 'auth/weak-password') msg = 'Password too weak.';
+    else if (err.code === 'permission-denied') msg = 'Permission denied by security rules.';
+
+    Swal.fire({ icon:'error', title:'Registration Failed', text:msg, confirmButtonColor:'#0052CC' });
+    resetBtn();
+  }
+}
+
+// Enter key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && document.activeElement && document.activeElement.tagName === 'INPUT') {
+    e.preventDefault(); doSignup();
+  }
+});
+
+// Already logged in → go to home
+auth.onAuthStateChanged(function(user) {
+  if (user) window.location.href = 'home.html';
+});
+</script>
+
+</body>
+</html>
