@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover"/>
+<title>Kinetic Wealth · Security PIN</title>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   BLUE & WHITE THEME — MATCHES SIGNUP PAGE
+═══════════════════════════════════════════════════════════════════ */
+:root {
+  --primary:       #0052CC;
+  --primary-dark:  #003D99;
+  --primary-light: #E5EFFF;
+  --bg-main:       #F4F7FB;
+  --card-bg:       #FFFFFF;
+  --card-bg-inner: #F8FAFC;
+  --text-primary:  #0F172A;
+  --text-muted:    #64748B;
+  --border-light:  #E2E8F0;
+  --success:       #059669;
+  --success-light: #D1FAE5;
+  --danger:        #DC2626;
+  --danger-light:  #FEE2E2;
+  --warning:       #D97706;
+  --warning-light: #FEF3C7;
+}
+
+[data-theme="dark"] {
+  --primary:       #3B82F6;
+  --primary-dark:  #60A5FA;
+  --primary-light: #1E3A8A;
+  --bg-main:       #0F172A;
+  --card-bg:       #1E293B;
+  --card-bg-inner: #151D2A;
+  --text-primary:  #F8FAFC;
+  --text-muted:    #94A3B8;
+  --border-light:  #334155;
+  --success:       #10B981;
+  --success-light: #064E3B;
+  --danger:        #EF4444;
+  --danger-light:  #7F1D1D;
+  --warning:       #F59E0B;
+  --warning-light: #78350F;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+body {
+  background: var(--bg-main);
+  color: var(--text-primary);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: 100px;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* ========== HEADER ========== */
+.app-header {
+  background: var(--primary);
+  padding: 16px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 82, 204, 0.15);
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.back-btn {
+  width: 38px; height: 38px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #fff;
+  font-size: 15px;
+  text-decoration: none;
+  border: none;
+  transition: background 0.2s;
+}
+
+.back-btn:active { background: rgba(255,255,255,0.35); }
+
+.header-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.icon-btn {
+  width: 38px; height: 38px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #fff;
+  font-size: 15px;
+  border: none;
+  transition: background 0.2s;
+}
+
+.icon-btn:active { background: rgba(255,255,255,0.35); }
+
+/* ========== MAIN ========== */
+.main-container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 16px 16px 100px;
+}
+
+/* Banner */
+.page-banner {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  border-radius: 20px;
+  padding: 22px;
+  margin-bottom: 20px;
+  text-align: center;
+  color: #fff;
+  box-shadow: 0 6px 20px rgba(0, 82, 204, 0.20);
+}
+
+.banner-icon {
+  font-size: 44px;
+  margin-bottom: 10px;
+}
+
+.banner-title {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.banner-sub {
+  font-size: 12px;
+  opacity: 0.85;
+  font-weight: 500;
+}
+
+/* Status Card */
+.status-card {
+  background: var(--card-bg);
+  border-radius: 18px;
+  padding: 16px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid var(--border-light);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+
+.status-icon-circle {
+  width: 50px; height: 50px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.status-icon-circle.active {
+  background: var(--success-light);
+  color: var(--success);
+}
+
+.status-icon-circle.inactive {
+  background: var(--warning-light);
+  color: var(--warning);
+}
+
+.status-info h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 3px;
+}
+
+.status-info p {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Steps */
+.steps-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding: 0 8px;
+}
+
+.step-item {
+  text-align: center;
+  flex: 1;
+}
+
+.step-circle {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  margin: 0 auto 6px;
+  transition: all 0.3s;
+  background: var(--card-bg-inner);
+  border: 2px solid var(--border-light);
+  color: var(--text-muted);
+}
+
+.step-circle.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.step-circle.done {
+  background: var(--success);
+  border-color: var(--success);
+  color: #fff;
+}
+
+.step-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.step-connector {
+  flex: 0.5;
+  height: 2px;
+  background: var(--border-light);
+  margin-bottom: 22px;
+  transition: background 0.3s;
+}
+
+.step-connector.done {
+  background: var(--success);
+}
+
+/* Form Card */
+.form-card {
+  background: var(--card-bg);
+  border-radius: 20px;
+  padding: 22px;
+  border: 1px solid var(--border-light);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+  margin-bottom: 20px;
+}
+
+.form-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-primary);
+}
+
+.form-title i { color: var(--primary); }
+
+/* PIN Display */
+.pin-display {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.pin-box {
+  width: 56px; height: 64px;
+  background: var(--card-bg-inner);
+  border: 2px solid var(--border-light);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  transition: all 0.2s;
+}
+
+.pin-box.filled {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+
+.pin-box.active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 82, 204, 0.15);
+}
+
+.pin-box.shake {
+  border-color: var(--danger);
+  animation: shakeAnim 0.4s ease;
+}
+
+@keyframes shakeAnim {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+.pin-hint {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 20px;
+  transition: color 0.2s;
+}
+
+.pin-hint.normal { color: var(--text-muted); }
+.pin-hint.error { color: var(--danger); }
+.pin-hint.success { color: var(--success); }
+
+/* Keypad */
+.keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.key {
+  background: var(--card-bg-inner);
+  border: 1px solid var(--border-light);
+  border-radius: 14px;
+  padding: 16px;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+  user-select: none;
+  font-family: inherit;
+}
+
+.key:active {
+  transform: scale(0.94);
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.key.delete-key {
+  color: var(--danger);
+}
+
+.key.delete-key:active {
+  background: var(--danger);
+  color: #fff;
+  border-color: var(--danger);
+}
+
+.key.blank {
+  background: transparent;
+  border: none;
+  pointer-events: none;
+}
+
+/* Submit Button */
+.submit-btn {
+  width: 100%;
+  padding: 15px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.submit-btn:active { background: var(--primary-dark); transform: scale(0.98); }
+
+.submit-btn:disabled {
+  background: #94A3B8;
+  cursor: not-allowed;
+}
+
+/* Info Box */
+.info-box {
+  background: var(--warning-light);
+  border: 1px solid var(--warning);
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  gap: 10px;
+}
+
+.info-box i {
+  color: var(--warning);
+  font-size: 16px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.info-box p {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* Bottom Tab Bar */
+.tab-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--card-bg); border-top: 1px solid var(--border-light);
+  display: flex; justify-content: space-around; padding: 10px 16px 22px;
+  max-width: 500px; margin: 0 auto; z-index: 100;
+}
+
+.tab-item {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  text-decoration: none; font-size: 10px; font-weight: 600; color: var(--text-muted);
+  transition: color 0.2s;
+}
+
+.tab-item i { font-size: 20px; }
+.tab-item.active { color: var(--primary); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="app-header">
+  <div class="header-row">
+    <div class="header-left">
+      <a href="dashboard.html" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+      <div class="header-title">Security PIN</div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" onclick="toggleTheme()" id="themeToggleBtn"><i class="fas fa-moon"></i></button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main-container">
+
+  <!-- Banner -->
+  <div class="page-banner">
+    <div class="banner-icon">🔐</div>
+    <div class="banner-title">Withdrawal PIN</div>
+    <div class="banner-sub">Set a 4-digit code to secure your withdrawals</div>
+  </div>
+
+  <!-- Status -->
+  <div class="status-card" id="statusCard">
+    <div class="status-icon-circle active" id="statusIcon">
+      <i class="fas fa-check-circle"></i>
+    </div>
+    <div class="status-info">
+      <h4 id="statusTitle">PIN Active</h4>
+      <p id="statusText">Your withdrawals are protected</p>
+    </div>
+  </div>
+
+  <!-- Steps -->
+  <div class="steps-row" id="stepsRow">
+    <div class="step-item">
+      <div class="step-circle active" id="step1">1</div>
+      <div class="step-label">Current</div>
+    </div>
+    <div class="step-connector" id="conn1"></div>
+    <div class="step-item">
+      <div class="step-circle" id="step2">2</div>
+      <div class="step-label">New PIN</div>
+    </div>
+    <div class="step-connector" id="conn2"></div>
+    <div class="step-item">
+      <div class="step-circle" id="step3">3</div>
+      <div class="step-label">Confirm</div>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <div class="form-card">
+    <div class="form-title">
+      <i class="fas fa-lock"></i>
+      <span id="formTitle">Enter Current PIN</span>
+    </div>
+
+    <div class="pin-display" id="pinDisplay">
+      <div class="pin-box" id="pin1"></div>
+      <div class="pin-box" id="pin2"></div>
+      <div class="pin-box" id="pin3"></div>
+      <div class="pin-box" id="pin4"></div>
+    </div>
+
+    <div class="pin-hint normal" id="pinHint">Use the keypad to enter your PIN</div>
+
+    <div class="keypad" id="keypad">
+      <button class="key" onclick="addDigit('1')">1</button>
+      <button class="key" onclick="addDigit('2')">2</button>
+      <button class="key" onclick="addDigit('3')">3</button>
+      <button class="key" onclick="addDigit('4')">4</button>
+      <button class="key" onclick="addDigit('5')">5</button>
+      <button class="key" onclick="addDigit('6')">6</button>
+      <button class="key" onclick="addDigit('7')">7</button>
+      <button class="key" onclick="addDigit('8')">8</button>
+      <button class="key" onclick="addDigit('9')">9</button>
+      <button class="key blank"></button>
+      <button class="key" onclick="addDigit('0')">0</button>
+      <button class="key delete-key" onclick="deleteDigit()"><i class="fas fa-delete-left"></i></button>
+    </div>
+
+    <button class="submit-btn" id="submitBtn" onclick="processStep()" disabled>
+      <i class="fas fa-arrow-right"></i>
+      <span id="submitText">Enter 4-digit PIN</span>
+    </button>
+  </div>
+
+  <!-- Info -->
+  <div class="info-box">
+    <i class="fas fa-shield-halved"></i>
+    <p>Your PIN is encrypted and never stored as plain text. You'll need it for every withdrawal.</p>
+  </div>
+
+</div>
+
+<!-- Bottom Tab Bar -->
+<div class="tab-bar">
+  <a href="home.html" class="tab-item"><i class="fas fa-home"></i><span>Home</span></a>
+  <a href="plans.html" class="tab-item"><i class="fas fa-bolt"></i><span>Invest</span></a>
+  <a href="withdraw.html" class="tab-item"><i class="fas fa-money-bill-transfer"></i><span>Withdraw</span></a>
+  <a href="referrals.html" class="tab-item"><i class="fas fa-users"></i><span>Team</span></a>
+  <a href="dashboard.html" class="tab-item"><i class="fas fa-user"></i><span>Profile</span></a>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   FIREBASE CONFIG
+═══════════════════════════════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "AIzaSyBl6HEVa9mUuROvnohMKzeEzzc0aTREU54",
+  authDomain: "kinetic-dc8e6.firebaseapp.com",
+  projectId: "kinetic-dc8e6",
+  storageBucket: "kinetic-dc8e6.firebasestorage.app",
+  messagingSenderId: "980527555815",
+  appId: "1:980527555815:web:131ccee594e0c8f122ee42"
+};
+
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+/* ═══════════════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════════════ */
+function hashPin(pin) {
+  let hash = 0;
+  for (let i = 0; i < pin.length; i++) {
+    hash = ((hash << 5) - hash) + pin.charCodeAt(i);
+    hash |= 0;
+  }
+  return 'KW-' + Math.abs(hash).toString(16).toUpperCase();
+}
+
+function setText(id, text) { const el = document.getElementById(id); if (el) el.textContent = text; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   GLOBALS
+═══════════════════════════════════════════════════════════════════ */
+let currentUser = null;
+let authReady = false;
+let currentStep = 1;
+let currentPin = '';
+let hasExistingPin = false;
+let storedPinHash = '';
+let newPin = '';
+
+/* ═══════════════════════════════════════════════════════════════════
+   THEME
+═══════════════════════════════════════════════════════════════════ */
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  const newTheme = isDark ? 'light' : 'dark';
+  html.setAttribute('data-theme', newTheme);
+  localStorage.setItem('kw-theme', newTheme);
+  const icon = document.querySelector('#themeToggleBtn i');
+  if (icon) icon.className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+}
+
+(function() {
+  const saved = localStorage.getItem('kw-theme') || 'light';
+  document.documentElement.setAttribute('data-theme', saved);
+  document.addEventListener('DOMContentLoaded', () => {
+    const icon = document.querySelector('#themeToggleBtn i');
+    if (icon) icon.className = saved === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════════════════
+   AUTH
+═══════════════════════════════════════════════════════════════════ */
+auth.onAuthStateChanged(async (user) => {
+  if (!user) {
+    window.location.replace('login.html');
+    return;
+  }
+  currentUser = user;
+  authReady = true;
+  await checkPinStatus();
+  resetPinInput();
+  updatePinDisplay();
+});
+
+async function checkPinStatus() {
+  try {
+    const doc = await db.collection('users').doc(currentUser.uid).get();
+    if (!doc.exists) return;
+    
+    const data = doc.data();
+    
+    if (data.withdrawalPin && data.withdrawalPin.length > 0) {
+      hasExistingPin = true;
+      storedPinHash = data.withdrawalPin;
+      currentStep = 1;
+      
+      document.getElementById('statusIcon').className = 'status-icon-circle active';
+      document.getElementById('statusIcon').innerHTML = '<i class="fas fa-check-circle"></i>';
+      setText('statusTitle', 'PIN Active');
+      setText('statusText', 'Your withdrawal PIN is protecting your funds');
+      setText('formTitle', 'Enter Current PIN');
+    } else {
+      hasExistingPin = false;
+      currentStep = 2;
+      
+      document.getElementById('statusIcon').className = 'status-icon-circle inactive';
+      document.getElementById('statusIcon').innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+      setText('statusTitle', 'PIN Not Set');
+      setText('statusText', 'Create a PIN to secure your withdrawals');
+      setText('formTitle', 'Create New PIN');
+    }
+    
+    updateSteps();
+  } catch (e) {
+    console.error('Status check error:', e);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   STEPS UI
+═══════════════════════════════════════════════════════════════════ */
+function updateSteps() {
+  const s1 = document.getElementById('step1');
+  const s2 = document.getElementById('step2');
+  const s3 = document.getElementById('step3');
+  const c1 = document.getElementById('conn1');
+  const c2 = document.getElementById('conn2');
+  
+  [s1, s2, s3].forEach(s => s.className = 'step-circle');
+  [c1, c2].forEach(c => c.className = 'step-connector');
+  
+  if (currentStep === 1) {
+    s1.classList.add('active');
+  } else if (currentStep === 2) {
+    s1.classList.add('done');
+    s2.classList.add('active');
+    c1.classList.add('done');
+  } else if (currentStep === 3) {
+    s1.classList.add('done');
+    s2.classList.add('done');
+    s3.classList.add('active');
+    c1.classList.add('done');
+    c2.classList.add('done');
+  }
+}
+
+function updatePinDisplay() {
+  for (let i = 1; i <= 4; i++) {
+    const box = document.getElementById('pin' + i);
+    box.classList.remove('filled', 'active', 'shake');
+    
+    if (i <= currentPin.length) {
+      box.textContent = '●';
+      box.classList.add('filled');
+    } else {
+      box.textContent = '';
+    }
+  }
+  
+  // Highlight next empty box
+  if (currentPin.length < 4) {
+    document.getElementById('pin' + (currentPin.length + 1)).classList.add('active');
+  }
+  
+  updateSubmitButton();
+}
+
+function updateSubmitButton() {
+  const btn = document.getElementById('submitBtn');
+  const text = document.getElementById('submitText');
+  
+  if (currentPin.length === 4) {
+    btn.disabled = false;
+    if (currentStep === 1) text.textContent = 'Verify PIN';
+    else if (currentStep === 2) text.textContent = 'Set New PIN';
+    else text.textContent = 'Confirm & Save';
+  } else {
+    btn.disabled = true;
+    text.textContent = 'Enter 4-digit PIN';
+  }
+}
+
+function setHint(msg, type) {
+  const hint = document.getElementById('pinHint');
+  hint.textContent = msg;
+  hint.className = 'pin-hint ' + type;
+}
+
+function shakeBoxes() {
+  for (let i = 1; i <= 4; i++) {
+    document.getElementById('pin' + i).classList.add('shake');
+  }
+  setTimeout(() => {
+    for (let i = 1; i <= 4; i++) {
+      document.getElementById('pin' + i).classList.remove('shake');
+    }
+  }, 500);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   KEYPAD
+═══════════════════════════════════════════════════════════════════ */
+function addDigit(digit) {
+  if (currentPin.length >= 4) return;
+  currentPin += digit;
+  updatePinDisplay();
+}
+
+function deleteDigit() {
+  if (currentPin.length > 0) {
+    currentPin = currentPin.slice(0, -1);
+    updatePinDisplay();
+  }
+  setHint('Use the keypad to enter your PIN', 'normal');
+}
+
+function resetPinInput() {
+  currentPin = '';
+  updatePinDisplay();
+  setHint('Use the keypad to enter your PIN', 'normal');
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PIN VALIDATION
+═══════════════════════════════════════════════════════════════════ */
+function isWeakPin(pin) {
+  // Same digit
+  if (/^(\d)\1{3}$/.test(pin)) return 'PIN cannot be all the same digit';
+  
+  // Ascending sequence
+  if ('0123456789'.includes(pin)) return 'PIN cannot be a sequence';
+  
+  // Descending sequence
+  if ('9876543210'.includes(pin)) return 'PIN cannot be a reverse sequence';
+  
+  // Common PINs
+  const common = ['1234', '1111', '0000', '1212', '1004', '2000', '2001', '6969', '1122', '1313', '4321', '1010'];
+  if (common.includes(pin)) return 'This PIN is too common — please choose another';
+  
+  return null;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   STEP PROCESSING
+═══════════════════════════════════════════════════════════════════ */
+function processStep() {
+  if (currentPin.length !== 4) return;
+  
+  if (currentStep === 1) {
+    verifyCurrentPin();
+  } else if (currentStep === 2) {
+    validateNewPin();
+  } else if (currentStep === 3) {
+    confirmAndSave();
+  }
+}
+
+function verifyCurrentPin() {
+  if (hashPin(currentPin) !== storedPinHash) {
+    setHint('✗ Incorrect PIN — please try again', 'error');
+    shakeBoxes();
+    setTimeout(resetPinInput, 800);
+    return;
+  }
+  
+  setHint('✓ PIN verified!', 'success');
+  
+  setTimeout(() => {
+    currentStep = 2;
+    updateSteps();
+    setText('formTitle', 'Enter New PIN');
+    resetPinInput();
+    setHint('Enter your new 4-digit PIN', 'normal');
+  }, 600);
+}
+
+function validateNewPin() {
+  // Check if same as old
+  if (hasExistingPin && hashPin(currentPin) === storedPinHash) {
+    setHint('✗ New PIN must be different from current', 'error');
+    shakeBoxes();
+    setTimeout(resetPinInput, 800);
+    return;
+  }
+  
+  // Check strength
+  const weakMsg = isWeakPin(currentPin);
+  if (weakMsg) {
+    setHint('✗ ' + weakMsg, 'error');
+    shakeBoxes();
+    setTimeout(resetPinInput, 800);
+    return;
+  }
+  
+  newPin = currentPin;
+  setHint('✓ PIN accepted!', 'success');
+  
+  setTimeout(() => {
+    currentStep = 3;
+    updateSteps();
+    setText('formTitle', 'Confirm New PIN');
+    resetPinInput();
+    setHint('Re-enter your new PIN to confirm', 'normal');
+  }, 600);
+}
+
+async function confirmAndSave() {
+  if (currentPin !== newPin) {
+    setHint('✗ PINs do not match — try again', 'error');
+    shakeBoxes();
+    setTimeout(resetPinInput, 800);
+    return;
+  }
+  
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  setText('submitText', 'Saving...');
+  
+  try {
+    const newHash = hashPin(newPin);
+    await db.collection('users').doc(currentUser.uid).update({
+      withdrawalPin: newHash,
+      pinLastChanged: new Date().toISOString()
+    });
+    
+    Swal.fire({
+      icon: 'success',
+      title: 'PIN Saved!',
+      html: `
+        <p>Your withdrawal PIN has been <strong>${hasExistingPin ? 'updated' : 'set'}</strong>.</p>
+        <p style="color:var(--success);font-size:12px;margin-top:8px;">
+          <i class="fas fa-check-circle"></i> Your funds are now protected
+        </p>
+      `,
+      confirmButtonColor: '#0052CC'
+    }).then(() => {
+      window.location.href = 'dashboard.html';
+    });
+    
+  } catch (err) {
+    console.error('Save error:', err);
+    Swal.fire({ 
+      icon: 'error', 
+      title: 'Failed', 
+      text: err.message || 'Please try again', 
+      confirmButtonColor: '#DC2626' 
+    });
+    btn.disabled = false;
+    setText('submitText', 'Confirm & Save');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   KEYBOARD SUPPORT
+═══════════════════════════════════════════════════════════════════ */
+document.addEventListener('keydown', (e) => {
+  if (!authReady) return;
+  
+  if (e.key >= '0' && e.key <= '9') {
+    e.preventDefault();
+    addDigit(e.key);
+  } else if (e.key === 'Backspace' || e.key === 'Delete') {
+    e.preventDefault();
+    deleteDigit();
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (currentPin.length === 4) processStep();
+  }
+});
+
+// Expose
+window.toggleTheme = toggleTheme;
+window.addDigit = addDigit;
+window.deleteDigit = deleteDigit;
+window.processStep = processStep;
+</script>
+
+</body>
+</html>
