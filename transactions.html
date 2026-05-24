@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover"/>
+<title>Kinetic Wealth · Transactions</title>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   BLUE & WHITE THEME — MATCHES SIGNUP PAGE
+═══════════════════════════════════════════════════════════════════ */
+:root {
+  --primary:       #0052CC;
+  --primary-dark:  #003D99;
+  --primary-light: #E5EFFF;
+  --bg-main:       #F4F7FB;
+  --card-bg:       #FFFFFF;
+  --card-bg-inner: #F8FAFC;
+  --text-primary:  #0F172A;
+  --text-muted:    #64748B;
+  --border-light:  #E2E8F0;
+  --success:       #059669;
+  --success-light: #D1FAE5;
+  --danger:        #DC2626;
+  --danger-light:  #FEE2E2;
+  --warning:       #D97706;
+  --warning-light: #FEF3C7;
+}
+
+[data-theme="dark"] {
+  --primary:       #3B82F6;
+  --primary-dark:  #60A5FA;
+  --primary-light: #1E3A8A;
+  --bg-main:       #0F172A;
+  --card-bg:       #1E293B;
+  --card-bg-inner: #151D2A;
+  --text-primary:  #F8FAFC;
+  --text-muted:    #94A3B8;
+  --border-light:  #334155;
+  --success:       #10B981;
+  --success-light: #064E3B;
+  --danger:        #EF4444;
+  --danger-light:  #7F1D1D;
+  --warning:       #F59E0B;
+  --warning-light: #78350F;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+body {
+  background: var(--bg-main);
+  color: var(--text-primary);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: 100px;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* ========== HEADER ========== */
+.app-header {
+  background: var(--primary);
+  padding: 16px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 82, 204, 0.15);
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 500px;
+  margin: 0 auto 14px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.back-btn {
+  width: 38px; height: 38px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #fff;
+  font-size: 15px;
+  text-decoration: none;
+  border: none;
+  transition: background 0.2s;
+}
+
+.back-btn:active { background: rgba(255,255,255,0.35); }
+
+.header-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.icon-btn {
+  width: 38px; height: 38px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #fff;
+  font-size: 15px;
+  border: none;
+  transition: background 0.2s;
+}
+
+.icon-btn:active { background: rgba(255,255,255,0.35); }
+
+/* Stats */
+.stats-row {
+  display: flex;
+  gap: 10px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.stat-mini {
+  flex: 1;
+  background: rgba(255,255,255,0.15);
+  border-radius: 12px;
+  padding: 10px;
+  text-align: center;
+  color: #fff;
+}
+
+.stat-mini-value {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.stat-mini-label {
+  font-size: 10px;
+  opacity: 0.8;
+  font-weight: 500;
+}
+
+/* ========== MAIN ========== */
+.main-container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 16px 16px 100px;
+}
+
+/* Filter Pills */
+.filter-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.filter-scroll::-webkit-scrollbar { display: none; }
+
+.filter-pill {
+  padding: 8px 16px;
+  border-radius: 25px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--card-bg);
+  border: 1px solid var(--border-light);
+  color: var(--text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.filter-pill:active { transform: scale(0.96); }
+
+.filter-pill.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+/* Search */
+.search-box {
+  display: flex;
+  align-items: center;
+  background: var(--card-bg);
+  border: 1px solid var(--border-light);
+  border-radius: 14px;
+  padding: 10px 16px;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.search-box i { color: var(--text-muted); }
+
+.search-box input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  outline: none;
+  color: var(--text-primary);
+  font-family: inherit;
+}
+
+.search-box input::placeholder { color: #94A3B8; }
+
+/* View Toggle */
+.view-toggle {
+  display: flex;
+  gap: 6px;
+  background: var(--card-bg);
+  border-radius: 25px;
+  padding: 4px;
+  margin-bottom: 14px;
+  border: 1px solid var(--border-light);
+}
+
+.toggle-btn {
+  flex: 1;
+  padding: 9px;
+  border-radius: 21px;
+  font-size: 12px;
+  font-weight: 600;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.toggle-btn.active {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* Summary */
+.summary-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.summary-box {
+  flex: 1;
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 14px;
+  text-align: center;
+  border: 1px solid var(--border-light);
+}
+
+.summary-value {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.summary-value.inflow { color: var(--success); }
+.summary-value.outflow { color: var(--danger); }
+
+.summary-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 3px;
+  font-weight: 500;
+}
+
+/* Transaction List */
+.tx-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tx-card {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 15px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--border-light);
+  transition: all 0.2s;
+}
+
+.tx-icon {
+  width: 44px; height: 44px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.tx-icon.deposit, .tx-icon.welcome_bonus { background: var(--success-light); color: var(--success); }
+.tx-icon.withdrawal { background: var(--danger-light); color: var(--danger); }
+.tx-icon.investment, .tx-icon.investment_purchase { background: var(--primary-light); color: var(--primary); }
+.tx-icon.roi_daily, .tx-icon.roi_final, .tx-icon.roi_claim { background: var(--warning-light); color: var(--warning); }
+.tx-icon.referral_bonus { background: #EDE9FE; color: #7C3AED; }
+.tx-icon.subordinate_daily, .tx-icon.subordinate_weekly { background: #FCE7F3; color: #DB2777; }
+.tx-icon.capital_return { background: var(--success-light); color: var(--success); }
+
+.tx-info { flex: 1; min-width: 0; }
+.tx-title { font-weight: 600; font-size: 14px; color: var(--text-primary); margin-bottom: 3px; }
+.tx-meta { font-size: 11px; color: var(--text-muted); display: flex; gap: 8px; flex-wrap: wrap; }
+
+.tx-amount { text-align: right; flex-shrink: 0; }
+.tx-amount-value { font-weight: 700; font-size: 15px; }
+.tx-amount-value.inflow { color: var(--success); }
+.tx-amount-value.outflow { color: var(--danger); }
+
+.tx-status {
+  font-size: 9px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 15px;
+  margin-top: 4px;
+  display: inline-block;
+}
+
+.tx-status.completed { background: var(--success-light); color: var(--success); }
+.tx-status.pending { background: var(--warning-light); color: var(--warning); }
+.tx-status.rejected { background: var(--danger-light); color: var(--danger); }
+
+/* Empty */
+.empty-state {
+  text-align: center;
+  padding: 44px 20px;
+  background: var(--card-bg);
+  border-radius: 18px;
+  border: 2px dashed var(--border-light);
+}
+
+.empty-icon { font-size: 40px; margin-bottom: 10px; }
+.empty-title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+.empty-text { font-size: 12px; color: var(--text-muted); }
+
+/* Load More */
+.load-more-wrap {
+  text-align: center;
+  padding: 16px;
+}
+
+.load-more-btn {
+  background: var(--primary-light);
+  border: none;
+  padding: 12px 28px;
+  border-radius: 25px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.load-more-btn:active { background: #D6E4FF; }
+
+/* Bottom Tab Bar */
+.tab-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--card-bg); border-top: 1px solid var(--border-light);
+  display: flex; justify-content: space-around; padding: 10px 16px 22px;
+  max-width: 500px; margin: 0 auto; z-index: 100;
+}
+
+.tab-item {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  text-decoration: none; font-size: 10px; font-weight: 600; color: var(--text-muted);
+  transition: color 0.2s;
+}
+
+.tab-item i { font-size: 20px; }
+.tab-item.active { color: var(--primary); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="app-header">
+  <div class="header-row">
+    <div class="header-left">
+      <a href="home.html" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+      <div class="header-title">Transactions</div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" onclick="refreshData()" title="Refresh"><i class="fas fa-sync-alt"></i></button>
+      <button class="icon-btn" onclick="toggleTheme()" id="themeToggleBtn"><i class="fas fa-moon"></i></button>
+    </div>
+  </div>
+  <div class="stats-row">
+    <div class="stat-mini">
+      <div class="stat-mini-value" id="statTotal">—</div>
+      <div class="stat-mini-label">Total</div>
+    </div>
+    <div class="stat-mini">
+      <div class="stat-mini-value" id="statCredits">—</div>
+      <div class="stat-mini-label">Inflow</div>
+    </div>
+    <div class="stat-mini">
+      <div class="stat-mini-value" id="statDebits">—</div>
+      <div class="stat-mini-label">Outflow</div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main-container">
+
+  <!-- Filters -->
+  <div class="filter-scroll" id="filterRow">
+    <button class="filter-pill active" data-filter="all" onclick="setFilter('all', this)">All</button>
+    <button class="filter-pill" data-filter="deposit" onclick="setFilter('deposit', this)">Deposits</button>
+    <button class="filter-pill" data-filter="withdrawal" onclick="setFilter('withdrawal', this)">Withdrawals</button>
+    <button class="filter-pill" data-filter="investment" onclick="setFilter('investment', this)">Investments</button>
+    <button class="filter-pill" data-filter="roi" onclick="setFilter('roi', this)">ROI</button>
+    <button class="filter-pill" data-filter="referral" onclick="setFilter('referral', this)">Referrals</button>
+    <button class="filter-pill" data-filter="bonus" onclick="setFilter('bonus', this)">Bonuses</button>
+  </div>
+
+  <!-- Search -->
+  <div class="search-box">
+    <i class="fas fa-search"></i>
+    <input type="text" id="searchInput" placeholder="Search by description, plan or reference..." oninput="onSearch()">
+  </div>
+
+  <!-- View Toggle -->
+  <div class="view-toggle">
+    <button class="toggle-btn active" data-view="all" onclick="setView('all', this)">All</button>
+    <button class="toggle-btn" data-view="inflow" onclick="setView('inflow', this)">Inflow</button>
+    <button class="toggle-btn" data-view="outflow" onclick="setView('outflow', this)">Outflow</button>
+  </div>
+
+  <!-- Summary -->
+  <div class="summary-row">
+    <div class="summary-box">
+      <div class="summary-value inflow" id="totalInflow">₦0</div>
+      <div class="summary-label">Total Inflow</div>
+    </div>
+    <div class="summary-box">
+      <div class="summary-value outflow" id="totalOutflow">₦0</div>
+      <div class="summary-label">Total Outflow</div>
+    </div>
+  </div>
+
+  <!-- Transaction List -->
+  <div class="tx-list" id="txList">
+    <div class="empty-state">
+      <div class="empty-icon"><i class="fas fa-spinner fa-spin" style="color:var(--primary);"></i></div>
+      <div class="empty-title">Loading transactions...</div>
+    </div>
+  </div>
+
+  <!-- Load More -->
+  <div class="load-more-wrap" id="loadMoreWrap" style="display:none;">
+    <button class="load-more-btn" onclick="loadMore()"><i class="fas fa-chevron-down"></i> Load More</button>
+  </div>
+
+</div>
+
+<!-- Bottom Tab Bar -->
+<div class="tab-bar">
+  <a href="home.html" class="tab-item"><i class="fas fa-home"></i><span>Home</span></a>
+  <a href="plans.html" class="tab-item"><i class="fas fa-bolt"></i><span>Invest</span></a>
+  <a href="withdraw.html" class="tab-item"><i class="fas fa-money-bill-transfer"></i><span>Withdraw</span></a>
+  <a href="referrals.html" class="tab-item"><i class="fas fa-users"></i><span>Team</span></a>
+  <a href="dashboard.html" class="tab-item"><i class="fas fa-user"></i><span>Profile</span></a>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   FIREBASE CONFIG
+═══════════════════════════════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "AIzaSyBl6HEVa9mUuROvnohMKzeEzzc0aTREU54",
+  authDomain: "kinetic-dc8e6.firebaseapp.com",
+  projectId: "kinetic-dc8e6",
+  storageBucket: "kinetic-dc8e6.firebasestorage.app",
+  messagingSenderId: "980527555815",
+  appId: "1:980527555815:web:131ccee594e0c8f122ee42"
+};
+
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+/* ═══════════════════════════════════════════════════════════════════
+   CONFIG
+═══════════════════════════════════════════════════════════════════ */
+const INFLOW_TYPES = ['deposit', 'welcome_bonus', 'roi_daily', 'roi_final', 'roi_claim', 'referral_bonus', 'subordinate_daily', 'subordinate_weekly', 'capital_return'];
+const OUTFLOW_TYPES = ['withdrawal', 'investment', 'investment_purchase'];
+
+const TYPE_META = {
+  deposit:             { name: 'Deposit', icon: 'fa-credit-card' },
+  withdrawal:          { name: 'Withdrawal', icon: 'fa-paper-plane' },
+  investment:          { name: 'Investment', icon: 'fa-chart-line' },
+  investment_purchase: { name: 'Investment', icon: 'fa-chart-line' },
+  roi_daily:           { name: 'Daily ROI', icon: 'fa-hand-holding-usd' },
+  roi_final:           { name: 'Final ROI', icon: 'fa-trophy' },
+  roi_claim:           { name: 'ROI Claim', icon: 'fa-hand-holding-usd' },
+  referral_bonus:      { name: 'Referral Bonus', icon: 'fa-users' },
+  welcome_bonus:       { name: 'Welcome Bonus', icon: 'fa-gift' },
+  subordinate_daily:   { name: 'Team Daily Reward', icon: 'fa-calendar-check' },
+  subordinate_weekly:  { name: 'Team Weekly Reward', icon: 'fa-calendar-week' },
+  capital_return:      { name: 'Capital Return', icon: 'fa-rotate-left' }
+};
+
+const FILTER_MAP = {
+  all:        [],
+  deposit:    ['deposit'],
+  withdrawal: ['withdrawal'],
+  investment: ['investment', 'investment_purchase'],
+  roi:        ['roi_daily', 'roi_final', 'roi_claim', 'capital_return'],
+  referral:   ['referral_bonus', 'subordinate_daily', 'subordinate_weekly'],
+  bonus:      ['welcome_bonus']
+};
+
+/* ═══════════════════════════════════════════════════════════════════
+   GLOBALS
+═══════════════════════════════════════════════════════════════════ */
+let currentUser = null;
+let authReady = false;
+let allTransactions = [];
+let filteredTx = [];
+let currentFilter = 'all';
+let currentView = 'all';
+let displayLimit = 20;
+let searchQuery = '';
+
+/* ═══════════════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════════════ */
+const fmtNum = (n) => (Number(n) || 0).toLocaleString('en-NG');
+const fmtCur = (n) => '₦' + fmtNum(n);
+
+function setText(id, text) { const el = document.getElementById(id); if (el) el.textContent = text; }
+
+function isInflow(type) {
+  return INFLOW_TYPES.includes(type);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   THEME
+═══════════════════════════════════════════════════════════════════ */
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  const newTheme = isDark ? 'light' : 'dark';
+  html.setAttribute('data-theme', newTheme);
+  localStorage.setItem('kw-theme', newTheme);
+  const icon = document.querySelector('#themeToggleBtn i');
+  if (icon) icon.className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+}
+
+(function() {
+  const saved = localStorage.getItem('kw-theme') || 'light';
+  document.documentElement.setAttribute('data-theme', saved);
+  document.addEventListener('DOMContentLoaded', () => {
+    const icon = document.querySelector('#themeToggleBtn i');
+    if (icon) icon.className = saved === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════════════════
+   AUTH
+═══════════════════════════════════════════════════════════════════ */
+auth.onAuthStateChanged(async (user) => {
+  if (!user) {
+    window.location.replace('login.html');
+    return;
+  }
+  currentUser = user;
+  authReady = true;
+  await loadTransactions();
+});
+
+/* ═══════════════════════════════════════════════════════════════════
+   LOAD
+═══════════════════════════════════════════════════════════════════ */
+async function loadTransactions() {
+  try {
+    let snapshot;
+    
+    // Try ordered query first
+    try {
+      snapshot = await db.collection('transactions')
+        .where('userId', '==', currentUser.uid)
+        .orderBy('createdAt', 'desc')
+        .limit(100)
+        .get();
+    } catch (idxErr) {
+      // Fallback: get without ordering
+      console.warn('Index may be missing, using fallback sort');
+      const rawSnap = await db.collection('transactions')
+        .where('userId', '==', currentUser.uid)
+        .get();
+      
+      const docs = rawSnap.docs.sort((a, b) => {
+        const aTime = a.data().createdAt?.toMillis?.() || a.data().createdAt?.seconds * 1000 || 0;
+        const bTime = b.data().createdAt?.toMillis?.() || b.data().createdAt?.seconds * 1000 || 0;
+        return bTime - aTime;
+      }).slice(0, 100);
+      
+      snapshot = { docs, empty: docs.length === 0 };
+    }
+    
+    allTransactions = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    
+    applyAllFilters();
+    updateStats();
+    
+  } catch (e) {
+    console.error('Load error:', e);
+    document.getElementById('txList').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">⚠️</div>
+        <div class="empty-title">Failed to load</div>
+        <button class="load-more-btn" onclick="refreshData()" style="margin-top:12px;">Retry</button>
+      </div>`;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   FILTERS
+═══════════════════════════════════════════════════════════════════ */
+function applyAllFilters() {
+  let result = [...allTransactions];
+  
+  // Type filter
+  const types = FILTER_MAP[currentFilter] || [];
+  if (types.length > 0) {
+    result = result.filter(tx => types.includes(tx.type));
+  }
+  
+  // View filter
+  if (currentView === 'inflow') {
+    result = result.filter(tx => isInflow(tx.type));
+  } else if (currentView === 'outflow') {
+    result = result.filter(tx => !isInflow(tx.type));
+  }
+  
+  // Search
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    result = result.filter(tx => {
+      const desc = (tx.description || '').toLowerCase();
+      const plan = (tx.planName || '').toLowerCase();
+      const ref = (tx.refCode || '').toLowerCase();
+      const name = (tx.userName || '').toLowerCase();
+      return desc.includes(q) || plan.includes(q) || ref.includes(q) || name.includes(q);
+    });
+  }
+  
+  filteredTx = result;
+  displayLimit = 20;
+  renderList();
+  updateSummary();
+}
+
+function setFilter(filter, btn) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  applyAllFilters();
+  updateStats();
+}
+
+function setView(view, btn) {
+  currentView = view;
+  document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  applyAllFilters();
+  updateStats();
+}
+
+function onSearch() {
+  searchQuery = document.getElementById('searchInput')?.value || '';
+  applyAllFilters();
+}
+
+function updateStats() {
+  const allInflow = allTransactions.filter(tx => isInflow(tx.type)).reduce((s, tx) => s + (Number(tx.amount) || 0), 0);
+  const allOutflow = allTransactions.filter(tx => !isInflow(tx.type)).reduce((s, tx) => s + (Number(tx.amount) || 0), 0);
+  
+  setText('statTotal', allTransactions.length);
+  setText('statCredits', fmtCur(allInflow));
+  setText('statDebits', fmtCur(allOutflow));
+}
+
+function updateSummary() {
+  const inflow = filteredTx.filter(tx => isInflow(tx.type)).reduce((s, tx) => s + (Number(tx.amount) || 0), 0);
+  const outflow = filteredTx.filter(tx => !isInflow(tx.type)).reduce((s, tx) => s + (Number(tx.amount) || 0), 0);
+  
+  setText('totalInflow', fmtCur(inflow));
+  setText('totalOutflow', fmtCur(outflow));
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   RENDER
+═══════════════════════════════════════════════════════════════════ */
+function renderList() {
+  const container = document.getElementById('txList');
+  const toShow = filteredTx.slice(0, displayLimit);
+  const hasMore = filteredTx.length > displayLimit;
+  
+  document.getElementById('loadMoreWrap').style.display = hasMore ? 'block' : 'none';
+  
+  if (toShow.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon"><i class="fas fa-receipt"></i></div>
+        <div class="empty-title">No transactions found</div>
+        <div class="empty-text">${searchQuery ? 'Try a different search term' : 'Your activity will appear here'}</div>
+      </div>`;
+    return;
+  }
+  
+  container.innerHTML = toShow.map((tx, i) => {
+    const meta = TYPE_META[tx.type] || { name: tx.type || 'Transaction', icon: 'fa-receipt' };
+    const inflow = isInflow(tx.type);
+    const amount = Number(tx.amount) || 0;
+    const date = tx.createdAt?.toDate?.() || new Date(tx.createdAt);
+    const dateStr = date.toLocaleDateString('en-NG', { day:'2-digit', month:'short', year:'numeric' });
+    const timeStr = date.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+    const status = tx.status || 'completed';
+    const desc = tx.description || tx.planName || '';
+    
+    return `
+      <div class="tx-card" style="animation: fadeSlideUp 0.25s ease ${i * 0.025}s both;">
+        <div class="tx-icon ${tx.type}">
+          <i class="fas ${meta.icon}"></i>
+        </div>
+        <div class="tx-info">
+          <div class="tx-title">${meta.name}</div>
+          <div class="tx-meta">
+            <span>${dateStr} · ${timeStr}</span>
+            ${desc ? `<span>${desc.substring(0, 28)}${desc.length > 28 ? '...' : ''}</span>` : ''}
+          </div>
+        </div>
+        <div class="tx-amount">
+          <div class="tx-amount-value ${inflow ? 'inflow' : 'outflow'}">
+            ${inflow ? '+' : '−'}${fmtCur(amount)}
+          </div>
+          <div class="tx-status ${status}">${status}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function loadMore() {
+  displayLimit += 20;
+  renderList();
+}
+
+async function refreshData() {
+  const icon = document.querySelector('.fa-sync-alt');
+  if (icon) icon.classList.add('fa-spin');
+  await loadTransactions();
+  setTimeout(() => { if (icon) icon.classList.remove('fa-spin'); }, 500);
+}
+
+// Animation
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+`;
+document.head.appendChild(style);
+
+// Expose
+window.toggleTheme = toggleTheme;
+window.setFilter = setFilter;
+window.setView = setView;
+window.onSearch = onSearch;
+window.loadMore = loadMore;
+window.refreshData = refreshData;
+</script>
+
+</body>
+</html>
