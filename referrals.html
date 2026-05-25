@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>Kinetic Wealth - My Team</title>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    
+    <!-- SweetAlert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #F4F7FB;
+            padding-bottom: 80px;
+        }
+        
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #0052CC, #003D99);
+            padding: 20px 16px;
+            color: white;
+        }
+        
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .back-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        
+        .header-title {
+            font-size: 20px;
+            font-weight: 700;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .icon-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        .stats-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+        
+        .stat-badge {
+            background: rgba(255,255,255,0.15);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        /* Main Content */
+        .main {
+            padding: 16px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        /* Referral Card */
+        .referral-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .card-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #64748B;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+        
+        .username-box {
+            background: #F8FAFC;
+            border-radius: 14px;
+            padding: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            border: 1px solid #E2E8F0;
+        }
+        
+        .username-display {
+            font-size: 18px;
+            font-weight: 700;
+            color: #0052CC;
+        }
+        
+        .copy-btn {
+            background: #0052CC;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 10px;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .link-box {
+            background: #F8FAFC;
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .link-input {
+            flex: 1;
+            background: white;
+            border: 1px solid #E2E8F0;
+            border-radius: 10px;
+            padding: 10px;
+            font-size: 11px;
+            font-family: monospace;
+            color: #64748B;
+            overflow: hidden;
+        }
+        
+        .share-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .share-btn {
+            flex: 1;
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 10px;
+            padding: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        
+        /* Earnings Banner */
+        .earnings-banner {
+            background: linear-gradient(135deg, #0052CC, #003D99);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 16px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .earnings-label {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        
+        .earnings-amount {
+            font-size: 28px;
+            font-weight: 800;
+        }
+        
+        /* Level Tabs */
+        .level-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        
+        .level-tab {
+            flex: 1;
+            background: white;
+            border-radius: 16px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            border: 2px solid #E2E8F0;
+            transition: all 0.2s;
+        }
+        
+        .level-tab.active {
+            border-color: #0052CC;
+            background: #EFF6FF;
+        }
+        
+        .level-percent {
+            font-size: 20px;
+            font-weight: 800;
+        }
+        
+        .level-percent.l1 { color: #0052CC; }
+        .level-percent.l2 { color: #06B6D4; }
+        .level-percent.l3 { color: #8B5CF6; }
+        
+        .level-count {
+            font-size: 24px;
+            font-weight: 800;
+            color: #1E293B;
+        }
+        
+        .level-label {
+            font-size: 11px;
+            color: #64748B;
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 14px;
+            text-align: center;
+        }
+        
+        .stat-card.wide {
+            grid-column: span 2;
+        }
+        
+        .stat-number {
+            font-size: 24px;
+            font-weight: 800;
+            color: #0052CC;
+        }
+        
+        .stat-label {
+            font-size: 11px;
+            color: #64748B;
+            margin-top: 4px;
+        }
+        
+        /* Team List */
+        .team-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .team-title {
+            font-size: 16px;
+            font-weight: 700;
+        }
+        
+        .team-count {
+            background: #E2E8F0;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .search-box {
+            background: white;
+            border-radius: 14px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            border: 1px solid #E2E8F0;
+        }
+        
+        .search-box input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 14px;
+        }
+        
+        /* Member Card */
+        .member-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .member-card {
+            background: white;
+            border-radius: 16px;
+            padding: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid #E2E8F0;
+        }
+        
+        .member-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+            color: white;
+        }
+        
+        .avatar-l1 { background: #0052CC; }
+        .avatar-l2 { background: #06B6D4; }
+        .avatar-l3 { background: #8B5CF6; }
+        
+        .member-info {
+            flex: 1;
+        }
+        
+        .member-name {
+            font-weight: 700;
+            font-size: 15px;
+            margin-bottom: 2px;
+        }
+        
+        .member-username {
+            font-size: 11px;
+            color: #0052CC;
+            font-weight: 600;
+        }
+        
+        .member-date {
+            font-size: 10px;
+            color: #64748B;
+            margin-top: 4px;
+        }
+        
+        .member-stats {
+            text-align: right;
+        }
+        
+        .member-invest {
+            font-size: 12px;
+            font-weight: 600;
+            color: #1E293B;
+        }
+        
+        .member-bonus {
+            font-size: 13px;
+            font-weight: 700;
+            color: #059669;
+        }
+        
+        .badge {
+            font-size: 9px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            background: #D1FAE5;
+            color: #059669;
+            display: inline-block;
+            margin-left: 6px;
+        }
+        
+        .badge.inactive {
+            background: #F1F5F9;
+            color: #64748B;
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 16px;
+        }
+        
+        /* Bottom Tab Bar */
+        .bottom-tabs {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 16px 24px;
+            border-top: 1px solid #E2E8F0;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .bottom-tabs a {
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            color: #64748B;
+        }
+        
+        .bottom-tabs a.active {
+            color: #0052CC;
+        }
+        
+        .bottom-tabs i {
+            font-size: 20px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="header-top">
+        <button class="back-btn" onclick="goBack()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <span class="header-title">My Team</span>
+        <div class="header-actions">
+            <button class="icon-btn" onclick="refreshData()">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+            <button class="icon-btn" onclick="toggleTheme()">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+    </div>
+    <div class="stats-row">
+        <div class="stat-badge">
+            <i class="fas fa-users"></i>
+            <span id="totalMembers">0</span> members
+        </div>
+        <div class="stat-badge">
+            <i class="fas fa-coins"></i>
+            <span id="totalEarningsHeader">₦0</span>
+        </div>
+    </div>
+</div>
+
+<div class="main">
+    <!-- Referral Info Card -->
+    <div class="referral-card">
+        <div class="card-label">
+            <i class="fas fa-at"></i> YOUR REFERRAL CODE
+        </div>
+        <div class="username-box">
+            <span class="username-display" id="myUsername">@loading...</span>
+            <button class="copy-btn" onclick="copyUsername()">
+                <i class="fas fa-copy"></i> Copy
+            </button>
+        </div>
+        <div class="link-box">
+            <div class="link-input" id="myLink">Loading...</div>
+            <button class="copy-btn" onclick="copyLink()">
+                <i class="fas fa-link"></i>
+            </button>
+        </div>
+        <div class="share-buttons">
+            <button class="share-btn" onclick="shareTo('whatsapp')">
+                <i class="fab fa-whatsapp" style="color:#25D366"></i> WhatsApp
+            </button>
+            <button class="share-btn" onclick="shareTo('telegram')">
+                <i class="fab fa-telegram" style="color:#229ED9"></i> Telegram
+            </button>
+            <button class="share-btn" onclick="shareTo('more')">
+                <i class="fas fa-share-alt"></i> Share
+            </button>
+        </div>
+    </div>
+    
+    <!-- Earnings Banner -->
+    <div class="earnings-banner">
+        <div>
+            <div class="earnings-label">Total Referral Earnings</div>
+            <div class="earnings-amount" id="totalEarnings">₦0</div>
+        </div>
+        <i class="fas fa-gift" style="font-size: 48px; opacity: 0.3;"></i>
+    </div>
+    
+    <!-- Level Tabs -->
+    <div class="level-tabs">
+        <div class="level-tab active" onclick="selectLevel('A')" id="tabA">
+            <div class="level-percent l1">10%</div>
+            <div class="level-count" id="countA">0</div>
+            <div class="level-label">Level 1 (Direct)</div>
+        </div>
+        <div class="level-tab" onclick="selectLevel('B')" id="tabB">
+            <div class="level-percent l2">3%</div>
+            <div class="level-count" id="countB">0</div>
+            <div class="level-label">Level 2</div>
+        </div>
+        <div class="level-tab" onclick="selectLevel('C')" id="tabC">
+            <div class="level-percent l3">1%</div>
+            <div class="level-count" id="countC">0</div>
+            <div class="level-label">Level 3</div>
+        </div>
+    </div>
+    
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-number" id="totalTeamCount">0</div>
+            <div class="stat-label">Total Members</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="activeCount">0</div>
+            <div class="stat-label">Active Investors</div>
+        </div>
+        <div class="stat-card wide">
+            <div class="stat-number" id="teamInvestment">₦0</div>
+            <div class="stat-label">Team Total Investment</div>
+        </div>
+    </div>
+    
+    <!-- Team List -->
+    <div class="team-header">
+        <div class="team-title">
+            <i class="fas fa-users" style="color: #0052CC;"></i> Team Members
+        </div>
+        <div class="team-count" id="listCount">0</div>
+    </div>
+    
+    <div class="search-box">
+        <i class="fas fa-search" style="color: #64748B;"></i>
+        <input type="text" id="searchInput" placeholder="Search by name or username..." oninput="filterMembers()">
+    </div>
+    
+    <div class="member-list" id="memberList">
+        <div class="loading">
+            <i class="fas fa-spinner fa-spin" style="font-size: 32px; color: #0052CC;"></i>
+            <p style="margin-top: 10px;">Loading your team...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Bottom Tab Bar -->
+<div class="bottom-tabs">
+    <a href="home.html">
+        <i class="fas fa-home"></i>
+        <span>Home</span>
+    </a>
+    <a href="plans.html">
+        <i class="fas fa-chart-line"></i>
+        <span>Invest</span>
+    </a>
+    <a href="withdraw.html">
+        <i class="fas fa-money-bill-wave"></i>
+        <span>Withdraw</span>
+    </a>
+    <a href="referrals.html" class="active">
+        <i class="fas fa-users"></i>
+        <span>Team</span>
+    </a>
+    <a href="profile.html">
+        <i class="fas fa-user"></i>
+        <span>Profile</span>
+    </a>
+</div>
+
+<script>
+    // Firebase Config
+    const firebaseConfig = {
+        apiKey: "AIzaSyBl6HEVa9mUuROvnohMKzeEzzc0aTREU54",
+        authDomain: "kinetic-dc8e6.firebaseapp.com",
+        projectId: "kinetic-dc8e6",
+        storageBucket: "kinetic-dc8e6.firebasestorage.app",
+        messagingSenderId: "980527555815",
+        appId: "1:980527555815:web:131ccee594e0c8f122ee42"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    
+    // Global variables
+    let currentUser = null;
+    let myUsername = '';
+    let myReferralLink = '';
+    let allTeamMembers = [];
+    let currentLevel = 'A';
+    let searchTerm = '';
+    
+    // Commission rates
+    const COMMISSION_RATES = {
+        A: 10,  // Level 1: 10%
+        B: 3,   // Level 2: 3%
+        C: 1    // Level 3: 1%
+    };
+    
+    // Helper functions
+    function formatMoney(amount) {
+        return '₦' + (Number(amount) || 0).toLocaleString('en-NG');
+    }
+    
+    function formatDate(timestamp) {
+        if (!timestamp) return '—';
+        try {
+            let date;
+            if (timestamp.toDate) {
+                date = timestamp.toDate();
+            } else if (timestamp.seconds) {
+                date = new Date(timestamp.seconds * 1000);
+            } else {
+                date = new Date(timestamp);
+            }
+            return date.toLocaleDateString('en-NG', {day: '2-digit', month: 'short', year: '2-digit'});
+        } catch(e) {
+            return '—';
+        }
+    }
+    
+    // Navigation
+    function goBack() {
+        window.location.href = 'home.html';
+    }
+    
+    function toggleTheme() {
+        alert('Theme feature coming soon!');
+    }
+    
+    // Copy functions
+    async function copyToClipboard(text, message) {
+        try {
+            await navigator.clipboard.writeText(text);
+            Swal.fire({
+                icon: 'success',
+                title: 'Copied!',
+                text: message,
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 2000
+            });
+        } catch(err) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            Swal.fire({
+                icon: 'success',
+                title: 'Copied!',
+                text: message,
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 2000
+            });
+        }
+    }
+    
+    function copyUsername() {
+        copyToClipboard('@' + myUsername, 'Username copied! Share it with friends.');
+    }
+    
+    function copyLink() {
+        copyToClipboard(myReferralLink, 'Referral link copied!');
+    }
+    
+    function shareTo(platform) {
+        const message = `Join me on Kinetic Wealth! Use my referral code @${myUsername} and get ₦1,000 welcome bonus!\n\nSign up here: ${myReferralLink}`;
+        
+        if (platform === 'whatsapp') {
+            window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank');
+        } else if (platform === 'telegram') {
+            window.open('https://t.me/share/url?url=' + encodeURIComponent(myReferralLink) + '&text=' + encodeURIComponent('Join Kinetic Wealth! Use referral code @' + myUsername), '_blank');
+        } else if (platform === 'more') {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Kinetic Wealth',
+                    text: message,
+                    url: myReferralLink
+                });
+            } else {
+                copyLink();
+            }
+        }
+    }
+    
+    // Build member object from user data
+    function buildMember(user, level) {
+        const totalInvested = Number(user.totalInvested) || 0;
+        const commissionRate = COMMISSION_RATES[level];
+        const earnedBonus = Math.floor(totalInvested * commissionRate / 100);
+        
+        // Active if they have running plans (Basic starts at ₦5,000)
+        const isActive = totalInvested >= 5000;
+        
+        let planName = 'No Plan';
+        if (totalInvested >= 5000) planName = 'Basic';
+        if (totalInvested >= 20000) planName = 'Pro';
+        if (totalInvested >= 50000) planName = 'Premium';
+        
+        return {
+            uid: user.uid || user.id,
+            level: level,
+            name: user.fullName || 'User',
+            username: user.username || 'unknown',
+            email: user.email || '',
+            totalInvested: totalInvested,
+            earnedBonus: earnedBonus,
+            isActive: isActive,
+            plan: planName,
+            joinedAt: user.createdAt || user.lastLogin || null
+        };
+    }
+    
+    // Load team data from Firestore
+    async function loadTeamData() {
+        try {
+            document.getElementById('memberList').innerHTML = `
+                <div class="loading">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 32px; color: #0052CC;"></i>
+                    <p style="margin-top: 10px;">Loading your team...</p>
+                </div>
+            `;
+            
+            const usersSnapshot = await db.collection('users').get();
+            const allUsers = [];
+            usersSnapshot.forEach(doc => {
+                const data = doc.data();
+                const cleanUid = data.uid || doc.id;
+                allUsers.push({ ...data, uid: cleanUid });
+            });
+            
+            const currentUid = currentUser.uid;
+            
+            // Find Level 1 (direct referrals)
+            const level1Users = allUsers.filter(user => 
+                user.uid !== currentUid && 
+                user.referrerUid === currentUid
+            );
+            
+            // Find Level 2
+            const level1Uids = new Set(level1Users.map(u => u.uid));
+            const level2Users = allUsers.filter(user =>
+                user.uid !== currentUid &&
+                !level1Uids.has(user.uid) &&
+                user.referrerUid &&
+                level1Uids.has(user.referrerUid)
+            );
+            
+            // Find Level 3
+            const level2Uids = new Set(level2Users.map(u => u.uid));
+            const level3Users = allUsers.filter(user =>
+                user.uid !== currentUid &&
+                !level1Uids.has(user.uid) &&
+                !level2Uids.has(user.uid) &&
+                user.referrerUid &&
+                level2Uids.has(user.referrerUid)
+            );
+            
+            allTeamMembers = [
+                ...level1Users.map(u => buildMember(u, 'A')),
+                ...level2Users.map(u => buildMember(u, 'B')),
+                ...level3Users.map(u => buildMember(u, 'C'))
+            ];
+            
+            const totalEarnings = allTeamMembers.reduce((sum, m) => sum + m.earnedBonus, 0);
+            const activeInvestors = allTeamMembers.filter(m => m.isActive).length;
+            const totalTeamInvestment = allTeamMembers.reduce((sum, m) => sum + m.totalInvested, 0);
+            
+            document.getElementById('countA').textContent = level1Users.length;
+            document.getElementById('countB').textContent = level2Users.length;
+            document.getElementById('countC').textContent = level3Users.length;
+            document.getElementById('totalMembers').textContent = allTeamMembers.length;
+            document.getElementById('totalTeamCount').textContent = allTeamMembers.length;
+            document.getElementById('activeCount').textContent = activeInvestors;
+            document.getElementById('teamInvestment').textContent = formatMoney(totalTeamInvestment);
+            document.getElementById('totalEarningsHeader').textContent = formatMoney(totalEarnings);
+            document.getElementById('totalEarnings').textContent = formatMoney(totalEarnings);
+            
+            renderTeamList();
+            
+        } catch(error) {
+            console.error('Error loading team:', error);
+            document.getElementById('memberList').innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #DC2626;"></i>
+                    <p style="margin-top: 10px;">Error loading team data</p>
+                    <p style="font-size: 12px; color: #64748B;">${error.message}</p>
+                </div>
+            `;
+        }
+    }
+    
+    // Select level tab
+    function selectLevel(level) {
+        currentLevel = level;
+        
+        document.getElementById('tabA').classList.remove('active');
+        document.getElementById('tabB').classList.remove('active');
+        document.getElementById('tabC').classList.remove('active');
+        
+        document.getElementById('tab' + level).classList.add('active');
+        
+        renderTeamList();
+    }
+    
+    // Filter members by search
+    function filterMembers() {
+        const input = document.getElementById('searchInput');
+        searchTerm = input ? input.value.toLowerCase().trim() : '';
+        renderTeamList();
+    }
+    
+    // Render team list based on current level and search
+    function renderTeamList() {
+        let filtered = allTeamMembers.filter(member => member.level === currentLevel);
+        
+        if (searchTerm) {
+            filtered = filtered.filter(member => 
+                member.name.toLowerCase().includes(searchTerm) ||
+                member.username.toLowerCase().includes(searchTerm) ||
+                member.email.toLowerCase().includes(searchTerm)
+            );
+        }
+        
+        document.getElementById('listCount').textContent = filtered.length;
+        const container = document.getElementById('memberList');
+        
+        if (filtered.length === 0) {
+            const levelNames = {A: 'Level 1 (Direct)', B: 'Level 2', C: 'Level 3'};
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-user-friends" style="font-size: 48px; color: #CBD5E1;"></i>
+                    <p style="margin-top: 10px; font-weight: 600;">No ${levelNames[currentLevel]} referrals yet</p>
+                    <p style="font-size: 12px; color: #64748B; margin-top: 5px;">
+                        Share your referral code <strong>@${myUsername}</strong> to grow your team!
+                    </p>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = filtered.map(member => {
+            const avatarClass = member.level === 'A' ? 'avatar-l1' : (member.level === 'B' ? 'avatar-l2' : 'avatar-l3');
+            const initial = member.name.charAt(0).toUpperCase();
+            
+            return `
+                <div class="member-card">
+                    <div class="member-avatar ${avatarClass}">${initial}</div>
+                    <div class="member-info">
+                        <div class="member-name">
+                            ${escapeHtml(member.name)}
+                            <span class="badge ${member.isActive ? '' : 'inactive'}">${member.plan}</span>
+                        </div>
+                        ${member.username ? `<div class="member-username">@${escapeHtml(member.username)}</div>` : ''}
+                        <div class="member-date">
+                            <i class="far fa-calendar-alt"></i> Joined ${formatDate(member.joinedAt)}
+                        </div>
+                    </div>
+                    <div class="member-stats">
+                        <div class="member-invest">${formatMoney(member.totalInvested)}</div>
+                        <div class="member-bonus">+${formatMoney(member.earnedBonus)}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+    
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
+    }
+    
+    // Refresh data
+    async function refreshData() {
+        await loadTeamData();
+        Swal.fire({
+            icon: 'success',
+            title: 'Refreshed!',
+            text: 'Team data updated.',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 1500
+        });
+    }
+    
+    // Initialize page
+    auth.onAuthStateChanged(async (user) => {
+        if (!user) {
+            window.location.href = 'login.html';
+            return;
+        }
+        
+        currentUser = user;
+        
+        try {
+            const userDoc = await db.collection('users').doc(currentUser.uid).get();
+            
+            if (!userDoc.exists) {
+                window.location.href = 'signup.html';
+                return;
+            }
+            
+            const userData = userDoc.data();
+            myUsername = userData.username || userData.referralCode || currentUser.uid.slice(0, 8);
+            
+            const baseUrl = window.location.origin;
+            myReferralLink = `${baseUrl}/signup.html?ref=${myUsername}`;
+            
+            document.getElementById('myUsername').textContent = '@' + myUsername;
+            document.getElementById('myLink').textContent = myReferralLink;
+            
+            await loadTeamData();
+            
+        } catch(error) {
+            console.error('Init error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Failed to load your data. Please refresh.',
+                confirmButtonColor: '#0052CC'
+            });
+        }
+    });
+    
+    // Make functions global for onclick
+    window.goBack = goBack;
+    window.toggleTheme = toggleTheme;
+    window.copyUsername = copyUsername;
+    window.copyLink = copyLink;
+    window.shareTo = shareTo;
+    window.selectLevel = selectLevel;
+    window.refreshData = refreshData;
+    window.filterMembers = filterMembers;
+</script>
+</body>
+</html>
