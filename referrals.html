@@ -189,7 +189,7 @@
                 const doc=await db.collection('users').doc(currentUser.uid).get();
                 if(!doc.exists){Swal.fire({icon:'error',title:'Error',text:'User data not found',confirmButtonColor:'#0052CC'});return}
                 currentUserData=doc.data();
-                const baseUrl=window.location.origin+window.location.pathname.replace('referral.html','signup.html');
+                const baseUrl=window.location.origin+"/signup.html";
                 document.getElementById('referralLink').value=baseUrl+'?ref='+currentUserData.username;
                 updateStats();
                 await loadUpline();
