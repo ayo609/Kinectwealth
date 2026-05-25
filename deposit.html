@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover"/>
+<title>Kinetic Wealth · Deposit</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --primary: #0052CC; --primary-dark: #003D99; --primary-light: #E5EFFF;
+  --bg-main: #F4F7FB; --card-bg: #FFFFFF; --card-bg-inner: #F8FAFC;
+  --text-primary: #0F172A; --text-muted: #64748B; --border-light: #E2E8F0;
+  --success: #059669; --success-light: #D1FAE5;
+  --danger: #DC2626; --danger-light: #FEE2E2;
+  --warning: #D97706; --warning-light: #FEF3C7;
+}
+[data-theme="dark"] {
+  --primary: #3B82F6; --bg-main: #0F172A; --card-bg: #1E293B; --card-bg-inner: #151D2A;
+  --text-primary: #F8FAFC; --text-muted: #94A3B8; --border-light: #334155;
+  --success: #10B981; --warning: #F59E0B;
+}
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Inter',sans-serif; }
+body { background:var(--bg-main); color:var(--text-primary); min-height:100vh; -webkit-font-smoothing:antialiased; padding-bottom:100px; }
+
+.app-header { background:var(--primary); padding:16px 20px; position:sticky; top:0; z-index:100; }
+.header-row { display:flex; align-items:center; justify-content:space-between; max-width:500px; margin:0 auto; }
+.header-left { display:flex; align-items:center; gap:12px; }
+.back-btn { width:38px; height:38px; background:rgba(255,255,255,0.2); border-radius:12px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#fff; font-size:15px; text-decoration:none; border:none; }
+.header-title { font-size:18px; font-weight:700; color:#fff; }
+.header-actions { display:flex; gap:8px; }
+.icon-btn { width:38px; height:38px; background:rgba(255,255,255,0.2); border-radius:12px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#fff; font-size:15px; border:none; }
+
+.main-container { max-width:500px; margin:0 auto; padding:16px 16px 100px; }
+
+.balance-card { background:var(--card-bg); border-radius:22px; padding:22px; text-align:center; margin-bottom:16px; border:1px solid var(--border-light); }
+.balance-label { font-size:12px; color:var(--text-muted); font-weight:600; margin-bottom:8px; }
+.balance-amount { font-size:38px; font-weight:800; color:var(--primary); }
+
+.info-banner { background:var(--primary-light); border-radius:14px; padding:14px 16px; display:flex; align-items:center; gap:12px; margin-bottom:18px; font-size:13px; color:var(--primary); font-weight:500; }
+
+.timer-bar { background:var(--warning-light); border:1px solid var(--warning); border-radius:14px; padding:12px 16px; margin-bottom:16px; display:flex; align-items:center; gap:10px; font-weight:600; font-size:13px; }
+.timer-countdown { color:var(--danger); font-weight:800; font-size:16px; margin-left:auto; }
+
+.gateway-tabs { display:flex; gap:10px; margin-bottom:16px; }
+.gateway-tab { flex:1; padding:14px; border-radius:16px; border:2px solid var(--border-light); background:var(--card-bg); cursor:pointer; text-align:center; }
+.gateway-tab.active { border-color:var(--primary); background:var(--primary-light); }
+.gateway-tab-name { font-size:13px; font-weight:700; color:var(--text-primary); }
+.gateway-tab-acc { font-size:11px; color:var(--text-muted); margin-top:2px; }
+
+.bank-card { background:var(--card-bg); border:1px solid var(--border-light); border-radius:18px; overflow:hidden; margin-bottom:18px; }
+.bank-card-header { background:var(--card-bg-inner); padding:16px 18px; border-bottom:1px solid var(--border-light); display:flex; align-items:center; gap:12px; }
+.bank-icon-circle { width:42px; height:42px; background:var(--primary-light); color:var(--primary); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:18px; }
+.bank-name { font-size:15px; font-weight:700; }
+.bank-sub { font-size:11px; color:var(--text-muted); }
+.bank-row { display:flex; justify-content:space-between; align-items:center; padding:14px 18px; border-bottom:1px solid var(--border-light); }
+.bank-row:last-child { border-bottom:none; }
+.bank-row-label { font-size:11px; color:var(--text-muted); }
+.bank-row-value { font-size:14px; font-weight:600; display:flex; align-items:center; gap:8px; }
+.copy-btn { color:var(--primary); cursor:pointer; background:none; border:none; font-size:13px; }
+
+.amount-pills { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+.amount-pill { background:var(--card-bg); border:1.5px solid var(--border-light); padding:10px 18px; border-radius:25px; font-size:13px; font-weight:600; cursor:pointer; }
+.amount-pill.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+.custom-input-wrap { background:var(--card-bg-inner); border:1px solid var(--border-light); border-radius:14px; display:flex; align-items:center; padding:2px 2px 2px 16px; margin-bottom:8px; }
+.custom-input-wrap .prefix { font-size:16px; font-weight:700; color:var(--text-muted); }
+.custom-input-wrap input { flex:1; padding:14px 12px; border:none; background:transparent; font-size:15px; outline:none; }
+.min-text { font-size:11px; color:var(--text-muted); margin-bottom:18px; }
+
+.form-card { background:var(--card-bg); border:1px solid var(--border-light); border-radius:18px; padding:18px; margin-bottom:18px; }
+.form-group { margin-bottom:16px; }
+.form-label { display:block; font-size:12px; font-weight:600; margin-bottom:8px; }
+.form-input { width:100%; padding:14px 16px; background:var(--card-bg-inner); border:1px solid var(--border-light); border-radius:12px; font-size:14px; outline:none; }
+
+.upload-zone { border:2px dashed var(--border-light); border-radius:14px; padding:24px; text-align:center; cursor:pointer; background:var(--card-bg-inner); }
+.upload-icon { font-size:30px; color:var(--text-muted); margin-bottom:8px; }
+.upload-text { font-size:13px; font-weight:500; }
+.upload-hint { font-size:11px; color:var(--text-muted); }
+.preview-box { display:none; align-items:center; gap:12px; background:var(--card-bg-inner); border-radius:12px; padding:12px; margin-top:12px; border:1px solid var(--success); }
+.preview-img { width:50px; height:50px; border-radius:10px; object-fit:cover; }
+.preview-info { flex:1; }
+.remove-btn { background:var(--danger); color:#fff; border:none; padding:6px 14px; border-radius:10px; cursor:pointer; }
+
+.submit-btn { width:100%; padding:16px; background:var(--primary); color:#fff; border:none; border-radius:14px; font-size:16px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:24px; }
+.submit-btn:disabled { background:#94A3B8; cursor:not-allowed; }
+
+.history-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.history-title { font-size:15px; font-weight:700; display:flex; align-items:center; gap:8px; }
+.history-count { font-size:11px; color:var(--text-muted); background:var(--card-bg-inner); padding:4px 10px; border-radius:20px; }
+.history-item { background:var(--card-bg); border-radius:14px; padding:14px; margin-bottom:8px; border:1px solid var(--border-light); display:flex; align-items:center; gap:12px; }
+.history-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.history-dot.pending { background:var(--warning); }
+.history-dot.approved { background:var(--success); }
+.history-dot.rejected { background:var(--danger); }
+.history-info { flex:1; }
+.history-amount { font-size:14px; font-weight:700; }
+.history-meta { font-size:11px; color:var(--text-muted); margin-top:2px; }
+.history-status { font-size:10px; font-weight:600; padding:5px 10px; border-radius:20px; }
+.history-status.pending { background:var(--warning-light); color:var(--warning); }
+.history-status.approved { background:var(--success-light); color:var(--success); }
+.history-status.rejected { background:var(--danger-light); color:var(--danger); }
+
+.empty-state { text-align:center; padding:32px 20px; background:var(--card-bg); border-radius:16px; border:2px dashed var(--border-light); }
+.empty-icon { font-size:36px; margin-bottom:8px; color:var(--text-muted); }
+
+.tab-bar { position:fixed; bottom:0; left:0; right:0; background:var(--card-bg); border-top:1px solid var(--border-light); display:flex; justify-content:space-around; padding:10px 16px 22px; max-width:500px; margin:0 auto; z-index:100; }
+.tab-item { display:flex; flex-direction:column; align-items:center; gap:4px; text-decoration:none; font-size:10px; font-weight:600; color:var(--text-muted); }
+.tab-item i { font-size:20px; }
+.tab-item.active { color:var(--primary); }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="header-row">
+    <div class="header-left"><a href="home.html" class="back-btn"><i class="fas fa-arrow-left"></i></a><div class="header-title">Deposit</div></div>
+    <div class="header-actions"><button class="icon-btn" onclick="refreshAll()"><i class="fas fa-sync-alt"></i></button><button class="icon-btn" onclick="toggleTheme()"><i class="fas fa-moon"></i></button></div>
+  </div>
+</div>
+
+<div class="main-container">
+  <div class="balance-card">
+    <div class="balance-label">Deposit Wallet</div>
+    <div class="balance-amount" id="walletBalance">₦0</div>
+  </div>
+  
+  <div class="info-banner"><i class="fas fa-info-circle"></i><p>Choose a gateway, make transfer, upload proof. Verification takes 5–30 minutes.</p></div>
+
+  <div class="timer-bar"><i class="fas fa-hourglass-half"></i><span>Session expires in:</span><span class="timer-countdown" id="timerDisplay">07:00</span></div>
+
+  <div class="gateway-tabs">
+    <div class="gateway-tab active" onclick="selectGateway(1)">
+      <div class="gateway-tab-name">Gateway 1</div>
+      <div class="gateway-tab-acc">Hussiani Abdullahi<br>1193982973</div>
+    </div>
+    <div class="gateway-tab" onclick="selectGateway(2)">
+      <div class="gateway-tab-name">Gateway 2</div>
+      <div class="gateway-tab-acc">Powell Abiegbe<br>1328092748</div>
+    </div>
+  </div>
+
+  <div class="bank-card">
+    <div class="bank-card-header">
+      <div class="bank-icon-circle"><i class="fas fa-university"></i></div>
+      <div><div class="bank-name" id="bankNameDisplay">Paga</div><div class="bank-sub">Official deposit account</div></div>
+    </div>
+    <div class="bank-row">
+      <span class="bank-row-label">Account Number</span>
+      <span class="bank-row-value"><span id="accNumDisplay">1193982973</span><button class="copy-btn" onclick="copyText(document.getElementById('accNumDisplay').innerText)"><i class="fas fa-copy"></i></button></span>
+    </div>
+    <div class="bank-row">
+      <span class="bank-row-label">Account Name</span>
+      <span class="bank-row-value"><span id="accNameDisplay">Hussiani Abdullahi</span><button class="copy-btn" onclick="copyText(document.getElementById('accNameDisplay').innerText)"><i class="fas fa-copy"></i></button></span>
+    </div>
+  </div>
+
+  <div class="amount-pills" id="pillContainer"></div>
+  <div class="custom-input-wrap"><span class="prefix">₦</span><input type="number" id="customAmount" placeholder="Enter custom amount" min="5000"></div>
+  <div class="min-text">Minimum deposit: ₦5,000</div>
+
+  <div class="form-card">
+    <div class="form-group">
+      <label class="form-label">Your Full Name <span style="color:var(--danger);">*</span></label>
+      <input type="text" id="senderName" class="form-input" placeholder="Name on your bank account" oninput="checkForm()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Payment Proof <span style="color:var(--danger);">*</span></label>
+      <div class="upload-zone" onclick="document.getElementById('screenshotFile').click()">
+        <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+        <div class="upload-text">Tap to upload screenshot</div>
+        <div class="upload-hint">PNG or JPG, max 5MB</div>
+        <input type="file" id="screenshotFile" accept="image/*" style="display:none">
+      </div>
+      <div class="preview-box" id="previewBox">
+        <img class="preview-img" id="previewImage" alt="Preview">
+        <div class="preview-info">
+          <div class="preview-name" id="previewFileName">—</div>
+          <div class="preview-status">Ready to submit</div>
+        </div>
+        <button class="remove-btn" onclick="clearScreenshot()">Remove</button>
+      </div>
+    </div>
+  </div>
+
+  <button class="submit-btn" id="submitBtn" onclick="submitDeposit()" disabled><i class="fas fa-paper-plane"></i><span id="submitBtnText">Select amount to continue</span></button>
+
+  <div class="history-header">
+    <div class="history-title"><i class="fas fa-clock-rotate-left"></i> Recent Deposits</div>
+    <div class="history-count" id="historyCount">—</div>
+  </div>
+  <div id="historyList"><div class="empty-state"><div class="empty-icon"><i class="fas fa-spinner fa-spin"></i></div><div class="empty-title">Loading history...</div></div></div>
+</div>
+
+<div class="tab-bar">
+  <a href="home.html" class="tab-item"><i class="fas fa-home"></i><span>Home</span></a>
+  <a href="plans.html" class="tab-item"><i class="fas fa-bolt"></i><span>Invest</span></a>
+  <a href="withdraw.html" class="tab-item"><i class="fas fa-money-bill-wave"></i><span>Withdraw</span></a>
+  <a href="referrals.html" class="tab-item active"><i class="fas fa-users"></i><span>Team</span></a>
+  <a href="dashboard.html" class="tab-item"><i class="fas fa-user"></i><span>Profile</span></a>
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBl6HEVa9mUuROvnohMKzeEzzc0aTREU54",
+  authDomain: "kinetic-dc8e6.firebaseapp.com",
+  projectId: "kinetic-dc8e6",
+  storageBucket: "kinetic-dc8e6.firebasestorage.app",
+  messagingSenderId: "980527555815",
+  appId: "1:980527555815:web:131ccee594e0c8f122ee42"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+const GATEWAYS = {
+  1: { bankName: 'Paga', accountNumber: '1193982973', accountName: 'Hussiani Abdullahi' },
+  2: { bankName: 'Paga', accountNumber: '1328092748', accountName: 'Powell Abiegbe' }
+};
+
+const PRESETS = [5000, 10000, 30000, 60000, 130000, 220000, 450000, 720000];
+
+let currentUser = null;
+let selectedAmount = 0;
+let selectedGateway = 1;
+let screenshotBase64 = null;
+let timerInterval = null;
+let timeLeft = 420;
+
+function formatMoney(amount) {
+  return '₦' + (Number(amount) || 0).toLocaleString('en-NG');
+}
+
+function copyText(text) {
+  navigator.clipboard.writeText(text);
+  Swal.fire({ icon: 'success', title: 'Copied!', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
+}
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  localStorage.setItem('kw-theme', isDark ? 'light' : 'dark');
+}
+
+// Initialize theme
+const savedTheme = localStorage.getItem('kw-theme') || 'light';
+document.documentElement.setAttribute('data-theme', savedTheme);
+
+function selectGateway(gw) {
+  selectedGateway = gw;
+  const g = GATEWAYS[gw];
+  document.querySelectorAll('.gateway-tab').forEach(tab => tab.classList.remove('active'));
+  document.querySelector(`.gateway-tab:nth-child(${gw})`).classList.add('active');
+  document.getElementById('bankNameDisplay').innerText = g.bankName;
+  document.getElementById('accNumDisplay').innerText = g.accountNumber;
+  document.getElementById('accNameDisplay').innerText = g.accountName;
+}
+
+function startTimer() {
+  if (timerInterval) clearInterval(timerInterval);
+  timeLeft = 420;
+  updateTimerDisplay();
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    updateTimerDisplay();
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      resetForm();
+      Swal.fire({ icon: 'warning', title: 'Session Expired', text: 'Please refresh the page and try again.', confirmButtonColor: '#0052CC' });
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const minutes = Math.floor(timeLeft / 60);
+  const seconds = timeLeft % 60;
+  document.getElementById('timerDisplay').innerText = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+function resetForm() {
+  selectedAmount = 0;
+  screenshotBase64 = null;
+  document.querySelectorAll('.amount-pill').forEach(btn => btn.classList.remove('active'));
+  document.getElementById('customAmount').value = '';
+  document.getElementById('senderName').value = '';
+  clearScreenshot();
+  checkForm();
+}
+
+function renderPills() {
+  const container = document.getElementById('pillContainer');
+  container.innerHTML = PRESETS.map(amount => `<button class="amount-pill" onclick="selectAmount(${amount}, this)">${formatMoney(amount)}</button>`).join('');
+}
+
+function selectAmount(amount, btn) {
+  document.querySelectorAll('.amount-pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  selectedAmount = amount;
+  document.getElementById('customAmount').value = '';
+  checkForm();
+}
+
+document.getElementById('customAmount').addEventListener('input', (e) => {
+  const val = parseInt(e.target.value) || 0;
+  if (val >= 5000) {
+    document.querySelectorAll('.amount-pill').forEach(b => b.classList.remove('active'));
+    selectedAmount = val;
+  } else {
+    selectedAmount = 0;
+  }
+  checkForm();
+});
+
+document.getElementById('screenshotFile').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) {
+    Swal.fire({ icon: 'warning', title: 'Invalid File', text: 'Please upload an image file', toast: true, timer: 2000 });
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    Swal.fire({ icon: 'warning', title: 'File Too Large', text: 'Maximum size is 5MB', toast: true, timer: 2000 });
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    screenshotBase64 = ev.target.result;
+    document.getElementById('previewImage').src = screenshotBase64;
+    document.getElementById('previewFileName').innerText = file.name;
+    document.getElementById('previewBox').style.display = 'flex';
+    checkForm();
+  };
+  reader.readAsDataURL(file);
+});
+
+function clearScreenshot() {
+  screenshotBase64 = null;
+  document.getElementById('screenshotFile').value = '';
+  document.getElementById('previewBox').style.display = 'none';
+  checkForm();
+}
+
+function checkForm() {
+  const senderName = document.getElementById('senderName').value.trim();
+  const btn = document.getElementById('submitBtn');
+  const btnText = document.getElementById('submitBtnText');
+  
+  if (selectedAmount >= 5000 && senderName && screenshotBase64) {
+    btn.disabled = false;
+    btnText.innerText = `Submit ${formatMoney(selectedAmount)}`;
+  } else {
+    btn.disabled = true;
+    if (selectedAmount < 5000) btnText.innerText = 'Select amount (min ₦5,000)';
+    else if (!senderName) btnText.innerText = 'Enter your name';
+    else if (!screenshotBase64) btnText.innerText = 'Upload payment proof';
+  }
+}
+
+async function submitDeposit() {
+  const senderName = document.getElementById('senderName').value.trim();
+  
+  if (selectedAmount < 5000) {
+    return Swal.fire({ icon: 'warning', title: 'Invalid Amount', text: 'Minimum deposit is ₦5,000', confirmButtonColor: '#0052CC' });
+  }
+  if (!senderName) {
+    return Swal.fire({ icon: 'warning', title: 'Missing Name', text: 'Please enter your full name', confirmButtonColor: '#0052CC' });
+  }
+  if (!screenshotBase64) {
+    return Swal.fire({ icon: 'warning', title: 'Missing Proof', text: 'Please upload your payment screenshot', confirmButtonColor: '#0052CC' });
+  }
+  
+  Swal.fire({ title: 'Submitting...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+  
+  try {
+    const userDoc = await db.collection('users').doc(currentUser.uid).get();
+    const userName = userDoc.exists ? (userDoc.data().fullName || userDoc.data().username || 'User') : 'User';
+    const refCode = 'DEP-' + Date.now().toString(36).toUpperCase().slice(-8);
+    const gateway = GATEWAYS[selectedGateway];
+    
+    // IMPORTANT: Use set() with a specific document ID instead of add()
+    const depositId = `deposit_${Date.now()}_${currentUser.uid.slice(0, 6)}`;
+    
+    await db.collection('deposits').doc(depositId).set({
+      userId: currentUser.uid,
+      userName: userName,
+      userEmail: currentUser.email,
+      amount: selectedAmount,
+      senderName: senderName,
+      refCode: refCode,
+      status: 'pending',
+      screenshotBase64: screenshotBase64,
+      bankName: gateway.bankName,
+      accountNumber: gateway.accountNumber,
+      accountName: gateway.accountName,
+      gateway: selectedGateway,
+      createdAt: new Date().toISOString()
+    });
+    
+    Swal.fire({
+      icon: 'success',
+      title: 'Deposit Submitted!',
+      html: `<p><strong>${formatMoney(selectedAmount)}</strong></p><p style="font-size:12px;">Ref: ${refCode}</p><p style="font-size:12px;">⏳ Verification in 5-30 minutes</p>`,
+      confirmButtonColor: '#0052CC'
+    });
+    
+    resetForm();
+    await loadBalance();
+    await loadHistory();
+    
+  } catch (error) {
+    console.error('Deposit error:', error);
+    Swal.fire({ icon: 'error', title: 'Submission Failed', text: error.message, confirmButtonColor: '#DC2626' });
+  }
+}
+
+async function loadBalance() {
+  try {
+    const doc = await db.collection('users').doc(currentUser.uid).get();
+    if (doc.exists) {
+      document.getElementById('walletBalance').innerText = formatMoney(doc.data().depositBalance || 0);
+    }
+  } catch (e) { console.error(e); }
+}
+
+async function loadHistory() {
+  const container = document.getElementById('historyList');
+  try {
+    const snapshot = await db.collection('deposits').where('userId', '==', currentUser.uid).get();
+    const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    docs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const recent = docs.slice(0, 15);
+    
+    document.getElementById('historyCount').innerText = recent.length;
+    
+    if (recent.length === 0) {
+      container.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-inbox"></i></div><div class="empty-title">No deposits yet</div></div>`;
+      return;
+    }
+    
+    container.innerHTML = recent.map(d => {
+      const status = d.status || 'pending';
+      const statusText = { pending: 'Pending', approved: 'Approved', rejected: 'Rejected' }[status];
+      const date = new Date(d.createdAt).toLocaleDateString('en-NG', { day: '2-digit', month: 'short', year: 'numeric' });
+      return `
+        <div class="history-item">
+          <div class="history-dot ${status}"></div>
+          <div class="history-info">
+            <div class="history-amount">${formatMoney(d.amount)}</div>
+            <div class="history-meta">${date} · ${d.refCode || '—'}<br><small>${d.bankName || 'Paga'}</small></div>
+          </div>
+          <div class="history-status ${status}">${statusText}</div>
+        </div>
+      `;
+    }).join('');
+  } catch (e) {
+    console.error(e);
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Error loading history</div><button onclick="loadHistory()" style="margin-top:10px;padding:8px 16px;background:#0052CC;color:#fff;border:none;border-radius:8px;">Retry</button></div>`;
+  }
+}
+
+async function refreshAll() {
+  await loadBalance();
+  await loadHistory();
+  Swal.fire({ icon: 'success', title: 'Refreshed!', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
+}
+
+// Auth
+auth.onAuthStateChanged(async (user) => {
+  if (!user) { window.location.href = 'login.html'; return; }
+  currentUser = user;
+  renderPills();
+  await loadBalance();
+  await loadHistory();
+  startTimer();
+});
+
+window.selectAmount = selectAmount;
+window.selectGateway = selectGateway;
+window.clearScreenshot = clearScreenshot;
+window.submitDeposit = submitDeposit;
+window.copyText = copyText;
+window.refreshAll = refreshAll;
+window.checkForm = checkForm;
+window.toggleTheme = toggleTheme;
+</script>
+</body>
+</html>
