@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes"/>
+<title>Kinetic Wealth · My Team</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --ink:#0B0F1A;--ink2:#1C2235;--ink3:#273046;
+  --blue:#1E6FFF;--blue2:#1558D6;
+  --green:#00D68F;--purple:#8B5CF6;
+  --red:#FF4757;--amber:#FFB300;
+  --l1:#1E6FFF;--l2:#00D68F;--l3:#8B5CF6;
+  --text:#F0F4FF;--text2:#8FA3C8;--text3:#4A5A7A;
+  --border:rgba(255,255,255,0.07);--border2:rgba(30,111,255,0.2);
+  --r:18px;--rs:12px;--rx:8px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--ink);color:var(--text);
+  min-height:100vh;padding-bottom:90px;
+  position:relative;overflow-x:hidden;
+}
+
+/* bg */
+.bg-orb{
+  position:fixed;border-radius:50%;filter:blur(100px);opacity:0.1;
+  pointer-events:none;z-index:0;animation:orb 20s ease-in-out infinite;
+}
+.orb1{width:500px;height:500px;background:var(--blue);top:-150px;right:-120px}
+.orb2{width:450px;height:450px;background:var(--green);bottom:-130px;left:-120px;animation-delay:-10s;opacity:0.07}
+@keyframes orb{0%,100%{transform:translate(0,0)}50%{transform:translate(15px,-20px)}}
+
+/* ── Header ── */
+.header{
+  background:rgba(11,15,26,0.88);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border2);
+  padding:14px 20px;
+  position:sticky;top:0;z-index:100;
+}
+.header-inner{max-width:600px;margin:0 auto;display:flex;justify-content:space-between;align-items:center}
+.hbtn{
+  width:40px;height:40px;border-radius:var(--rx);border:none;
+  background:rgba(30,111,255,0.12);color:var(--text);font-size:16px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:background 0.2s;
+}
+.hbtn:hover{background:rgba(30,111,255,0.25)}
+.header-title{font-size:18px;font-weight:700;color:#fff;letter-spacing:-0.3px}
+
+/* ── Main ── */
+.main{max-width:600px;margin:0 auto;padding:20px 16px}
+
+/* Glass card */
+.gc{
+  position:relative;z-index:1;
+  background:var(--ink2);border:1px solid var(--border);
+  border-radius:var(--r);padding:22px;margin-bottom:18px;
+}
+.gc-title{
+  font-size:11px;font-weight:700;color:var(--blue);
+  text-transform:uppercase;letter-spacing:1.2px;
+  margin-bottom:16px;display:flex;align-items:center;gap:8px;
+}
+
+/* Referral code block */
+.code-block{
+  background:var(--ink3);border:1px solid var(--border);
+  border-radius:var(--rs);padding:14px 16px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin-bottom:12px;flex-wrap:wrap;
+}
+.code-val{
+  font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;
+  background:linear-gradient(135deg,var(--blue),var(--green));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.link-block{
+  background:var(--ink3);border:1px solid var(--border);
+  border-radius:var(--rs);padding:11px 14px;
+  display:flex;align-items:center;gap:10px;margin-bottom:14px;
+}
+.link-text{
+  flex:1;font-size:11px;font-family:'JetBrains Mono',monospace;
+  color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+
+/* Buttons */
+.cbtn{
+  background:linear-gradient(135deg,var(--blue),var(--blue2));border:none;
+  padding:9px 16px;border-radius:var(--rx);color:#fff;
+  font-size:12px;font-weight:600;cursor:pointer;
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:'DM Sans',sans-serif;white-space:nowrap;
+  transition:all 0.2s;
+}
+.cbtn:hover{opacity:0.9;transform:translateY(-1px)}
+.cbtn.sm{padding:7px 12px;font-size:11px}
+.share-row{display:flex;gap:10px;flex-wrap:wrap}
+.sbtn{
+  flex:1;min-width:80px;
+  background:rgba(30,111,255,0.08);border:1px solid var(--border2);
+  border-radius:var(--rx);padding:9px;color:var(--text);
+  font-size:12px;font-weight:500;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  font-family:'DM Sans',sans-serif;transition:background 0.2s;
+}
+.sbtn:hover{background:rgba(30,111,255,0.15)}
+
+/* Earnings banner */
+.earn-banner{
+  background:linear-gradient(135deg,var(--blue),var(--blue2));
+  border-radius:var(--r);padding:20px;margin-bottom:18px;
+  display:flex;justify-content:space-between;align-items:center;
+  position:relative;z-index:1;
+}
+.earn-lbl{font-size:11px;opacity:0.8;margin-bottom:4px}
+.earn-val{font-size:28px;font-weight:800;letter-spacing:-0.5px}
+.earn-icon{font-size:40px;opacity:0.25}
+
+/* Level tabs */
+.lvl-tabs{display:flex;gap:10px;margin-bottom:18px;position:relative;z-index:1}
+.lvl-tab{
+  flex:1;background:var(--ink2);border:2px solid var(--border);
+  border-radius:var(--r);padding:14px 10px;text-align:center;
+  cursor:pointer;transition:all 0.2s;
+}
+.lvl-tab.active.l1{border-color:var(--l1);background:rgba(30,111,255,0.08)}
+.lvl-tab.active.l2{border-color:var(--l2);background:rgba(0,214,143,0.08)}
+.lvl-tab.active.l3{border-color:var(--l3);background:rgba(139,92,246,0.08)}
+.lvl-num{font-size:22px;font-weight:800;margin-bottom:2px}
+.l1 .lvl-num{color:var(--l1)}.l2 .lvl-num{color:var(--l2)}.l3 .lvl-num{color:var(--l3)}
+.lvl-pct{font-size:13px;font-weight:700;margin-bottom:2px}
+.l1 .lvl-pct{color:var(--l1)}.l2 .lvl-pct{color:var(--l2)}.l3 .lvl-pct{color:var(--l3)}
+.lvl-lbl{font-size:10px;color:var(--text3)}
+
+/* Stats grid */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;position:relative;z-index:1}
+.scard{background:var(--ink2);border:1px solid var(--border);border-radius:var(--r);padding:16px}
+.scard.wide{grid-column:span 2}
+.scard-icon{
+  width:38px;height:38px;border-radius:10px;
+  background:linear-gradient(135deg,var(--blue),var(--blue2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;color:#fff;margin-bottom:10px;
+}
+.scard-lbl{font-size:11px;color:var(--text2);margin-bottom:4px}
+.scard-val{font-size:22px;font-weight:800;color:#fff}
+
+/* Search */
+.search-bar{
+  background:var(--ink2);border:1px solid var(--border);
+  border-radius:var(--rs);padding:12px 16px;
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:14px;position:relative;z-index:1;
+}
+.search-bar i{color:var(--text3)}
+.search-bar input{
+  flex:1;background:none;border:none;outline:none;
+  color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;
+}
+.search-bar input::placeholder{color:var(--text3)}
+
+/* Team header */
+.team-hd{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:14px;position:relative;z-index:1;
+}
+.team-hd-title{font-size:16px;font-weight:700;color:#fff;display:flex;align-items:center;gap:8px}
+.team-count{
+  background:rgba(30,111,255,0.12);border:1px solid var(--border2);
+  padding:3px 12px;border-radius:20px;font-size:12px;color:var(--blue);font-weight:600;
+}
+
+/* Member cards */
+.member-list{display:flex;flex-direction:column;gap:12px;position:relative;z-index:1}
+.mcard{
+  background:var(--ink2);border:1px solid var(--border);
+  border-radius:var(--r);padding:14px;
+  display:flex;align-items:center;gap:14px;
+  transition:border-color 0.2s;
+}
+.mcard:hover{border-color:var(--border2)}
+.mavatar{
+  width:48px;height:48px;border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;font-weight:700;color:#fff;flex-shrink:0;
+}
+.av-l1{background:linear-gradient(135deg,var(--l1),#1040CC)}
+.av-l2{background:linear-gradient(135deg,var(--l2),#00A870)}
+.av-l3{background:linear-gradient(135deg,var(--l3),#6D28D9)}
+.minfo{flex:1;min-width:0}
+.mname{font-size:15px;font-weight:700;color:#fff;margin-bottom:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.musername{font-size:11px;color:var(--blue);font-weight:600;margin-bottom:3px}
+.mbadge{
+  display:inline-block;padding:2px 8px;border-radius:20px;
+  font-size:9px;font-weight:700;
+}
+.mb-l1{background:rgba(30,111,255,0.15);color:var(--l1)}
+.mb-l2{background:rgba(0,214,143,0.15);color:var(--l2)}
+.mb-l3{background:rgba(139,92,246,0.15);color:var(--l3)}
+.mdate{font-size:10px;color:var(--text3);display:flex;align-items:center;gap:5px}
+.mstats{text-align:right;flex-shrink:0}
+.m-invest{font-size:13px;font-weight:700;color:var(--green)}
+.m-bonus{font-size:11px;color:var(--text2);margin-top:2px}
+.m-active{font-size:10px;margin-top:3px}
+.m-active.yes{color:var(--green)}.m-active.no{color:var(--text3)}
+
+/* Empty / Loading */
+.empty{
+  text-align:center;padding:50px 20px;
+  background:var(--ink2);border-radius:var(--r);
+  border:2px dashed rgba(30,111,255,0.2);
+  position:relative;z-index:1;
+}
+.empty i{font-size:44px;color:var(--text3);margin-bottom:14px;display:block}
+.empty h3{color:#fff;font-size:16px;margin-bottom:6px}
+.empty p{color:var(--text2);font-size:12px;line-height:1.6}
+.loading{text-align:center;padding:50px;color:var(--text2);position:relative;z-index:1}
+.loading i{font-size:28px;color:var(--blue);margin-bottom:12px;display:block}
+
+/* Bottom nav */
+.bnav{
+  position:fixed;bottom:0;left:0;right:0;
+  background:rgba(11,15,26,0.95);backdrop-filter:blur(16px);
+  border-top:1px solid var(--border2);
+  display:flex;justify-content:space-around;
+  padding:12px 20px 24px;
+  max-width:600px;margin:0 auto;z-index:200;
+  left:50%;transform:translateX(-50%);width:100%;
+}
+.bnav a{
+  text-decoration:none;display:flex;flex-direction:column;
+  align-items:center;gap:4px;font-size:10px;
+  font-weight:600;color:var(--text3);transition:color 0.2s;
+}
+.bnav a i{font-size:20px}
+.bnav a.active{color:var(--blue)}
+
+@media(max-width:540px){
+  .main{padding:16px 12px}
+  .lvl-pct{font-size:12px}.earn-val{font-size:24px}
+  .code-val{font-size:18px}
+}
+</style>
+</head>
+<body>
+
+<div class="bg-orb orb1"></div>
+<div class="bg-orb orb2"></div>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-inner">
+    <button class="hbtn" onclick="history.back()"><i class="fas fa-arrow-left"></i></button>
+    <span class="header-title">My Team</span>
+    <button class="hbtn" id="refreshBtn" onclick="refreshAll()"><i class="fas fa-sync-alt"></i></button>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- Referral Link Card -->
+  <div class="gc">
+    <div class="gc-title"><i class="fas fa-share-alt"></i> Your Referral Code</div>
+
+    <!-- Username / code -->
+    <div class="code-block">
+      <span class="code-val" id="codeDisplay">loading…</span>
+      <button class="cbtn" onclick="copyCode()"><i class="fas fa-copy"></i> Copy Code</button>
+    </div>
+
+    <!-- Link -->
+    <div class="link-block">
+      <span class="link-text" id="linkDisplay">loading…</span>
+      <button class="cbtn sm" onclick="copyLink()"><i class="fas fa-link"></i></button>
+    </div>
+
+    <!-- Share -->
+    <div class="share-row">
+      <button class="sbtn" onclick="share('whatsapp')"><i class="fab fa-whatsapp" style="color:#25D366"></i> WhatsApp</button>
+      <button class="sbtn" onclick="share('telegram')"><i class="fab fa-telegram" style="color:#229ED9"></i> Telegram</button>
+      <button class="sbtn" onclick="share('more')"><i class="fas fa-ellipsis-h"></i> More</button>
+    </div>
+  </div>
+
+  <!-- Earnings Banner -->
+  <div class="earn-banner">
+    <div>
+      <div class="earn-lbl">Total Referral Earnings</div>
+      <div class="earn-val" id="totalEarnings">₦0</div>
+    </div>
+    <i class="fas fa-gift earn-icon"></i>
+  </div>
+
+  <!-- Level Tabs -->
+  <div class="lvl-tabs">
+    <div class="lvl-tab l1 active" id="tab-l1" onclick="setLevel(1)">
+      <div class="lvl-pct">10%</div>
+      <div class="lvl-num" id="cnt-l1">0</div>
+      <div class="lvl-lbl">Level 1</div>
+    </div>
+    <div class="lvl-tab l2" id="tab-l2" onclick="setLevel(2)">
+      <div class="lvl-pct">3%</div>
+      <div class="lvl-num" id="cnt-l2">0</div>
+      <div class="lvl-lbl">Level 2</div>
+    </div>
+    <div class="lvl-tab l3" id="tab-l3" onclick="setLevel(3)">
+      <div class="lvl-pct">1%</div>
+      <div class="lvl-num" id="cnt-l3">0</div>
+      <div class="lvl-lbl">Level 3</div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="scard">
+      <div class="scard-icon"><i class="fas fa-users"></i></div>
+      <div class="scard-lbl">Total Members</div>
+      <div class="scard-val" id="statTotal">0</div>
+    </div>
+    <div class="scard">
+      <div class="scard-icon"><i class="fas fa-chart-line"></i></div>
+      <div class="scard-lbl">Active Investors</div>
+      <div class="scard-val" id="statActive">0</div>
+    </div>
+    <div class="scard wide">
+      <div class="scard-icon"><i class="fas fa-coins"></i></div>
+      <div class="scard-lbl">Team Total Investment</div>
+      <div class="scard-val" id="statInvested">₦0</div>
+    </div>
+  </div>
+
+  <!-- Team List -->
+  <div class="team-hd">
+    <div class="team-hd-title"><i class="fas fa-list-ul" style="color:var(--blue)"></i> Team Members</div>
+    <div class="team-count" id="listCount">0</div>
+  </div>
+
+  <div class="search-bar">
+    <i class="fas fa-search"></i>
+    <input type="text" id="searchInput" placeholder="Search by name or username…" oninput="renderList()">
+  </div>
+
+  <div class="member-list" id="memberList">
+    <div class="loading"><i class="fas fa-spinner fa-spin"></i><p>Loading your team…</p></div>
+  </div>
+
+</div>
+
+<!-- Bottom Nav -->
+<div class="bnav">
+  <a href="home.html"><i class="fas fa-home"></i><span>Home</span></a>
+  <a href="plans.html"><i class="fas fa-chart-line"></i><span>Invest</span></a>
+  <a href="withdraw.html"><i class="fas fa-money-bill-wave"></i><span>Withdraw</span></a>
+  <a href="referrals.html" class="active"><i class="fas fa-users"></i><span>Team</span></a>
+  <a href="dashboard.html"><i class="fas fa-user"></i><span>Profile</span></a>
+</div>
+
+<script>
+/* ════════════════════════════════════════
+   FIREBASE
+════════════════════════════════════════ */
+const firebaseConfig={
+  apiKey:"AIzaSyBl6HEVa9mUuROvnohMKzeEzzc0aTREU54",
+  authDomain:"kinetic-dc8e6.firebaseapp.com",
+  projectId:"kinetic-dc8e6",
+  storageBucket:"kinetic-dc8e6.firebasestorage.app",
+  messagingSenderId:"980527555815",
+  appId:"1:980527555815:web:131ccee594e0c8f122ee42"
+};
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth();
+const db=firebase.firestore();
+
+/* ── State ── */
+let ME=null;          /* current user doc data */
+let MY_UID='';
+let MY_USERNAME='';
+let MY_LINK='';
+let ALL_MEMBERS=[];   /* all L1+L2+L3 enriched */
+let ACTIVE_LEVEL=1;
+
+/* ── Helpers ── */
+const N=id=>document.getElementById(id);
+const fc=n=>'₦'+(Number(n)||0).toLocaleString('en-NG');
+const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+/* Safe date from Firestore Timestamp, {seconds}, ISO string, or Date */
+function fmtDate(ts){
+  if(!ts)return'—';
+  try{
+    let d;
+    if(typeof ts.toDate==='function')d=ts.toDate();
+    else if(ts.seconds)d=new Date(ts.seconds*1000);
+    else{d=new Date(ts);if(isNaN(d))return'—';}
+    return d.toLocaleDateString('en-NG',{day:'2-digit',month:'short',year:'2-digit'});
+  }catch{return'—';}
+}
+
+function toast(msg){
+  Swal.fire({icon:'success',title:msg,toast:true,position:'top-end',showConfirmButton:false,timer:2000});
+}
+
+/* ── Copy / Share ── */
+function doCopy(text){
+  (navigator.clipboard?.writeText(text)||Promise.reject())
+    .catch(()=>{
+      const t=document.createElement('textarea');t.value=text;
+      document.body.appendChild(t);t.select();document.execCommand('copy');
+      document.body.removeChild(t);
+    });
+}
+function copyCode(){doCopy('@'+MY_USERNAME);toast('Code @'+MY_USERNAME+' copied!');}
+function copyLink(){doCopy(MY_LINK);toast('Referral link copied!');}
+function share(p){
+  if(!MY_LINK)return;
+  const msg=`Join me on Kinetic Wealth! Use my referral code *@${MY_USERNAME}* when signing up and get ₦1,000 welcome bonus!\n\nSign up: ${MY_LINK}`;
+  if(p==='whatsapp')window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+  else if(p==='telegram')window.open(`https://t.me/share/url?url=${encodeURIComponent(MY_LINK)}&text=${encodeURIComponent('Join Kinetic Wealth! Referral code @'+MY_USERNAME)}`,'_blank');
+  else if(p==='more'){
+    if(navigator.share)navigator.share({title:'Kinetic Wealth',text:msg,url:MY_LINK}).catch(()=>copyLink());
+    else copyLink();
+  }
+}
+
+/* ── Level tabs ── */
+function setLevel(n){
+  ACTIVE_LEVEL=n;
+  [1,2,3].forEach(i=>{
+    N('tab-l'+i).className='lvl-tab l'+i+(i===n?' active':'');
+  });
+  renderList();
+}
+
+/* ════════════════════════════════════════
+   LOAD TEAM DATA
+   ────────────────────────────────────────
+   STRATEGY: Fetch ALL user documents in ONE read.
+   Then filter in memory using referrerUid === MY_UID for L1,
+   and chaining from L1 UIDs for L2, and L2 UIDs for L3.
+
+   WHY THIS WORKS:
+   • signup.html stores referrerUid as a proper Firebase UID (or null)
+   • null never equals MY_UID so non-referred users are automatically excluded
+   • The three-level chain is built purely from referrerUid fields
+
+   COMPATIBILITY:
+   We also handle old accounts that may have stored referrerUid as
+   'direct' or a username string — those will never match MY_UID
+   (which is a 28-char Firebase UID), so they're safely ignored.
+════════════════════════════════════════ */
+async function loadTeam(){
+  N('memberList').innerHTML='<div class="loading"><i class="fas fa-spinner fa-spin"></i><p>Loading your team…</p></div>';
+
+  try{
+    console.log('═══════════════════════════════════');
+    console.log('👤 MY UID:',MY_UID);
+    console.log('🔑 MY USERNAME:',MY_USERNAME);
+    console.log('═══════════════════════════════════');
+
+    /* ONE Firestore read — all users */
+    const snap=await db.collection('users').get();
+    const allUsers=snap.docs.map(d=>({_id:d.id,...d.data()}));
+    console.log('📊 Total users in DB:',allUsers.length);
+
+    /* ── LEVEL 1: referrerUid === MY_UID ── */
+    const l1=allUsers.filter(u=>
+      u._id!==MY_UID &&
+      u.referrerUid===MY_UID          /* strict equality — null never matches */
+    );
+    console.log('👥 L1 (direct):',l1.length,l1.map(u=>'@'+(u.username||u._id.slice(0,6))));
+
+    /* ── LEVEL 2: referrerUid is one of L1's UIDs ── */
+    const l1set=new Set(l1.map(u=>u._id));
+    const l2=allUsers.filter(u=>
+      u._id!==MY_UID &&
+      !l1set.has(u._id) &&
+      u.referrerUid &&                /* must not be null/undefined/''/0 */
+      l1set.has(u.referrerUid)
+    );
+    console.log('👥 L2:',l2.length);
+
+    /* ── LEVEL 3: referrerUid is one of L2's UIDs ── */
+    const l2set=new Set(l2.map(u=>u._id));
+    const l3=allUsers.filter(u=>
+      u._id!==MY_UID &&
+      !l1set.has(u._id) &&
+      !l2set.has(u._id) &&
+      u.referrerUid &&
+      l2set.has(u.referrerUid)
+    );
+    console.log('👥 L3:',l3.length);
+
+    /* ── Build enriched member objects ── */
+    function makeMember(u,lvl){
+      const rates={1:0.10,2:0.03,3:0.01};
+      const inv=Number(u.totalInvested)||0;
+      return{
+        _id:u._id,
+        level:lvl,
+        name:u.fullName||u.username||'User',
+        username:u.username||'',
+        invested:inv,
+        bonus:Math.floor(inv*rates[lvl]),
+        isActive:inv>=10000,
+        joinedAt:u.createdAt||null
+      };
+    }
+
+    ALL_MEMBERS=[
+      ...l1.map(u=>makeMember(u,1)),
+      ...l2.map(u=>makeMember(u,2)),
+      ...l3.map(u=>makeMember(u,3))
+    ];
+
+    /* Sort newest first (handles both Timestamp and ISO string) */
+    ALL_MEMBERS.sort((a,b)=>{
+      const ta=a.joinedAt?.toMillis?.()??a.joinedAt?.seconds*1000??new Date(a.joinedAt||0).getTime()??0;
+      const tb=b.joinedAt?.toMillis?.()??b.joinedAt?.seconds*1000??new Date(b.joinedAt||0).getTime()??0;
+      return tb-ta;
+    });
+
+    /* ── Compute stats ── */
+    const l1c=l1.length,l2c=l2.length,l3c=l3.length;
+    const totalMem=ALL_MEMBERS.length;
+    const totalActive=ALL_MEMBERS.filter(m=>m.isActive).length;
+    const totalInv=ALL_MEMBERS.reduce((s,m)=>s+m.invested,0);
+    const totalEarn=ALL_MEMBERS.reduce((s,m)=>s+m.bonus,0);
+
+    /* ── Update UI ── */
+    N('cnt-l1').textContent=l1c;
+    N('cnt-l2').textContent=l2c;
+    N('cnt-l3').textContent=l3c;
+    N('totalEarnings').textContent=fc(totalEarn);
+    N('statTotal').textContent=totalMem;
+    N('statActive').textContent=totalActive;
+    N('statInvested').textContent=fc(totalInv);
+
+    console.log('✅ Team loaded:',{l1:l1c,l2:l2c,l3:l3c,totalMem});
+
+    if(totalMem===0){
+      console.log('ℹ️ No downlines yet.');
+      console.log('   → Share @'+MY_USERNAME+' so people sign up using your referral code.');
+      console.log('   → When they sign up, their referrerUid will be set to:',MY_UID);
+    }
+
+    renderList();
+
+  }catch(e){
+    console.error('❌ loadTeam error:',e);
+    N('memberList').innerHTML=`
+      <div class="empty">
+        <i class="fas fa-exclamation-triangle"></i>
+        <h3>Failed to load</h3>
+        <p>${esc(e.message)}</p>
+      </div>`;
+  }
+}
+
+/* ════════════════════════════════════════
+   RENDER MEMBER LIST
+════════════════════════════════════════ */
+function renderList(){
+  const q=(N('searchInput')?.value||'').toLowerCase().trim();
+  const filtered=ALL_MEMBERS.filter(m=>{
+    if(m.level!==ACTIVE_LEVEL)return false;
+    if(!q)return true;
+    return m.name.toLowerCase().includes(q)||m.username.toLowerCase().includes(q);
+  });
+
+  N('listCount').textContent=String(filtered.length);
+
+  if(!filtered.length){
+    const lvlName={1:'Level 1 (Direct)',2:'Level 2',3:'Level 3'}[ACTIVE_LEVEL];
+    N('memberList').innerHTML=`
+      <div class="empty">
+        <i class="fas fa-${q?'search':'user-friends'}"></i>
+        <h3>${q?'No matches found':'No '+esc(lvlName)+' referrals yet'}</h3>
+        <p>${q?'Try a different search term.':'Share your referral code <strong>@'+esc(MY_USERNAME)+'</strong> to grow your team!'}</p>
+        ${!q?`<button class="cbtn" onclick="copyCode()" style="margin-top:16px"><i class="fas fa-share-alt"></i> Share Code</button>`:''}
+      </div>`;
+    return;
+  }
+
+  const avClass={1:'av-l1',2:'av-l2',3:'av-l3'};
+  const mbClass={1:'mb-l1',2:'mb-l2',3:'mb-l3'};
+  const rates={1:'10%',2:'3%',3:'1%'};
+
+  N('memberList').innerHTML=filtered.map(m=>`
+    <div class="mcard">
+      <div class="mavatar ${avClass[m.level]}">${esc(m.name.charAt(0).toUpperCase())}</div>
+      <div class="minfo">
+        <div class="mname">
+          ${esc(m.name)}
+          <span class="mbadge ${mbClass[m.level]}">L${m.level} · ${rates[m.level]}</span>
+        </div>
+        ${m.username?`<div class="musername">@${esc(m.username)}</div>`:''}
+        <div class="mdate"><i class="far fa-calendar-alt"></i> Joined ${fmtDate(m.joinedAt)}</div>
+      </div>
+      <div class="mstats">
+        <div class="m-invest">${fc(m.invested)}</div>
+        <div class="m-bonus">+${fc(m.bonus)} earned</div>
+        <div class="m-active ${m.isActive?'yes':'no'}">${m.isActive?'● Active':'○ Inactive'}</div>
+      </div>
+    </div>`).join('');
+}
+
+/* ── Refresh ── */
+async function refreshAll(){
+  const icon=N('refreshBtn').querySelector('i');
+  icon.className='fas fa-spinner fa-spin';
+  ALL_MEMBERS=[];
+  await loadTeam();
+  icon.className='fas fa-sync-alt';
+  toast('Team data refreshed!');
+}
+
+/* ════════════════════════════════════════
+   AUTH
+════════════════════════════════════════ */
+auth.onAuthStateChanged(async u=>{
+  if(!u){window.location.href='login.html';return;}
+  MY_UID=u.uid;
+
+  try{
+    const snap=await db.collection('users').doc(MY_UID).get();
+    if(!snap.exists){window.location.href='signup.html';return;}
+
+    ME=snap.data();
+    MY_USERNAME=(ME.username||ME.referralCode||MY_UID.slice(0,8)).toLowerCase().trim();
+    MY_LINK=window.location.origin+'/signup.html?ref='+MY_USERNAME;
+
+    /* Backfill: if referralCode field doesn't match username, fix it */
+    if(ME.referralCode!==MY_USERNAME){
+      db.collection('users').doc(MY_UID).update({referralCode:MY_USERNAME}).catch(()=>{});
+    }
+
+    N('codeDisplay').textContent='@'+MY_USERNAME;
+    N('linkDisplay').textContent=MY_LINK;
+
+    await loadTeam();
+
+  }catch(e){
+    console.error('Auth init error:',e);
+    N('memberList').innerHTML=`<div class="empty"><i class="fas fa-exclamation-triangle"></i><h3>Error</h3><p>${esc(e.message)}</p></div>`;
+  }
+});
+
+Object.assign(window,{copyCode,copyLink,share,setLevel,renderList,refreshAll});
+</script>
+</body>
+</html>
