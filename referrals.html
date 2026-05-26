@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Kinetic Wealth - My Team & Referrals</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#0a0f1e 0%,#020617 100%);min-height:100vh;color:#e2e8f0;padding-bottom:40px}
+        .container{max-width:900px;margin:0 auto;padding:20px}
+        .header{display:flex;align-items:center;justify-content:space-between;padding:20px 0;margin-bottom:24px}
+        .back-btn{color:#94a3b8;text-decoration:none;font-size:14px;display:flex;align-items:center;gap:6px;transition:color .3s}
+        .back-btn:hover{color:#fff}
+        .page-title{font-size:24px;font-weight:800;background:linear-gradient(135deg,#fff,#94a3b8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .avatar-sm{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,#0052CC,#00E5A0);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:15px}
+
+        /* Referral Link Card */
+        .ref-card{background:linear-gradient(135deg,#0052CC,#003D99);border-radius:20px;padding:20px;margin-bottom:24px;box-shadow:0 10px 30px rgba(0,82,204,.3)}
+        .ref-label{font-size:11px;font-weight:700;color:rgba(255,255,255,.75);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+        .ref-row{display:flex;align-items:center;gap:10px}
+        .ref-link-box{flex:1;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:14px;padding:12px 14px;font-size:13px;font-weight:600;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .ref-copy-btn{padding:12px 18px;background:#fff;color:#0052CC;border:none;border-radius:14px;font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px;transition:all .2s}
+        .ref-copy-btn:active{transform:scale(.95)}
+        .share-row{display:flex;gap:8px;margin-top:14px}
+        .share-btn{flex:1;padding:10px;border-radius:12px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);color:#fff;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .2s}
+        .share-btn:hover{background:rgba(255,255,255,.2)}
+
+        /* Stats */
+        .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px}
+        .stat-card{background:rgba(15,23,42,.85);backdrop-filter:blur(12px);border-radius:20px;border:1px solid rgba(255,255,255,.08);padding:18px}
+        .stat-card.full{grid-column:1/-1}
+        .stat-header{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+        .stat-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+        .icon-teal{background:rgba(0,229,160,.15);color:#00E5A0}
+        .icon-green{background:rgba(16,185,129,.15);color:#10B981}
+        .icon-purple{background:rgba(139,92,246,.15);color:#8b5cf6}
+        .icon-blue{background:rgba(0,82,204,.15);color:#0052CC}
+        .stat-value{font-size:22px;font-weight:800;color:#fff;margin-bottom:2px}
+        .stat-label{font-size:11px;color:#94a3b8;font-weight:500}
+
+        /* Level Breakdown */
+        .level-breakdown{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:24px}
+        .level-card{background:rgba(15,23,42,.85);backdrop-filter:blur(12px);border-radius:16px;border:1px solid rgba(255,255,255,.08);padding:16px;text-align:center;cursor:pointer;transition:all .2s}
+        .level-card:hover{border-color:rgba(255,255,255,.2)}
+        .level-card.l1{border-left:3px solid #0052CC}
+        .level-card.l2{border-left:3px solid #f59e0b}
+        .level-card.l3{border-left:3px solid #ec4899}
+        .level-num{font-size:28px;font-weight:800;margin-bottom:2px}
+        .level-num.l1{color:#0052CC}
+        .level-num.l2{color:#f59e0b}
+        .level-num.l3{color:#ec4899}
+        .level-label{font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+        .level-rate{font-size:12px;font-weight:700}
+        .level-rate.l1{color:#0052CC}
+        .level-rate.l2{color:#f59e0b}
+        .level-rate.l3{color:#ec4899}
+
+        /* Team Filter */
+        .team-filter{display:flex;gap:8px;margin-bottom:18px}
+        .filter-btn{flex:1;padding:12px 8px;border-radius:14px;font-size:12px;font-weight:700;border:1px solid rgba(255,255,255,.08);background:rgba(15,23,42,.6);color:#94a3b8;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:5px}
+        .filter-btn.active-l1{background:rgba(0,82,204,.15);border-color:#0052CC;color:#0052CC}
+        .filter-btn.active-l2{background:rgba(245,158,11,.15);border-color:#f59e0b;color:#f59e0b}
+        .filter-btn.active-l3{background:rgba(236,72,153,.15);border-color:#ec4899;color:#ec4899}
+        .filter-badge{padding:2px 8px;border-radius:20px;font-size:10px}
+        .badge-l1{background:rgba(0,82,204,.2);color:#0052CC}
+        .badge-l2{background:rgba(245,158,11,.2);color:#f59e0b}
+        .badge-l3{background:rgba(236,72,153,.2);color:#ec4899}
+
+        /* Search */
+        .search-wrap{position:relative;margin-bottom:18px}
+        .search-input{width:100%;padding:12px 16px 12px 42px;background:rgba(15,23,42,.6);border:1px solid rgba(255,255,255,.08);border-radius:14px;color:#e2e8f0;font-family:'Inter',sans-serif;font-size:13px;outline:none}
+        .search-input::placeholder{color:#64748b}
+        .search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#64748b;font-size:14px}
+
+        /* Member Cards */
+        .member-card{background:rgba(15,23,42,.85);backdrop-filter:blur(12px);border-radius:16px;border:1px solid rgba(255,255,255,.08);padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:12px;animation:slideIn .3s ease both}
+        @keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        .member-avatar{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;color:#fff;flex-shrink:0}
+        .av-l1{background:linear-gradient(135deg,#0052CC,#003D99)}
+        .av-l2{background:linear-gradient(135deg,#f59e0b,#b45309)}
+        .av-l3{background:linear-gradient(135deg,#ec4899,#9d174d)}
+        .member-body{flex:1;min-width:0}
+        .member-name{font-weight:700;font-size:14px;color:#fff;margin-bottom:3px;display:flex;align-items:center;gap:6px}
+        .member-email{font-size:11px;color:#64748b;margin-bottom:6px}
+        .member-tags{display:flex;gap:5px;flex-wrap:wrap}
+        .member-tag{padding:3px 8px;border-radius:20px;font-size:10px;font-weight:600}
+        .tag-plan{background:rgba(0,229,160,.12);color:#00E5A0}
+        .tag-date{background:rgba(255,255,255,.05);color:#94a3b8}
+        .tag-active{background:rgba(16,185,129,.12);color:#10B981}
+        .tag-inactive{background:rgba(239,68,68,.12);color:#ef4444}
+        .member-right{text-align:right;flex-shrink:0}
+        .member-invested{font-size:10px;color:#94a3b8;margin-bottom:2px}
+        .member-invested b{color:#fff}
+        .member-bonus{font-size:15px;font-weight:800;color:#00E5A0}
+        .member-rate{font-size:10px;color:#64748b;margin-top:1px}
+
+        /* Empty State */
+        .empty-state{text-align:center;padding:50px 20px}
+        .empty-icon{font-size:44px;color:rgba(148,163,184,.2);margin-bottom:14px}
+        .empty-title{font-size:15px;font-weight:700;color:#94a3b8;margin-bottom:6px}
+        .empty-text{font-size:12px;color:#64748b}
+
+        .section-header{display:flex;align-items:center;gap:8px;margin-bottom:16px;font-size:16px;font-weight:700;color:#fff}
+        @media(max-width:600px){.stats-grid{grid-template-columns:1fr}.level-breakdown{grid-template-columns:1fr 1fr 1fr;gap:6px}.level-card{padding:12px 8px}}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="home.html" class="back-btn"><i class="fas fa-arrow-left"></i> Back</a>
+            <h1 class="page-title">My Team & Referrals</h1>
+            <div class="avatar-sm" id="avatarBox">?</div>
+        </div>
+
+        <!-- Referral Link -->
+        <div class="ref-card">
+            <div class="ref-label"><i class="fas fa-link"></i> Your Referral Link</div>
+            <div class="ref-row">
+                <div class="ref-link-box" id="refLinkDisplay">Loading...</div>
+                <button class="ref-copy-btn" onclick="copyLink()"><i class="fas fa-copy"></i> Copy</button>
+            </div>
+            <div class="share-row">
+                <button class="share-btn" onclick="shareWhatsApp()"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+                <button class="share-btn" onclick="shareTelegram()"><i class="fab fa-telegram"></i> Telegram</button>
+                <button class="share-btn" onclick="shareMore()"><i class="fas fa-share-alt"></i> More</button>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="section-header"><i class="fas fa-chart-pie" style="color:#00E5A0"></i> Team Overview</div>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header"><div class="stat-icon icon-teal"><i class="fas fa-users"></i></div></div>
+                <div class="stat-value" id="totalTeamSize">0</div>
+                <div class="stat-label">Total Team Members</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-header"><div class="stat-icon icon-green"><i class="fas fa-user-check"></i></div></div>
+                <div class="stat-value" id="activeMembers">0</div>
+                <div class="stat-label">Active Members</div>
+            </div>
+            <div class="stat-card full">
+                <div class="stat-header"><div class="stat-icon icon-purple"><i class="fas fa-coins"></i></div></div>
+                <div class="stat-value" id="teamRecharge">N0.00</div>
+                <div class="stat-label">Total Team Investment</div>
+            </div>
+        </div>
+
+        <!-- Level Breakdown -->
+        <div class="section-header"><i class="fas fa-layer-group" style="color:#8b5cf6"></i> Level Breakdown</div>
+        <div class="level-breakdown">
+            <div class="level-card l1" onclick="switchTeamLevel(1)">
+                <div class="level-num l1" id="l1Count">0</div>
+                <div class="level-label">Level 1</div>
+                <div class="level-rate l1">10% Bonus</div>
+            </div>
+            <div class="level-card l2" onclick="switchTeamLevel(2)">
+                <div class="level-num l2" id="l2Count">0</div>
+                <div class="level-label">Level 2</div>
+                <div class="level-rate l2">5% Bonus</div>
+            </div>
+            <div class="level-card l3" onclick="switchTeamLevel(3)">
+                <div class="level-num l3" id="l3Count">0</div>
+                <div class="level-label">Level 3</div>
+                <div class="level-rate l3">1% Bonus</div>
+            </div>
+        </div>
+
+        <!-- Team List -->
+        <div class="section-header"><i class="fas fa-list" style="color:#f59e0b"></i> My Team</div>
+        <div class="team-filter">
+            <button class="filter-btn active-l1" id="tltab1" onclick="switchTeamLevel(1)">
+                <i class="fas fa-circle" style="font-size:7px;color:#0052CC"></i> Level 1
+                <span class="filter-badge badge-l1" id="tl1badge">0</span>
+            </button>
+            <button class="filter-btn" id="tltab2" onclick="switchTeamLevel(2)">
+                <i class="fas fa-circle" style="font-size:7px;color:#f59e0b"></i> Level 2
+                <span class="filter-badge badge-l2" id="tl2badge">0</span>
+            </button>
+            <button class="filter-btn" id="tltab3" onclick="switchTeamLevel(3)">
+                <i class="fas fa-circle" style="font-size:7px;color:#ec4899"></i> Level 3
+                <span class="filter-badge badge-l3" id="tl3badge">0</span>
+            </button>
+        </div>
+        <div class="search-wrap">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" class="search-input" id="teamSearchInput" placeholder="Search by name or email..." oninput="filterTeam()"/>
+        </div>
+        <div id="memberList">
+            <div class="empty-state">
+                <i class="fas fa-circle-notch fa-spin empty-icon" style="font-size:28px;opacity:.5"></i>
+                <div class="empty-text">Loading your team...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // KINETIC WEALTH FIREBASE CONFIG
+        const firebaseConfig={apiKey:"AIzaSyBl6HEVa9mUuROvnohMKzeEzzc0aTREU54",authDomain:"kinetic-dc8e6.firebaseapp.com",projectId:"kinetic-dc8e6",storageBucket:"kinetic-dc8e6.firebasestorage.app",messagingSenderId:"980527555815",appId:"1:980527555815:web:131ccee594e0c8f122ee42"};
+        if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
+        const auth=firebase.auth(),db=firebase.firestore();
+        const RATES={1:0.10,2:0.05,3:0.01};
+
+        let currentUserId=null,myReferralCode='',myReferralLink='';
+        let allDownlines=[],currentTeamLevel=1;
+        let allUsersMap=new Map();
+
+        const fmt=n=>Number(n||0).toLocaleString('en-NG',{minimumFractionDigits:2});
+
+        /* ═══ GET REFERRER - EXACTLY LIKE VESTRO ═══ */
+        function getReferrerField(data){
+            if(!data)return null;
+            const fields=['referrerUid','refererUid','referredByUid','uplineUid','referredBy','referrer','upline','invitedBy','parentId'];
+            for(const f of fields){const val=data[f];if(val&&String(val).trim()!==''&&val!=='direct'&&val!=='none')return String(val).trim()}
+            return null;
+        }
+
+        /* ═══ RESOLVE TO UID - EXACTLY LIKE VESTRO ═══ */
+        function resolveToUid(rawRef){
+            if(!rawRef)return null;
+            const ref=String(rawRef).trim();
+            if(ref==='direct'||ref==='none'||ref==='')return null;
+            if(ref.length>=28&&/^[a-zA-Z0-9]+$/.test(ref))return allUsersMap.has(ref)?ref:null;
+            for(const[uid,data]of allUsersMap){if(data.referralCode===ref)return uid}
+            return null;
+        }
+
+        /* ═══ BUILD TEAM - EXACTLY LIKE VESTRO ═══ */
+        function buildTeam(allUsers){
+            const l1=[],l2=[],l3=[];
+            for(const user of allUsers){
+                const resolvedUid=resolveToUid(getReferrerField(user));
+                if(resolvedUid===currentUserId)l1.push(user);
+            }
+            const l1Uids=new Set(l1.map(u=>u.uid));
+            for(const user of allUsers){
+                if(l1Uids.has(user.uid))continue;
+                const resolvedUid=resolveToUid(getReferrerField(user));
+                if(resolvedUid&&l1Uids.has(resolvedUid))l2.push(user);
+            }
+            const l2Uids=new Set(l2.map(u=>u.uid));
+            for(const user of allUsers){
+                if(l1Uids.has(user.uid)||l2Uids.has(user.uid))continue;
+                const resolvedUid=resolveToUid(getReferrerField(user));
+                if(resolvedUid&&l2Uids.has(resolvedUid))l3.push(user);
+            }
+            return{l1,l2,l3};
+        }
+
+        /* ═══ ENRICH MEMBER - EXACTLY LIKE VESTRO ═══ */
+        async function enrichMember(user,level){
+            let planName='No plan';
+            const invested=user.totalInvested||0;
+            try{
+                const invSnap=await db.collection('investments').where('userId','==',user.uid).get();
+                if(!invSnap.empty){
+                    const plans=invSnap.docs.map(d=>d.data()).sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));
+                    planName=plans[0].planName||'Investment';
+                }
+            }catch(e){}
+            return{
+                level,uid:user.uid,fullName:user.fullName||user.username||'User',
+                email:user.email||'N/A',planName,invested,
+                bonus:Math.floor(invested*RATES[level]),
+                isActive:invested>0,
+                joinedAt:user.createdAt||null,
+                vipLevel:user.vipLevel||0
+            };
+        }
+
+        /* ═══ AUTH & LOAD ═══ */
+        auth.onAuthStateChanged(async user=>{
+            if(!user){window.location.href='login.html';return}
+            currentUserId=user.uid;
+            const userDoc=await db.collection('users').doc(currentUserId).get();
+            if(!userDoc.exists){window.location.href='login.html';return}
+            const ud=userDoc.data();
+            document.getElementById('avatarBox').textContent=(ud.fullName||'U').charAt(0).toUpperCase();
+            myReferralCode=ud.referralCode||('KW'+currentUserId.slice(0,8).toUpperCase());
+            if(!ud.referralCode){db.collection('users').doc(currentUserId).update({referralCode:myReferralCode}).catch(()=>{})}
+            myReferralLink=window.location.origin+'/signup.html?ref='+myReferralCode;
+            document.getElementById('refLinkDisplay').textContent=myReferralLink;
+            await loadTeamData();
+        });
+
+        async function loadTeamData(){
+            try{
+                const allSnap=await db.collection('users').get();
+                allUsersMap.clear();
+                const allUsers=[];
+                allSnap.docs.forEach(d=>{const data=d.data();allUsers.push({uid:d.id,...data});allUsersMap.set(d.id,data)});
+
+                const{l1,l2,l3}=buildTeam(allUsers);
+                console.log('Team: L1='+l1.length+' L2='+l2.length+' L3='+l3.length);
+
+                allDownlines=[];
+                for(const u of l1)allDownlines.push(await enrichMember(u,1));
+                for(const u of l2)allDownlines.push(await enrichMember(u,2));
+                for(const u of l3)allDownlines.push(await enrichMember(u,3));
+
+                const l1List=allDownlines.filter(d=>d.level===1);
+                const l2List=allDownlines.filter(d=>d.level===2);
+                const l3List=allDownlines.filter(d=>d.level===3);
+
+                document.getElementById('totalTeamSize').textContent=allDownlines.length;
+                document.getElementById('activeMembers').textContent=allDownlines.filter(d=>d.isActive).length;
+                document.getElementById('teamRecharge').textContent='N'+fmt(allDownlines.reduce((s,d)=>s+d.invested,0));
+                document.getElementById('l1Count').textContent=l1List.length;
+                document.getElementById('l2Count').textContent=l2List.length;
+                document.getElementById('l3Count').textContent=l3List.length;
+                document.getElementById('tl1badge').textContent=l1List.length;
+                document.getElementById('tl2badge').textContent=l2List.length;
+                document.getElementById('tl3badge').textContent=l3List.length;
+
+                renderTeam(1);
+            }catch(e){
+                console.error(e);
+                document.getElementById('memberList').innerHTML='<div class="empty-state"><i class="fas fa-exclamation-triangle empty-icon"></i><div class="empty-title">Error</div><div class="empty-text">Please refresh</div></div>';
+            }
+        }
+
+        /* ═══ RENDER TEAM ═══ */
+        function switchTeamLevel(lvl){
+            currentTeamLevel=lvl;
+            [1,2,3].forEach(l=>{document.getElementById('tltab'+l).className='filter-btn';if(l===lvl)document.getElementById('tltab'+l).className='filter-btn active-l'+l});
+            filterTeam();
+        }
+
+        function filterTeam(){
+            const query=(document.getElementById('teamSearchInput')?.value||'').toLowerCase().trim();
+            const list=allDownlines.filter(d=>d.level===currentTeamLevel);
+            const filtered=query?list.filter(d=>d.fullName.toLowerCase().includes(query)||d.email.toLowerCase().includes(query)):list;
+
+            const container=document.getElementById('memberList');
+            if(!filtered.length){
+                container.innerHTML='<div class="empty-state"><i class="fas fa-users empty-icon"></i><div class="empty-title">'+(query?'No results':'No Level '+currentTeamLevel+' members yet')+'</div><div class="empty-text">'+(query?'Try a different name':'Share your link to grow your team!')+'</div></div>';
+                return;
+            }
+
+            const colors={1:'av-l1',2:'av-l2',3:'av-l3'},rates={1:'10%',2:'5%',3:'1%'};
+            container.innerHTML='';
+            filtered.forEach((d,i)=>{
+                let joinedStr='—';
+                if(d.joinedAt){try{const dt=d.joinedAt.toDate?d.joinedAt.toDate():new Date(d.joinedAt);joinedStr=dt.toLocaleDateString('en-NG',{day:'2-digit',month:'short',year:'2-digit'})}catch{}}
+                const card=document.createElement('div');card.className='member-card';card.style.animationDelay=i*.04+'s';
+                card.innerHTML='<div class="member-avatar '+colors[d.level]+'">'+d.fullName.charAt(0).toUpperCase()+'</div><div class="member-body"><div class="member-name">'+d.fullName+(d.vipLevel>0?' <span style="display:inline-block;padding:1px 6px;border-radius:8px;background:linear-gradient(135deg,#B8860B,#F4B942);color:#fff;font-size:9px;font-weight:800">VIP'+d.vipLevel+'</span>':'')+'</div><div class="member-email">'+d.email+'</div><div class="member-tags"><span class="member-tag tag-plan"><i class="fas fa-chart-pie"></i> '+d.planName+'</span><span class="member-tag tag-date"><i class="far fa-calendar"></i> '+joinedStr+'</span><span class="member-tag '+(d.isActive?'tag-active':'tag-inactive')+'">'+(d.isActive?'Active':'Inactive')+'</span></div></div><div class="member-right"><div class="member-invested">Invested <b>N'+fmt(d.invested)+'</b></div><div class="member-bonus">+N'+fmt(d.bonus)+'</div><div class="member-rate">Bonus ('+rates[d.level]+')</div></div>';
+                container.appendChild(card);
+            });
+        }
+
+        /* ═══ SHARE FUNCTIONS ═══ */
+        function copyLink(){
+            navigator.clipboard?.writeText(myReferralLink).then(()=>{
+                Swal.fire({icon:'success',title:'Copied!',toast:true,timer:2000,showConfirmButton:false,position:'top-end'});
+            }).catch(()=>{
+                const el=document.createElement('textarea');el.value=myReferralLink;document.body.appendChild(el);el.select();document.execCommand('copy');document.body.removeChild(el);
+                Swal.fire({icon:'success',title:'Copied!',toast:true,timer:2000});
+            });
+        }
+        function shareWhatsApp(){window.open('https://wa.me/?text='+encodeURIComponent('Join Kinetic Wealth and earn daily!\n\n'+myReferralLink),'_blank')}
+        function shareTelegram(){window.open('https://t.me/share/url?url='+encodeURIComponent(myReferralLink)+'&text='+encodeURIComponent('Join Kinetic Wealth!'),'_blank')}
+        function shareMore(){if(navigator.share)navigator.share({title:'Join Kinetic Wealth',text:'Earn daily returns!',url:myReferralLink});else copyLink()}
+
+        window.switchTeamLevel=switchTeamLevel;
+        window.filterTeam=filterTeam;
+        window.copyLink=copyLink;
+        window.shareWhatsApp=shareWhatsApp;
+        window.shareTelegram=shareTelegram;
+        window.shareMore=shareMore;
+    </script>
+</body>
+</html>
