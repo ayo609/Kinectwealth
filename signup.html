@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes"/>
+<title>Kinetic Wealth · Create Account</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --ink:#0B0F1A;--ink2:#1C2235;--ink3:#273046;
+  --blue:#1E6FFF;--blue2:#1558D6;--blue3:rgba(30,111,255,0.12);
+  --green:#00D68F;--green2:rgba(0,214,143,0.12);
+  --red:#FF4757;--amber:#FFB300;
+  --text:#F0F4FF;--text2:#8FA3C8;--text3:#4A5A7A;
+  --border:rgba(255,255,255,0.07);--border2:rgba(30,111,255,0.25);
+  --r:18px;--rs:12px;--rx:8px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--ink);
+  color:var(--text);
+  min-height:100vh;
+  display:flex;align-items:center;justify-content:center;
+  padding:24px 16px;
+  position:relative;overflow-x:hidden;
+}
+
+/* ── Animated background ── */
+.bg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.bg-dot{
+  position:absolute;border-radius:50%;
+  background:radial-gradient(circle,var(--blue) 0%,transparent 70%);
+  opacity:0.12;animation:drift 20s ease-in-out infinite;
+}
+.bg-dot:nth-child(1){width:600px;height:600px;top:-200px;right:-150px;animation-delay:0s}
+.bg-dot:nth-child(2){width:500px;height:500px;bottom:-150px;left:-150px;background:radial-gradient(circle,var(--green) 0%,transparent 70%);opacity:0.08;animation-delay:-8s}
+.bg-dot:nth-child(3){width:300px;height:300px;top:40%;left:40%;opacity:0.06;animation-delay:-14s}
+@keyframes drift{0%,100%{transform:translate(0,0)}33%{transform:translate(20px,-30px)}66%{transform:translate(-15px,20px)}}
+
+/* grid lines */
+.bg::after{
+  content:'';position:absolute;inset:0;
+  background-image:linear-gradient(rgba(30,111,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(30,111,255,0.04) 1px,transparent 1px);
+  background-size:60px 60px;
+}
+
+/* ── Card ── */
+.card{
+  position:relative;z-index:10;
+  width:100%;max-width:520px;
+  background:var(--ink2);
+  border:1px solid var(--border);
+  border-radius:28px;
+  padding:36px 32px;
+  box-shadow:0 32px 80px rgba(0,0,0,0.5),0 0 0 1px rgba(255,255,255,0.03);
+}
+
+/* ── Logo ── */
+.logo{text-align:center;margin-bottom:28px}
+.logo-ring{
+  width:68px;height:68px;
+  background:linear-gradient(135deg,var(--blue),var(--green));
+  border-radius:20px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:28px;color:#fff;
+  margin:0 auto 14px;
+  box-shadow:0 12px 30px rgba(30,111,255,0.35);
+}
+.logo-name{font-size:26px;font-weight:800;letter-spacing:-0.5px;color:#fff}
+.logo-sub{font-size:13px;color:var(--text2);margin-top:4px}
+
+/* ── Bonus Banner ── */
+.bonus-banner{
+  background:linear-gradient(135deg,rgba(30,111,255,0.1),rgba(0,214,143,0.06));
+  border:1px solid var(--border2);
+  border-radius:var(--r);
+  padding:14px 18px;
+  display:flex;align-items:center;gap:14px;
+  margin-bottom:28px;
+}
+.bonus-icon{
+  width:46px;height:46px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--blue),#0A47C2);
+  border-radius:13px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;color:#fff;
+}
+.bonus-title{font-size:14px;font-weight:700;color:#fff;margin-bottom:2px}
+.bonus-desc{font-size:11px;color:var(--text2)}
+.bonus-desc strong{color:var(--green)}
+
+/* ── Referral detected pill ── */
+.ref-pill{
+  background:rgba(0,214,143,0.08);
+  border:1px solid rgba(0,214,143,0.25);
+  border-radius:var(--rs);
+  padding:10px 14px;
+  display:none;align-items:center;gap:10px;
+  margin-bottom:20px;
+  font-size:13px;color:var(--green);font-weight:600;
+}
+.ref-pill i{font-size:16px;flex-shrink:0}
+.ref-pill.show{display:flex}
+
+/* ── Form fields ── */
+.field{margin-bottom:18px}
+.field-label{
+  display:block;font-size:12px;font-weight:600;
+  color:var(--text2);margin-bottom:8px;
+  text-transform:uppercase;letter-spacing:0.6px;
+}
+.field-label span{color:var(--text3);text-transform:none;letter-spacing:0;font-weight:400}
+.input-wrap{
+  display:flex;align-items:center;
+  background:var(--ink3);
+  border:1.5px solid var(--border);
+  border-radius:var(--rs);
+  transition:border-color 0.2s,box-shadow 0.2s;
+  overflow:hidden;
+}
+.input-wrap:focus-within{
+  border-color:var(--blue);
+  box-shadow:0 0 0 3px rgba(30,111,255,0.12);
+}
+.input-wrap.ok{border-color:var(--green)}
+.input-wrap.bad{border-color:var(--red);background:rgba(255,71,87,0.04)}
+.input-wrap .icon{
+  padding:0 4px 0 14px;
+  color:var(--blue);font-size:14px;flex-shrink:0;
+}
+.input-wrap input{
+  flex:1;padding:13px 14px;
+  background:transparent;border:none;outline:none;
+  color:var(--text);font-size:14px;
+  font-family:'DM Sans',sans-serif;
+}
+.input-wrap input::placeholder{color:var(--text3)}
+.input-wrap .eye{
+  padding:0 14px;background:none;border:none;
+  color:var(--text3);cursor:pointer;font-size:14px;
+}
+.hint{
+  font-size:11px;margin-top:6px;padding-left:2px;
+  display:flex;align-items:center;gap:5px;
+  color:var(--text3);
+}
+.hint.ok{color:var(--green)}.hint.bad{color:var(--red)}.hint.checking{color:var(--amber)}
+
+/* Password strength */
+.strength-track{height:3px;background:var(--border);border-radius:99px;margin-top:8px;overflow:hidden}
+.strength-fill{height:100%;width:0;border-radius:99px;transition:width 0.3s,background 0.3s}
+
+/* Terms */
+.terms-row{
+  display:flex;align-items:flex-start;gap:10px;
+  background:var(--ink3);border:1px solid var(--border);
+  border-radius:var(--rs);padding:12px 14px;
+  margin-bottom:22px;cursor:pointer;
+}
+.terms-row input[type=checkbox]{
+  width:17px;height:17px;margin-top:2px;
+  accent-color:var(--blue);flex-shrink:0;cursor:pointer;
+}
+.terms-row span{font-size:12px;color:var(--text2);line-height:1.5}
+.terms-row a{color:var(--blue);text-decoration:none}
+
+/* Submit button */
+.submit-btn{
+  width:100%;padding:15px;
+  background:linear-gradient(135deg,var(--blue),var(--blue2));
+  border:none;border-radius:var(--rs);
+  color:#fff;font-size:15px;font-weight:700;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;
+  font-family:'DM Sans',sans-serif;
+  box-shadow:0 8px 24px rgba(30,111,255,0.35);
+  transition:all 0.2s;
+}
+.submit-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 12px 30px rgba(30,111,255,0.45)}
+.submit-btn:active:not(:disabled){transform:scale(0.98)}
+.submit-btn:disabled{opacity:0.6;cursor:not-allowed;transform:none}
+
+.login-link{
+  text-align:center;margin-top:20px;padding-top:18px;
+  border-top:1px solid var(--border);
+  font-size:13px;color:var(--text2);
+}
+.login-link a{color:var(--blue);font-weight:600;text-decoration:none}
+
+/* Steps progress */
+.steps{display:flex;align-items:center;gap:6px;margin-bottom:24px}
+.step{
+  flex:1;height:3px;border-radius:99px;
+  background:var(--border);transition:background 0.3s;
+}
+.step.done{background:var(--blue)}
+.step.active{background:var(--blue);opacity:0.5}
+
+@media(max-width:540px){
+  .card{padding:24px 18px;border-radius:22px}
+  .logo-name{font-size:22px}
+}
+</style>
+</head>
+<body>
+
+<div class="bg">
+  <div class="bg-dot"></div>
+  <div class="bg-dot"></div>
+  <div class="bg-dot"></div>
+</div>
+
+<div class="card">
+  <div class="logo">
+    <div class="logo-ring"><i class="fas fa-bolt"></i></div>
+    <div class="logo-name">Kinetic Wealth</div>
+    <div class="logo-sub">Start your investment journey today</div>
+  </div>
+
+  <div class="bonus-banner">
+    <div class="bonus-icon"><i class="fas fa-gift"></i></div>
+    <div>
+      <div class="bonus-title">🎁 ₦1,000 Welcome Bonus!</div>
+      <div class="bonus-desc">Sign up now and get <strong>₦1,000</strong> credited instantly to your account.</div>
+    </div>
+  </div>
+
+  <!-- Referral auto-detected pill -->
+  <div class="ref-pill" id="refPill">
+    <i class="fas fa-check-circle"></i>
+    <span>Referred by <strong id="refPillName"></strong> — bonus unlocked!</span>
+  </div>
+
+  <!-- Progress indicator -->
+  <div class="steps">
+    <div class="step done" id="s1"></div>
+    <div class="step" id="s2"></div>
+    <div class="step" id="s3"></div>
+    <div class="step" id="s4"></div>
+  </div>
+
+  <!-- Full Name -->
+  <div class="field">
+    <label class="field-label">Full Name</label>
+    <div class="input-wrap" id="wrapName">
+      <span class="icon"><i class="fas fa-user"></i></span>
+      <input type="text" id="fullName" placeholder="e.g. John Doe" autocomplete="name" oninput="valName()">
+    </div>
+    <div class="hint" id="hintName">Enter your real full name</div>
+  </div>
+
+  <!-- Username -->
+  <div class="field">
+    <label class="field-label">Username <span>(— becomes your referral code)</span></label>
+    <div class="input-wrap" id="wrapUsername">
+      <span class="icon"><i class="fas fa-at"></i></span>
+      <input type="text" id="username" placeholder="e.g. johnwealth" autocomplete="off"
+             oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9_]/g,'');valUsername()">
+    </div>
+    <div class="hint" id="hintUsername">3–20 chars · letters, numbers, underscore only</div>
+  </div>
+
+  <!-- Email -->
+  <div class="field">
+    <label class="field-label">Email Address</label>
+    <div class="input-wrap" id="wrapEmail">
+      <span class="icon"><i class="fas fa-envelope"></i></span>
+      <input type="email" id="email" placeholder="you@example.com" autocomplete="email" oninput="valEmail()">
+    </div>
+    <div class="hint" id="hintEmail">We'll never share your email</div>
+  </div>
+
+  <!-- Phone -->
+  <div class="field">
+    <label class="field-label">Phone Number</label>
+    <div class="input-wrap" id="wrapPhone">
+      <span class="icon"><i class="fas fa-phone"></i></span>
+      <input type="tel" id="phone" placeholder="08012345678" autocomplete="tel" oninput="valPhone()">
+    </div>
+    <div class="hint" id="hintPhone">Nigerian format preferred (e.g. 0801…)</div>
+  </div>
+
+  <!-- Password -->
+  <div class="field">
+    <label class="field-label">Password</label>
+    <div class="input-wrap" id="wrapPassword">
+      <span class="icon"><i class="fas fa-lock"></i></span>
+      <input type="password" id="password" placeholder="Min 8 characters" autocomplete="new-password" oninput="valPassword()">
+      <button class="eye" type="button" onclick="toggleEye('password',this)"><i class="fas fa-eye"></i></button>
+    </div>
+    <div class="strength-track"><div class="strength-fill" id="strengthFill"></div></div>
+    <div class="hint" id="hintPassword">At least 8 characters</div>
+  </div>
+
+  <!-- Confirm Password -->
+  <div class="field">
+    <label class="field-label">Confirm Password</label>
+    <div class="input-wrap" id="wrapConfirm">
+      <span class="icon"><i class="fas fa-shield-check"></i></span>
+      <input type="password" id="confirmPassword" placeholder="Repeat your password" autocomplete="new-password" oninput="valConfirm()">
+      <button class="eye" type="button" onclick="toggleEye('confirmPassword',this)"><i class="fas fa-eye"></i></button>
+    </div>
+    <div class="hint" id="hintConfirm">Must match password above</div>
+  </div>
+
+  <!-- Referral Code -->
+  <div class="field">
+    <label class="field-label">Referral Code <span>(optional — enter referrer's username)</span></label>
+    <div class="input-wrap" id="wrapRef">
+      <span class="icon"><i class="fas fa-at"></i></span>
+      <input type="text" id="refCode" placeholder="e.g. johnwealth" autocomplete="off"
+             oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9_]/g,'');valRef()">
+    </div>
+    <div class="hint" id="hintRef">Leave blank if no one referred you</div>
+  </div>
+
+  <!-- Terms -->
+  <label class="terms-row">
+    <input type="checkbox" id="termsCheck">
+    <span>I agree to Kinetic Wealth's <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></span>
+  </label>
+
+  <button class="submit-btn" id="submitBtn" onclick="doSignup()">
+    <i class="fas fa-gift"></i> Create Account & Claim ₦1,000
+  </button>
+
+  <div class="login-link">Already have an account? <a href="login.html">Sign In</a></div>
+</div>
+
+<script>
+/* ════════════════════════════════════════
+   FIREBASE
+════════════════════════════════════════ */
+const firebaseConfig={
+  apiKey:"AIzaSyBl6HEVa9mUuROvnohMKzeEzzc0aTREU54",
+  authDomain:"kinetic-dc8e6.firebaseapp.com",
+  projectId:"kinetic-dc8e6",
+  storageBucket:"kinetic-dc8e6.firebasestorage.app",
+  messagingSenderId:"980527555815",
+  appId:"1:980527555815:web:131ccee594e0c8f122ee42"
+};
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth();
+const db=firebase.firestore();
+const FS=firebase.firestore.FieldValue;
+
+const WELCOME=1000;
+const BTN='<i class="fas fa-gift"></i> Create Account & Claim ₦1,000';
+
+/* ════════════════════════════════════════
+   URL REFERRAL DETECTION
+════════════════════════════════════════ */
+(function detectRefFromURL(){
+  const p=new URLSearchParams(window.location.search);
+  const ref=(p.get('ref')||p.get('referral')||p.get('r')||'').toLowerCase().replace(/[^a-z0-9_]/g,'');
+  if(!ref)return;
+  const inp=document.getElementById('refCode');
+  if(inp)inp.value=ref;
+  document.getElementById('refPillName').textContent='@'+ref;
+  document.getElementById('refPill').classList.add('show');
+  document.getElementById('wrapRef').classList.add('ok');
+  setHint('hintRef','✓ Referral code from invite link applied','ok');
+  console.log('✅ Referral from URL:',ref);
+})();
+
+/* ════════════════════════════════════════
+   VALIDATION HELPERS
+════════════════════════════════════════ */
+function getEl(id){return document.getElementById(id)}
+function setHint(id,msg,type){const e=getEl(id);if(e){e.textContent=msg;e.className='hint '+type;}}
+function setWrap(id,type){const e=getEl(id);if(e){e.className='input-wrap '+type;}}
+function toggleEye(id,btn){
+  const i=getEl(id);if(!i)return;
+  const show=i.type==='password';i.type=show?'text':'password';
+  btn.querySelector('i').className='fas fa-eye'+(show?'-slash':'');
+}
+
+/* Step progress */
+function updateSteps(){
+  const fields=['fullName','username','email','phone','password','confirmPassword'];
+  const done=fields.filter(f=>{const e=getEl(f);return e&&e.value.trim().length>0;}).length;
+  const pct=done/fields.length;
+  ['s1','s2','s3','s4'].forEach((s,i)=>{
+    const e=getEl(s);if(!e)return;
+    e.className='step'+(pct>i*0.25?' done':'');
+  });
+}
+
+let usernameCheckTimer=null;
+let usernameValid=false;
+let refValid=true; /* true means "no ref" = valid */
+let refChecking=false;
+let refCheckTimer=null;
+
+function valName(){
+  updateSteps();
+  const v=getEl('fullName').value.trim();
+  if(v.length>=3){setWrap('wrapName','ok');setHint('hintName','✓ Great!','ok');}
+  else{setWrap('wrapName','bad');setHint('hintName','Too short — min 3 characters','bad');}
+}
+
+function valUsername(){
+  updateSteps();
+  const v=getEl('username').value.trim();
+  usernameValid=false;
+  clearTimeout(usernameCheckTimer);
+
+  if(v.length<3||v.length>20){
+    setWrap('wrapUsername','bad');
+    setHint('hintUsername','Must be 3–20 characters','bad');
+    return;
+  }
+  if(!/^[a-z0-9_]+$/.test(v)){
+    setWrap('wrapUsername','bad');
+    setHint('hintUsername','Only letters, numbers, underscore allowed','bad');
+    return;
+  }
+
+  setHint('hintUsername','Checking availability…','checking');
+  usernameCheckTimer=setTimeout(async()=>{
+    try{
+      const q=await db.collection('users').where('username','==',v).limit(1).get();
+      if(q.empty){
+        setWrap('wrapUsername','ok');
+        setHint('hintUsername','✓ @'+v+' is available — this will be your referral code','ok');
+        usernameValid=true;
+      }else{
+        setWrap('wrapUsername','bad');
+        setHint('hintUsername','@'+v+' is already taken — try another','bad');
+      }
+    }catch(e){
+      setWrap('wrapUsername','');
+      setHint('hintUsername','Could not check — will verify on submit','');
+      usernameValid=true; /* allow submit, will re-check */
+    }
+  },600);
+}
+
+function valEmail(){
+  updateSteps();
+  const v=getEl('email').value.trim();
+  if(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)){setWrap('wrapEmail','ok');setHint('hintEmail','✓ Valid email','ok');}
+  else{setWrap('wrapEmail','bad');setHint('hintEmail','Enter a valid email address','bad');}
+}
+
+function valPhone(){
+  updateSteps();
+  const v=getEl('phone').value.trim();
+  if(/^[0-9+\s\-]{8,15}$/.test(v)){setWrap('wrapPhone','ok');setHint('hintPhone','✓ Valid number','ok');}
+  else{setWrap('wrapPhone','bad');setHint('hintPhone','Enter a valid phone number (8–15 digits)','bad');}
+}
+
+function valPassword(){
+  updateSteps();
+  const v=getEl('password').value;
+  const fill=getEl('strengthFill');
+  let s=0;
+  if(v.length>=8)s++;
+  if(/[a-z]/.test(v)&&/[A-Z]/.test(v))s++;
+  if(/[0-9]/.test(v))s++;
+  if(/[^a-zA-Z0-9]/.test(v))s++;
+  const pct=[0,33,60,80,100][s];
+  const col=['','#FF4757','#FFB300','#00D68F','#00D68F'][s];
+  if(fill){fill.style.width=pct+'%';fill.style.background=col;}
+  if(v.length>=8){setWrap('wrapPassword','ok');setHint('hintPassword','✓ Strong enough','ok');}
+  else{setWrap('wrapPassword','bad');setHint('hintPassword','Minimum 8 characters required','bad');}
+  /* re-validate confirm if already filled */
+  if(getEl('confirmPassword').value)valConfirm();
+}
+
+function valConfirm(){
+  updateSteps();
+  const p1=getEl('password').value,p2=getEl('confirmPassword').value;
+  if(p2&&p1===p2){setWrap('wrapConfirm','ok');setHint('hintConfirm','✓ Passwords match','ok');}
+  else if(p2){setWrap('wrapConfirm','bad');setHint('hintConfirm','Passwords do not match','bad');}
+}
+
+function valRef(){
+  const v=getEl('refCode').value.trim();
+  refValid=true;
+  clearTimeout(refCheckTimer);
+  if(!v){
+    setWrap('wrapRef','');
+    setHint('hintRef','Leave blank if no one referred you','');
+    return;
+  }
+  setHint('hintRef','Verifying referral code…','checking');
+  refChecking=true;
+  refCheckTimer=setTimeout(async()=>{
+    try{
+      const q=await db.collection('users').where('username','==',v).limit(1).get();
+      if(q.empty){
+        setWrap('wrapRef','bad');
+        setHint('hintRef','No user found with username @'+v,'bad');
+        refValid=false;
+      }else{
+        const name=q.docs[0].data().fullName||('@'+v);
+        setWrap('wrapRef','ok');
+        setHint('hintRef','✓ Referrer found: '+name,'ok');
+        refValid=true;
+      }
+    }catch(e){
+      setWrap('wrapRef','');
+      setHint('hintRef','Could not verify — will check on submit','');
+      refValid=true;
+    }
+    refChecking=false;
+  },600);
+}
+
+function resetBtn(){
+  const b=getEl('submitBtn');b.disabled=false;b.innerHTML=BTN;
+}
+
+/* ════════════════════════════════════════
+   MAIN SIGNUP
+   ────────────────────────────────────────
+   DATA MODEL — every field stored consistently:
+   ● uid              — Firebase auth UID
+   ● fullName         — display name
+   ● username         — lowercase, unique → IS the referral code
+   ● referralCode     — same as username (kept for compatibility)
+   ● email / phone
+   ● referrerUid      — UID string of direct referrer, OR null if none
+   ● referredBy       — username string of direct referrer, OR null
+   ● depositBalance / withdrawalBalance / balance / totalEarnings
+   ● totalInvested / totalRefEarnings
+   ● referralCount / level1Count / level2Count / level3Count
+   ● purchasedPlans[]
+   ● isAdmin          — always false on signup
+   ● accountStatus    — object {status:'active'} for consistency
+   ● createdAt        — Firestore serverTimestamp (CRITICAL: must be
+                        Timestamp not string for .toDate() to work)
+════════════════════════════════════════ */
+async function doSignup(){
+  const fullName   = getEl('fullName').value.trim();
+  const username   = getEl('username').value.trim().toLowerCase();
+  const email      = getEl('email').value.trim().toLowerCase();
+  const phone      = getEl('phone').value.trim();
+  const password   = getEl('password').value;
+  const confirm    = getEl('confirmPassword').value;
+  const refCode    = getEl('refCode').value.trim().toLowerCase();
+  const terms      = getEl('termsCheck').checked;
+
+  /* ── Client-side validation ── */
+  if(fullName.length<3)return Swal.fire({icon:'warning',title:'Full name required',text:'Enter at least 3 characters.',confirmButtonColor:'#1E6FFF'});
+  if(username.length<3||username.length>20||!/^[a-z0-9_]+$/.test(username))
+    return Swal.fire({icon:'warning',title:'Invalid username',text:'3–20 chars, letters/numbers/underscore only.',confirmButtonColor:'#1E6FFF'});
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+    return Swal.fire({icon:'warning',title:'Invalid email',text:'Enter a valid email address.',confirmButtonColor:'#1E6FFF'});
+  if(!/^[0-9+\s\-]{8,15}$/.test(phone))
+    return Swal.fire({icon:'warning',title:'Invalid phone',text:'Enter a valid phone number.',confirmButtonColor:'#1E6FFF'});
+  if(password.length<8)
+    return Swal.fire({icon:'warning',title:'Password too short',text:'Use at least 8 characters.',confirmButtonColor:'#1E6FFF'});
+  if(password!==confirm)
+    return Swal.fire({icon:'warning',title:'Passwords do not match',text:'Re-enter your password.',confirmButtonColor:'#1E6FFF'});
+  if(!terms)
+    return Swal.fire({icon:'warning',title:'Terms required',text:'Please accept the Terms of Service.',confirmButtonColor:'#1E6FFF'});
+  if(refCode&&refCode===username)
+    return Swal.fire({icon:'warning',title:'Invalid referral',text:"You can't use your own username as a referral code.",confirmButtonColor:'#1E6FFF'});
+
+  const btn=getEl('submitBtn');
+  btn.disabled=true;
+  btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Creating your account…';
+
+  let newCred=null;
+  try{
+
+    /* STEP 1 — Verify username is unique (server-side check) */
+    console.log('🔍 Step 1: Checking username uniqueness…');
+    const uq=await db.collection('users').where('username','==',username).limit(1).get();
+    if(!uq.empty){
+      setWrap('wrapUsername','bad');
+      setHint('hintUsername','@'+username+' is already taken','bad');
+      resetBtn();
+      return Swal.fire({icon:'error',title:'Username taken',text:`@${username} is already in use. Choose a different username.`,confirmButtonColor:'#1E6FFF'});
+    }
+    console.log('✅ Username available');
+
+    /* STEP 2 — Resolve referrer UID from referral code (username) */
+    console.log('🔍 Step 2: Resolving referrer…');
+    let referrerUid=null;   /* null = no referrer */
+    let referredBy=null;    /* null = no referrer */
+
+    if(refCode){
+      try{
+        const rq=await db.collection('users').where('username','==',refCode).limit(1).get();
+        if(!rq.empty){
+          referrerUid=rq.docs[0].id;   /* ← real Firebase UID */
+          referredBy=refCode;           /* ← username string for display */
+          console.log('✅ Referrer found → UID:',referrerUid,'username:',referredBy);
+        }else{
+          console.warn('⚠️ Referral code @'+refCode+' not found — proceeding without referral');
+          /* Non-fatal — user can still sign up */
+        }
+      }catch(e){
+        console.warn('⚠️ Referrer lookup error (non-fatal):',e.message);
+      }
+    }else{
+      console.log('ℹ️ No referral code provided');
+    }
+
+    /* STEP 3 — Create Firebase Auth user */
+    console.log('🔐 Step 3: Creating auth user…');
+    newCred=await auth.createUserWithEmailAndPassword(email,password);
+    const uid=newCred.user.uid;
+    console.log('✅ Auth user created. UID:',uid);
+
+    /* STEP 4 — Save user document
+       ⚠️ CRITICAL FIELDS:
+       • referrerUid  = null OR a real 28-char Firebase UID
+       • referredBy   = null OR a username string (for display)
+       • createdAt    = FS.serverTimestamp() (NOT an ISO string)
+         Using serverTimestamp() means .toDate() works in all pages.
+    */
+    console.log('💾 Step 4: Saving user document…');
+    const userDoc={
+      uid,
+      fullName,
+      username,
+      referralCode: username,   /* same as username for compatibility */
+      email,
+      phone,
+      referrerUid,              /* null or UID string */
+      referredBy,               /* null or username string */
+      depositBalance:    WELCOME,
+      withdrawalBalance: 0,
+      balance:           WELCOME,
+      totalEarnings:     WELCOME,
+      welcomeBonusPaid:  true,
+      totalInvested:     0,
+      totalRefEarnings:  0,
+      referralCount:     0,
+      level1Count:       0,
+      level2Count:       0,
+      level3Count:       0,
+      purchasedPlans:    [],
+      isAdmin:           false,
+      accountStatus:     {status:'active'},   /* object, not string */
+      createdAt:         FS.serverTimestamp(), /* Firestore Timestamp */
+      lastLogin:         FS.serverTimestamp(),
+      lastUpdated:       FS.serverTimestamp()
+    };
+
+    await db.collection('users').doc(uid).set(userDoc);
+    console.log('✅ User document saved. referrerUid:',referrerUid,'referredBy:',referredBy);
+
+    /* STEP 5 — Log welcome bonus transaction */
+    console.log('📝 Step 5: Logging welcome bonus…');
+    try{
+      await db.collection('transactions').add({
+        userId:uid,userName:fullName,
+        type:'welcome_bonus',amount:WELCOME,
+        status:'completed',
+        description:'₦1,000 Welcome Bonus',
+        wallet:'deposit',
+        createdAt:FS.serverTimestamp()
+      });
+      console.log('✅ Transaction logged');
+    }catch(e){console.warn('⚠️ Transaction log failed (non-fatal):',e.message);}
+
+    /* STEP 6 — Update referral counters up the chain
+       L1: direct referrer (referrerUid)
+       L2: referrer's referrer (referrerUid.referrerUid)
+       L3: L2's referrer
+
+       We validate each UID is >20 chars to ensure it's a Firebase UID
+       not accidentally a username string (UIDs are 28 chars). */
+    if(referrerUid){
+      console.log('🔗 Step 6: Updating referral counters…');
+
+      const isRealUid=u=>u&&typeof u==='string'&&u.length>20;
+
+      /* L1 */
+      try{
+        await db.collection('users').doc(referrerUid).update({
+          referralCount:FS.increment(1),
+          level1Count:  FS.increment(1),
+          lastUpdated:  FS.serverTimestamp()
+        });
+        console.log('✅ L1 updated for',referrerUid.slice(0,8)+'…');
+      }catch(e){console.warn('⚠️ L1 update failed:',e.message);}
+
+      /* L2 */
+      try{
+        const l1Snap=await db.collection('users').doc(referrerUid).get();
+        if(l1Snap.exists){
+          const l2Uid=l1Snap.data().referrerUid;
+          if(isRealUid(l2Uid)&&l2Uid!==referrerUid&&l2Uid!==uid){
+            await db.collection('users').doc(l2Uid).update({
+              referralCount:FS.increment(1),
+              level2Count:  FS.increment(1),
+              lastUpdated:  FS.serverTimestamp()
+            });
+            console.log('✅ L2 updated for',l2Uid.slice(0,8)+'…');
+
+            /* L3 */
+            try{
+              const l2Snap=await db.collection('users').doc(l2Uid).get();
+              if(l2Snap.exists){
+                const l3Uid=l2Snap.data().referrerUid;
+                if(isRealUid(l3Uid)&&l3Uid!==l2Uid&&l3Uid!==referrerUid&&l3Uid!==uid){
+                  await db.collection('users').doc(l3Uid).update({
+                    referralCount:FS.increment(1),
+                    level3Count:  FS.increment(1),
+                    lastUpdated:  FS.serverTimestamp()
+                  });
+                  console.log('✅ L3 updated for',l3Uid.slice(0,8)+'…');
+                }
+              }
+            }catch(e){console.warn('⚠️ L3 update failed (non-fatal):',e.message);}
+          }
+        }
+      }catch(e){console.warn('⚠️ L2 update failed (non-fatal):',e.message);}
+    }
+
+    /* STEP 7 — Done! */
+    console.log('🎉 Signup complete!');
+    await Swal.fire({
+      icon:'success',
+      title:'Welcome to Kinetic Wealth! 🎉',
+      html:`
+        <div style="font-family:DM Sans,sans-serif;text-align:center">
+          <div style="font-size:36px;margin-bottom:10px">💰</div>
+          <div style="font-size:22px;font-weight:800;color:#1E6FFF;margin-bottom:6px">₦1,000 Credited!</div>
+          <p style="color:#8FA3C8;font-size:13px;margin-bottom:14px">Your account is ready. Start investing!</p>
+          <div style="background:#0B0F1A;border-radius:12px;padding:12px;font-size:12px;color:#8FA3C8">
+            Your referral code: <strong style="color:#00D68F;font-size:14px">@${username}</strong>
+          </div>
+        </div>`,
+      background:'#1C2235',color:'#F0F4FF',
+      confirmButtonText:'Go to Dashboard',confirmButtonColor:'#1E6FFF'
+    });
+    window.location.href='home.html';
+
+  }catch(err){
+    console.error('❌ SIGNUP ERROR:',err.code,err.message,err);
+
+    /* Clean up orphaned auth user if Firestore write failed */
+    if(newCred?.user){
+      try{await newCred.user.delete();console.log('🧹 Orphaned auth user cleaned up');}
+      catch(e){console.warn('Could not clean up auth user:',e.message);}
+    }
+
+    /* Human-friendly error messages */
+    let msg='Registration failed. Please try again.';
+    const c=err?.code||'';
+    if(c==='auth/email-already-in-use')msg='This email is already registered. Try logging in instead.';
+    else if(c==='auth/weak-password')msg='Password is too weak. Use at least 8 characters.';
+    else if(c==='auth/invalid-email')msg='The email address is not valid.';
+    else if(c==='auth/network-request-failed')msg='No internet connection. Please check and try again.';
+    else if(c==='auth/too-many-requests')msg='Too many attempts. Please wait a minute and try again.';
+    else if(c==='permission-denied'||err.message?.includes('permission'))
+      msg='Database permission error (Code: permission-denied). Please contact support.';
+
+    Swal.fire({
+      icon:'error',title:'Signup Failed',text:msg,
+      footer:`<small style="color:#8FA3C8">Error code: ${c||'unknown'}</small>`,
+      background:'#1C2235',color:'#F0F4FF',confirmButtonColor:'#1E6FFF'
+    });
+    resetBtn();
+  }
+}
+
+/* Redirect if already logged in */
+auth.onAuthStateChanged(u=>{if(u)window.location.href='home.html';});
+
+/* Enter key submits */
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&document.activeElement?.tagName==='INPUT'){e.preventDefault();doSignup();}
+});
+</script>
+</body>
+</html>
